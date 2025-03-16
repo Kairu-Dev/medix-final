@@ -6,9 +6,10 @@ import { ClerkProvider } from "@clerk/nextjs"
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme-provider"
 import { dark } from "@clerk/themes";
+import { cn } from "@/lib/utils";
  
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+const fontSans = Plus_Jakarta_Sans({
   variable: "--font-sans",
   subsets: ["latin"],
   weight: ['300', '400', '500', '600', '700'],
@@ -39,14 +40,19 @@ export default function RootLayout({
   return (
     <ClerkProvider>
     
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${plusJakartaSans.variable}`}>
+    <html lang="en" className="dark" style={{ colorScheme: "dark" }} suppressHydrationWarning>
+      {/*<body className={`${plusJakartaSans.variable}`}> */}
+      <body
+        className={cn(
+          "min-h-screen bg-dark-300 font-sans antialiased", //bg-dark-300
+          fontSans.variable
+        )}
+      >
         <ThemeProvider 
         attribute="class" 
         defaultTheme="dark" 
-        enableSystem
+        enableSystem={false}
         disableTransitionOnChange
-        
         >
         {children}
         <Toaster richColors position='top-center' />

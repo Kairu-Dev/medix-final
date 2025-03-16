@@ -74,7 +74,7 @@ model Patient {
   relation                    String
   blood_group                 String?
   allergies                   String?
-  medical_condition           String?
+  medical_conditions          String?
   medical_history             String?
   insurance_provider          String?
   insurance_number            String?

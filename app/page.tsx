@@ -1,19 +1,26 @@
 import { ModeToggle } from "@/components/mode-toggle";
 import { Button } from "@/components/ui/button";
+import { getRole } from "@/utils/roles";
 import { UserButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 export default async function Home() {
   const { userId } = await auth();
+  const role = await getRole();
+
+  if (userId && role) {
+    redirect(`/${role}`);
+  }
 
   return (
     <div>
       <div className="flex flex-col items-center justify-center h-screen p-6">
         <div className="flex-1 flex flex-col items-center justify-center">
           <div className="mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold text-center">
+            <h1 className="text-4xl md:text-5xl font-bold text-center text-white">
               Welcome to <br />
               <span className="text-green-500 text-5-xl md:text-6xl">MEDIX IHMS</span>
             </h1>
@@ -29,7 +36,7 @@ export default async function Home() {
               {userId ? (
                 <>
                 
-                <Link href={'/dashboard'}>
+                <Link href={`/${role}`}>
                 <Button className="shad-primary-btn">View Dashboard</Button>
                 </Link>
 
@@ -42,7 +49,7 @@ export default async function Home() {
                   </Link>
 
                   <Link href="/sign-in">
-                    <Button variant="outline" className='md:text-base font-medium underline hover:text-green-400'>Login to account</Button>
+                    <Button variant="outline" className='md:text-base font-medium underline text-white hover:text-green-400'>Login to account</Button>
                   </Link>
                 </>
               )}
@@ -51,7 +58,7 @@ export default async function Home() {
         </div>
 
         <footer className="mt-8" >
-        <p className="justify-items-end text-dark-600 xl:text-left">
+        <p className="copyright justify-items-end text-dark-600 xl:text-left">
               © 2025 MEDIX Integrated Hospital Management System. All rights reserved.
             </p>
         </footer>
@@ -59,7 +66,7 @@ export default async function Home() {
       </div>
       
       <div className="absolute top-4 right-4">
-        <ModeToggle />
+       {/* <ModeToggle /> Broken Light Mode Disable For Now (caused by bg-dark-300 at layout find a solution to separate them) */} 
       </div>
     </div>
   );

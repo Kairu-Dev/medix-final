@@ -1,12 +1,10 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-    darkMode: ["class"],
-    content: [
+  darkMode: ["class"],
+  content: [
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
- 
-    // Or if using `src` directory:
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
@@ -43,8 +41,20 @@ module.exports = {
           600: "#76828D",
           700: "#ABB8C4",
         },
+        teal: {
+          400: "#4fd1c5",
+        },
+        black: {
+          800: "#000A12"
+        },
+        gradient: {
+          checkbox: "#4cd3a5" // Base color for non-gradient fallback
+        }
       },
-    }, // Added this closing curly brace for the extend object
+      backgroundImage: {
+        'checkbox-gradient': 'linear-gradient(135deg, #79B5EC 0%, #4cd3a5 100%)',
+      }
+    },
   },
   plugins: [require("tailwindcss-animate")],
 }
