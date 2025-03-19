@@ -1,3 +1,5 @@
+import { CANCELLED } from "node:dns";
+
 export const GENDER = [
     { label: "Male", value: "MALE" },
     { label: "Female", value: "FEMALE" },
@@ -26,4 +28,12 @@ export const GENDER = [
     LAB_TECHNICIAN: "LAB_TECHNICIAN",
     PATIENT: "PATIENT",
     CASHIER: "CASHIER",
+    PHYSICAL_THERAPIST: "PHYSICAL_THERAPIST",
+  };
+
+  export const StatusIcon = {
+    COMPLETED: "/assets/icons/check.svg",
+    PENDING: "/assets/icons/pending.svg",
+    CANCELLED: "/assets/icons/cancelled.svg",
+    SCHEDULED: "/assets/icons/schedule.png",
   };

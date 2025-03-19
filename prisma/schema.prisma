@@ -60,42 +60,38 @@ enum PaymentStatus {
 }
 
 model Patient {
-  id                          String @id  //uses clerk user provided ID
-  first_name                  String
-  last_name                   String
-  date_of_birth               DateTime
-  gender                      Gender @default(MALE)
-  phone                       String
-  email                       String @unique
-  marital_status              String
-  address                     String
-  emergency_contact_name      String
-  emergency_contact_number    String   
-  relation                    String
-  blood_group                 String?
-  allergies                   String?
-  medical_conditions          String?
-  medical_history             String?
-  insurance_provider          String?
-  insurance_number            String?
-  privacy_consent             Boolean
-  service_consent             Boolean
-  medical_consent             Boolean
-  img                         String?
+  id                       String   @id //clerk userId
+  first_name               String
+  last_name                String
+  date_of_birth            DateTime
+  gender                   Gender @default(MALE)
+  phone                    String
+  email                    String   @unique
+  marital_status           String
+  address                  String
+  emergency_contact_name   String
+  emergency_contact_number String
+  relation                 String
+  blood_group              String?
+  allergies                String?
+  medical_conditions       String?
+  medical_history          String?
+  insurance_provider       String?
+  insurance_number         String?
+  privacy_consent          Boolean
+  service_consent          Boolean
+  medical_consent          Boolean
+  img                      String?
+  colorCode                String?
 
+  appointments             Appointment[]
+  medical                  MedicalRecords[]
+  payments                 Payment[]
+  ratings                  Rating[]
 
-  appointments                Appointment[]
-  medical                     MedicalRecords[]
-  payments                    Payment[]
-  ratings                     Rating[]
-
-  created_at                  DateTime @default(now())
-  updated_at                  DateTime @updatedAt
-
-
-
+  created_at               DateTime @default(now())
+  updated_at               DateTime @updatedAt
 }
-
 
 model Doctor {
   id                    String   @id
@@ -152,6 +148,7 @@ model Staff {
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 }
+
 
 model Appointment {
   id                Int   @id @default(autoincrement())
@@ -321,11 +318,3 @@ model Services {
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
 }
-
-
-
-
-
-
-
-

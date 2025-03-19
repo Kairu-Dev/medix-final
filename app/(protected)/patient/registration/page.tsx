@@ -1,12 +1,13 @@
 import NewPatient from '@/components/new-patient';
+import { getPatientById } from '@/utils/services/patientFetchInfo';
 import { auth } from '@clerk/nextjs/server';
 import React from 'react'
 
 const Registration = async () => {
 
   const {userId} = await auth()
-  const data = null as any
-  //const {data} = getPatientDataById(userId)
+  
+  const {data} = await getPatientById(userId!)
 
 
   return (
