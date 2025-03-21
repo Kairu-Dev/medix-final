@@ -44,7 +44,7 @@ export default function RootLayout({
       {/*<body className={`${plusJakartaSans.variable}`}> */}
       <body
         className={cn(
-          "min-h-screen bg-dark-300 font-sans antialiased", //bg-dark-300
+          "min-h-screen bg-dark-300 font-sans antialiased remove-scrollbar", //bg-dark-300
           fontSans.variable
         )}
       >

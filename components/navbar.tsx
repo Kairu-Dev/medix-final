@@ -13,13 +13,13 @@ export const Navbar = () => {
     const user = useAuth();
 
     function formatPathName (): string {
-        const pathname = usePathname()
+        const pathname = usePathname();
 
-        if (!pathname) return "Overview"
+        if (!pathname) return "Overview";
 
-        const splitRoute = pathname.split("/")
-        const lastIndex = splitRoute.length - 1 > 2 ? 2 : splitRoute.length - 1
-        const pathName = splitRoute[lastIndex]
+        const splitRoute = pathname.split("/");
+        const lastIndex = splitRoute.length - 1 > 2 ? 2 : splitRoute.length - 1;
+        const pathName = splitRoute[lastIndex];
         const formattedPath = pathName.replace(/-/g, " "); //Replace special characters with space
 
         return formattedPath;
@@ -31,7 +31,7 @@ export const Navbar = () => {
 
            <div className="p-5 flex justify-between bg-green-900">
 
-            <h1 className="text-24-bold text-gray-100 capitalize"> {path || "Overview" } </h1> {/*NAVBAR PATIENT TOP*/}
+            <h1 className="text-24-bold text-gray-100 capitalize"> { path || "Overview" } </h1> {/*NAVBAR PATIENT TOP*/}
 
 
            <div className="flex items-center gap-4">
@@ -43,8 +43,7 @@ export const Navbar = () => {
             </p>
             </div>
 
-            {user?.userId && <UserButton />}
-
+                { user?.userId && <UserButton /> }
 
            </div>
 

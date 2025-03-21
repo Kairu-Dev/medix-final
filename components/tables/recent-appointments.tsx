@@ -78,8 +78,19 @@ export const RecentAppointments = ({ data }: DataProps) => {
         {format(item?.appointment_date, "yyyy-MM-dd")}
         </td>
 
+        {/* Modified this a bit make it simpler later */}
+
         <td className="hidden md:table-cell text-teal-400/80">
-        {format(new Date(`2000-01-01T${item?.time}`), "h:mm a")}
+          {(() => {
+            try {
+              if (item?.time && /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(item.time)) {
+                return format(new Date(`2000-01-01T${item.time}`), "h:mm a");
+              }
+              return item?.time || "N/A";
+            } catch (error) {
+              return item?.time || "N/A";
+            }
+          })()}
         </td>
 
         <td className="hidden md:table-cell">
@@ -120,7 +131,7 @@ export const RecentAppointments = ({ data }: DataProps) => {
   return (
     <div className="bg-black-800 rounded-xl p-2 2xl:p-4 border border-gray-800 shadow-lg">
         <div className="flex justify-between items-center mb-4 border-b border-gray-800 pb-3">
-            <h1 className="text-lg font-semibold text-white flex items-center">
+            <h1 className="sub-header text-lg font-semibold text-white flex items-center">
                 <span className="inline-block w-1 h-6 bg-teal-400 mr-2 rounded"></span>
                 Recent Appointments
             </h1>

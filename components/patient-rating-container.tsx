@@ -3,12 +3,12 @@ import { auth } from '@clerk/nextjs/server'
 import React from 'react'
 import RatingList from './rating-list';
 
-export const PatientRatingContainer = async () => {
+export const PatientRatingContainer = async ({id}: {id?: string }) => {
     const {userId} = await auth()
 
     const data = await db.rating.findMany({
         take: 10,
-        where: { patient_id: userId! },
+        where: { patient_id: id ? id: userId! },
         include: { patient: { select: {last_name: true, first_name: true}}},
         orderBy: {created_at:"desc"}
     

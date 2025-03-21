@@ -186,3 +186,56 @@ export async function getPatientById(id: string) {
   }
 }
 
+export async function getPatientFullDataById(id: string) {
+  try {
+    const patient = await db.patient.findFirst({
+      where: {
+        OR: [
+          {
+            id,
+          },
+          { email: id },
+        ],
+      },
+      include: {
+        _count: {
+          select: {
+            appointments: true,
+          },
+        },
+        appointments: {
+          select: {
+            appointment_date: true,
+          },
+          orderBy: {
+            appointment_date: "desc",
+          },
+          take: 1,
+        },
+      },
+    });
+
+    if (!patient) {
+      return {
+        success: false,
+        message: "Patient data not found",
+        status: 404,
+      };
+    }
+    const lastVisit = patient.appointments[0]?.appointment_date || null;
+
+    return {
+      success: true,
+      data: {
+        ...patient,
+        totalAppointments: patient._count.appointments,
+        lastVisit,
+      },
+      status: 200,
+    };
+  } catch (error) {
+    console.log(error);
+    return { success: false, message: "Internal Server Error", status: 500 };
+  }
+}
+

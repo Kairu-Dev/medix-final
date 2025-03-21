@@ -12,8 +12,14 @@ const Registration = async () => {
 
   return (
 
-    <div className="py-6 px-3 flex justify-center">
+    /*<div className="py-6 px-3 flex justify-center">
+        //<NewPatient data={data!} type={!data ? "create" : "update"} />
+    </div> */
+
+    <div className="w-full h-full flex justify-center py-6 px-3">
+      <div className="max-w-6xl w-full relative pb-10">
         <NewPatient data={data!} type={!data ? "create" : "update"} />
+      </div>
     </div>
 
   );

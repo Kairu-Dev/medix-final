@@ -4,6 +4,7 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/f
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Checkbox } from './ui/checkbox';
+import { Textarea } from './ui/textarea';
 
 interface CustomProps {
   type: "input" | "select" | "checkbox" | "switch" | "radio" | "textarea";
@@ -69,7 +70,21 @@ const RenderInput = ({ field, props }: {field: any; props: CustomProps}) => {
       </div>
     </div>
   );
-  }
+
+  case "textarea":
+    return (
+      <FormControl>
+        <Textarea
+          className="shad-textArea"
+          type={props.inputType}
+          placeholder={props.placeholder}
+          {...field}
+        ></Textarea>
+      </FormControl>
+    );
+}
+
+  
 
 };
 
