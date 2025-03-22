@@ -8,11 +8,11 @@ import { formatNumber } from "@/utils";
 
 export const StatSummary = ({ data, total }: { data: any; total: number }) => {
   const dataInfo = [
-    { name: "Total", count: total || 0, fill: "teal" },
+    { name: "Total", count: total || 0, fill: "#fde68a" },
     {
       name: "Appointments",
       count: data?.PENDING + data?.SCHEDULED || 0,
-      fill: "#000000",
+      fill: "#48d380",
     },
     { name: "Consultation", count: data?.COMPLETED || 0, fill: "#2563eb" },
   ];

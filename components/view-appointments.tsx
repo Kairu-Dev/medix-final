@@ -45,7 +45,7 @@ export const ViewAppointment = async ({ id }: { id: string | undefined }) => {
 
               <div className="p-6 bg-gradient-to-b from-blue-950/90 to-slate-950 bg-opacity-90 relative ">
                 {/* Subtle constellation pattern overlay */}
-                <div className="absolute inset-0 bg-[url('/path/to/constellation-pattern.png')] opacity-5 pointer-events-none mix-blend-screen"></div>
+                <div className="absolute inset-0 acer-bg opacity-5 pointer-events-none mix-blend-screen"></div>
                 
                 {data?.status === "CANCELLED" && (
                   <div className="bg-red-900/20 border-l-4 border-red-500 p-4 rounded-lg mb-6">

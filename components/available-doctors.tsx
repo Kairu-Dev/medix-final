@@ -74,6 +74,7 @@ export const AvailableDoctors = async ({ data }: DataProps ) => {
                         name={doc?.name}
                         className="md:flex min-w-14 min-h-14 md:min-w-16 md:min-h-16 ring-2 ring-offset-2 ring-offset-black-800 ring-teal-500/30"
                         textClassName="text-2xl font-semibold"
+                        bgColor={doc?.colorCode!}
                      
                         />
 

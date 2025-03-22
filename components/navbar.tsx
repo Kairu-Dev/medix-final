@@ -1,9 +1,6 @@
-"use client"; //Enable Interactions
+"use client";
 
-
-
-
-import { useAuth, UserButton } from '@clerk/nextjs';
+import { useAuth, UserButton } from "@clerk/nextjs";
 import { Bell } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import React from 'react'
@@ -19,6 +16,7 @@ export const Navbar = () => {
 
         const splitRoute = pathname.split("/");
         const lastIndex = splitRoute.length - 1 > 2 ? 2 : splitRoute.length - 1;
+
         const pathName = splitRoute[lastIndex];
         const formattedPath = pathName.replace(/-/g, " "); //Replace special characters with space
 
@@ -43,7 +41,7 @@ export const Navbar = () => {
             </p>
             </div>
 
-                { user?.userId && <UserButton /> }
+                {user?.userId && <UserButton />}
 
            </div>
 
