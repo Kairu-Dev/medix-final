@@ -13,13 +13,23 @@ export const ActionOptions = ({ children }: { children: React.ReactNode }) => {
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className="flex items-center justify-center rounded-full p-1"
+          className="flex items-center justify-center rounded-full p-1 bg-emerald-900"
         >
-          <EllipsisVertical size={16} className="text-sm text-gray-500" />
+          <EllipsisVertical size={16} className="text-sm text-emerald-500" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-56 p-3">
-        <span className="text-xs text-gray-400 mb-4 uppercase">
+      <PopoverContent className="w-56 p-3 py-6 px-3 bg-gray-900/90 border border-emerald-500/40 rounded-xl shadow-lg backdrop-blur-sm">
+         {/* Minecraft-style decorative elements */}
+         <div className="absolute top-0 left-0 w-10 h-10 border-t-2 border-l-2 border-emerald-500/70 rounded-tl-xl"></div>
+          <div className="absolute top-0 right-0 w-10 h-10 border-t-2 border-r-2 border-emerald-500/70 rounded-tr-xl"></div>
+          <div className="absolute bottom-0 left-0 w-10 h-10 border-b-2 border-l-2 border-emerald-500/70 rounded-bl-xl"></div>
+          <div className="absolute bottom-0 right-0 w-10 h-10 border-b-2 border-r-2 border-emerald-500/70 rounded-br-xl"></div>
+          
+          {/* Enhanced emerald glow effects */}
+          <div className="absolute -top-4 right-8 w-24 h-24 bg-emerald-300/20 rounded-full blur-2xl"></div>
+          <div className="absolute -bottom-4 left-16 w-24 h-24 bg-emerald-200/15 rounded-full blur-3xl"></div>
+          
+        <span className="text-lg text-emerald-200/80 max-w-xs text-center font-medium">
           Perform Action
         </span>
         {children}

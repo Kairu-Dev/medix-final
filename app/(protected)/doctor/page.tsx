@@ -1,4 +1,4 @@
-import AvailableDoctors from '@/components/available-doctors';
+import AvailableDoctors from '@/components/available-doctor';
 import { AppointmentChart } from '@/components/charts/appointment-chart';
 import { StatSummary } from '@/components/charts/stat-summary';
 import StatCard from '@/components/stat-card';

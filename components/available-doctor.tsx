@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { ProfileImage } from './profile-image';
 import { Card } from './ui/card';
 import { daysOfWeek } from '@/utils';
-import { log } from 'console';
+
 
 const getToday = () => {
     
@@ -26,19 +26,21 @@ interface DataProps {
     data: AvailableDoctorProps;
 }
 
-export const availableDays = ({data}: {data: Days[]}) => {
-    const isTodayWorkingDay = data?.find((dayObj) => dayObj?.day?.toLowerCase() === todayDay)
+export const availableDays = ({ data }: { data: Days[] }) => {
+    const isTodayWorkingDay = data?.find(
+      (dayObj) => dayObj?.day?.toLowerCase() === todayDay
+    );
+  
     return isTodayWorkingDay
-    ? `${isTodayWorkingDay?.start_time} - ${isTodayWorkingDay?.close_time}`
-    : " Not Available";
-};
+      ? `${isTodayWorkingDay?.start_time} - ${isTodayWorkingDay?.close_time}`
+      : "Not Available";
+  };
 
 export const AvailableDoctors = async ({ data }: DataProps ) => {
   return (
     <div className="bg-black-800 rounded-xl p-4 border border-gray-800 shadow-lg">
         <div className="flex justify-between items-center mb-6 border-b border-gray-800 pb-3">
             <h1 className="sub-header text-white flex items-center">
-                <span className="inline-block w-1 h-6 bg-teal-400 mr-2 rounded"></span>
                 Available Doctors
             </h1>
 

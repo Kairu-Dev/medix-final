@@ -1,4 +1,4 @@
-import { availableDays } from '@/components/available-doctors';
+import { availableDays } from '@/components/available-doctor';
 import RatingContainer from '@/components/doc-rating-container';
 import PatientRatingContainer from '@/components/patient-rating-container';
 import { ProfileImage } from '@/components/profile-image';
@@ -71,6 +71,7 @@ const DoctorProfile = async(props: {params: Promise <{id: string}>}) => {
                             <div className="w-full md:w-1/3 lg:w-full 2xl:w-1/3 flex items-center gap-2">
                                 <MdEmail className="text-lg text-amber-400 shrink-0" />
                                 <span className="capitalize text-white">{data?.email}</span>
+                                
                             </div>
 
                             <div className="w-full md:w-1/3 lg:w-full 2xl:w-1/3 flex items-center gap-2">

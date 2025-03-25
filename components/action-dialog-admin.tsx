@@ -14,12 +14,14 @@ import { Trash2 } from "lucide-react";
 import { FaQuestion } from "react-icons/fa6";
 import { toast } from "sonner";
 import { deleteDataById } from "@/app/actions/general";
+import { ProfileImage } from "./profile-image";
+import { SmallCard } from "./small-card-staff";
 
 interface ActionDialogProps {
   type: "doctor" | "staff" | "delete";
   id: string;
   data?: any;
-  deleteType?: "doctor" | "staff" | "patient";
+  deleteType?: "doctor" | "staff" | "patient" | "payment";
 }
 export const ActionDialog = ({
   id,
@@ -110,8 +112,89 @@ export const ActionDialog = ({
       </Dialog>
     );
   }
+
+  if(type === "staff") {
+    return (
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button
+          variant={"outline"}
+            className=  "flex items-center justify-center rounded-lg bg-blue-700 hover:bg-blue-600 text-emerald-50 px-2.5 py-1.5 text-xs font-medium tracking-wide md:text-sm border border-blue-500/40 shadow-sm transition-all duration-200 hover:shadow-blue-400/20 disabled:opacity-50 disabled:bg-gray-700 disabled:text-gray-400 disabled:border-gray-600 disabled:hover:bg-gray-700 disabled:cursor-not-allowed"
+
+          >
+            View
+          </Button>
+        </DialogTrigger>
+  
+        <DialogContent className="bg-gradient-to-br from-gray-900 to-gray-800 max-w-[300px] md:max-w-2xl max-h-[90%] p-8 overflow-y-auto rounded-2xl border border-gray-700/50 shadow-2xl">
+            <DialogTitle 
+            className="text-lg text-gray-300 font-bold mb-4 uppercase tracking-wider">
+              Staff Information
+            </DialogTitle>
+
+            <div className="flex justify-between bg-gray-800/60 p-4 rounded-xl border border-gray-700/50 shadow-md">
+
+              <div className="flex gap-3 items-center">
+
+                <ProfileImage 
+                url={data?.img!}
+                name={data?.name}
+                className="xl:size-20 ring-2 ring-blue-500/50 rounded-full"
+                bgColor={data?.colorCode!}
+                textClassName="xl:text-2xl" 
+                />
+
+                <div className="flex flex-col">
+
+                  <p className="text-xl font-semibold text-gray-100">{data?.name}</p>
+                  <span className="text-blue-400 text-sm md:text=base capitalize font-medium">{data?.role?.toLowerCase()}</span>
+                  <span className="text-green-500 text-xs font-medium bg-green-500/10 px-2 py-0.5 rounded-full inline-block w-fit mt-3">Full-Time</span>
+
+                </div>
+
+              </div>
+
+            </div>
+
+            <div className="mt-10 space-y-6">
+
+              <div className="flex flex-col md:flex-row md:flex-wrap md:items-center xl:justify-between gap-y-4 md:gap-x-0">
+                <SmallCard 
+                label="Email Address" 
+                value={data?.email} 
+                />
+
+                <SmallCard label="Phone Number" value={data?.phone} />
+
+              </div>
+
+              <div>
+
+              <SmallCard label="Address" value={data?.address || "N/A"} />
+
+              </div>
+
+              <div className="flex flex-col md:flex-row md:flex-wrap md:items-center xl:justify-between gap-y-4 md:gap-x-0">
+              <SmallCard label="Role" value={data?.role} />
+                <SmallCard 
+                label="Department" 
+                value={data?.department || "N/A"} 
+                />
+
+                <SmallCard label="License Number" value={data?.license_number || "N/A"} />
+
+              </div>
+             
+            </div>
+
+        </DialogContent>
+      </Dialog>
+    )
+  }
   return null;
 }
+
+
 
 export default ActionDialog
 
