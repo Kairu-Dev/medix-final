@@ -75,75 +75,87 @@ export const AppointmentActionDialog = ({
     <Dialog>
       <DialogTrigger asChild disabled={!disabled}>
         {type === "approve" ? (
-          <Button size="sm" variant="ghost" className="w-full justify-start">
-            <Check size={16} /> Approve
+          <Button size="sm" variant="ghost" className="w-full justify-start text-emerald-200 hover:bg-emerald-900/50 hover:text-emerald-100 font-mono tracking-wide">
+            <Check size={16} className="mr-2 text-emerald-300" /> Approve
           </Button>
         ) : (
           <Button
             size="sm"
             variant="outline"
-            className="w-full flex items-center justify-start gap-2 rounded-full text-red-500 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-start gap-2 rounded-md text-red-400 disabled:cursor-not-allowed border-red-500/30 bg-red-900/20 hover:bg-red-900/40 hover:border-red-400/50 font-mono tracking-wide"
           >
             <Ban size={16} /> Cancel
           </Button>
         )}
       </DialogTrigger>
 
-      <DialogContent className="shad-dialog">
-        <div className="flex flex-col items-center justify-center py-6">
-          <DialogTitle>
-            {type === "approve" ? (
-              <div className="bg-emerald-200 p-4 rounded-full mb-2">
-                <GiConfirmed size={50} className="text-emerald-500" />
-              </div>
-            ) : (
-              <div className="bg-red-200 p-4 rounded-full mb-2">
-                <MdCancel size={50} className="text-red-500" />
-              </div>
-            )}
-          </DialogTitle>
-
-          <span className="text-xl text-black">
-            Appointment
-            {type === "approve" ? " Confirmation" : " Cancellation"}
-          </span>
-          <p className="text-sm text-center text-gray-500">
-            {type === "approve"
-              ? "You're about to confirm this appointment. Click Yes to approve, or No to cancel."
-              : "Are you sure you want to cancel this appointment?"}
-          </p>
-
-          {type == "cancel" && (
-            <Textarea
-              disabled={isLoading}
-              className="mt-4 shad-textArea"
-              placeholder="Cancellation reason...."
-              onChange={(e) => setReason(e.target.value)}
-            ></Textarea>
-          )}
-
-          <div className="flex justify-center mt-6 items-center gap-x-4">
-            <Button
-              disabled={isLoading}
-              onClick={() => handleAction()}
-              variant="outline"
-              className={cn(
-                "px-4 py-2 text-sm font-medium text-white hover:text-white hover:underline",
-                type === "approve"
-                  ? "bg-blue-600 hover:bg-blue-700"
-                  : "bg-destructive hover:bg-destructive"
+      <DialogContent className="bg-gray-900/95 border border-emerald-500/40 shadow-lg backdrop-blur-md p-0 rounded-xl overflow-hidden">
+        <div className="relative">
+          {/* Decorative corners */}
+          <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-emerald-500/70 rounded-tl-xl"></div>
+          <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-emerald-500/70 rounded-tr-xl"></div>
+          <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-emerald-500/70 rounded-bl-xl"></div>
+          <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-emerald-500/70 rounded-br-xl"></div>
+          
+          {/* Glow effects */}
+          <div className="absolute -top-10 right-10 w-32 h-32 bg-emerald-300/20 rounded-full blur-2xl"></div>
+          <div className="absolute -bottom-10 left-10 w-32 h-32 bg-emerald-200/15 rounded-full blur-3xl"></div>
+          
+          <div className="flex flex-col items-center justify-center py-8 px-6 relative z-10">
+            <DialogTitle>
+              {type === "approve" ? (
+                <div className="bg-emerald-900/70 border border-emerald-400/50 p-4 rounded-full mb-4 shadow-[0_0_15px_rgba(52,211,153,0.4)]">
+                  <GiConfirmed size={50} className="text-emerald-400" />
+                </div>
+              ) : (
+                <div className="bg-red-900/70 border border-red-400/50 p-4 rounded-full mb-4 shadow-[0_0_15px_rgba(248,113,113,0.4)]">
+                  <MdCancel size={50} className="text-red-400" />
+                </div>
               )}
-            >
-              Yes, {type === "approve" ? "Approve" : "Delete"}
-            </Button>
-            <DialogClose asChild>
+            </DialogTitle>
+
+            <span className="text-xl text-emerald-100 font-mono tracking-wider uppercase">
+              Appointment
+              {type === "approve" ? " Confirmation" : " Cancellation"}
+            </span>
+            <p className="text-sm text-center text-emerald-300/80 mt-2 font-mono">
+              {type === "approve"
+                ? "You're about to confirm this appointment. Click Yes to approve, or No to cancel."
+                : "Are you sure you want to cancel this appointment?"}
+            </p>
+
+            {type == "cancel" && (
+              <Textarea
+                disabled={isLoading}
+                className="mt-6 bg-emerald-900/30 border border-emerald-500/40 text-emerald-100 placeholder:text-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 rounded-md w-full font-mono"
+                placeholder="Cancellation reason...."
+                onChange={(e) => setReason(e.target.value)}
+              ></Textarea>
+            )}
+
+            <div className="flex justify-center mt-6 items-center gap-x-4">
               <Button
+                disabled={isLoading}
+                onClick={() => handleAction()}
                 variant="outline"
-                className="px-4 py-2 text-sm underline text-gray-500"
+                className={cn(
+                  "px-4 py-2 text-sm font-medium font-mono tracking-wide border rounded-md transition-colors duration-200",
+                  type === "approve"
+                    ? "bg-emerald-700/80 hover:bg-emerald-600/80 text-emerald-100 border-emerald-500/50 hover:border-emerald-500/70"
+                    : "bg-red-700/80 hover:bg-red-600/80 text-red-100 border-red-500/50 hover:border-red-500/70"
+                )}
               >
-                No
+                Yes, {type === "approve" ? "Approve" : "Delete"}
               </Button>
-            </DialogClose>
+              <DialogClose asChild>
+                <Button
+                  variant="outline"
+                  className="px-4 py-2 text-sm text-emerald-300 border-emerald-500/30 hover:bg-emerald-900/50 hover:border-emerald-500/50 font-mono tracking-wide rounded-md"
+                >
+                  No
+                </Button>
+              </DialogClose>
+            </div>
           </div>
         </div>
       </DialogContent>

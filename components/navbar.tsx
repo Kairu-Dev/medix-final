@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth, UserButton } from "@clerk/nextjs";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Bell } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import React from 'react'
@@ -34,11 +35,13 @@ export const Navbar = () => {
 
            <div className="flex items-center gap-4">
             
-            <div className="relative"> 
+            <div className="relative">
+            <VisuallyHidden>
             <Bell />
             <p className="absolute -top-4 right-1 size-4 bg-red-700 text-white rounded-full text-[10px] text-center">
                 2
             </p>
+            </VisuallyHidden> 
             </div>
 
                 {user?.userId && <UserButton />}

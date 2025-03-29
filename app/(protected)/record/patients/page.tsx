@@ -122,9 +122,11 @@ const columns = [
             lastVisit ? format(lastVisit?.created_at, "yyyy-MM-dd HH:mm:ss") : <span className="text-gray-400 italic">No last Visit</span>
         }</td>
 
-        <td className="hidden xl:table-cell text-emerald-300/90">{
-            lastVisit ? lastVisit?.treatment_plan : <span className="text-gray-400 italic">No last treatment</span>
-        }</td>
+        <td className="hidden xl:table-cell text-emerald-300/90">
+        {lastVisit ? (
+          lastVisit?.treatment_plan 
+        ) : ( <span className="text-gray-400 italic">No last treatment</span>
+        )}</td>
         
         <td>
             <div className="flex items-center gap-2">

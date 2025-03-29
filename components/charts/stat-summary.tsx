@@ -7,18 +7,30 @@ import { Users } from "lucide-react";
 import { formatNumber } from "@/utils";
 
 export const StatSummary = ({ data, total }: { data: any; total: number }) => {
+  const appointment = data?.PENDING + data?.SCHEDULED || 0;
+  const consultation = data?.COMPLETED || 0;
+  
+  // Calculate total for percentage calculation
+  const totalInteractions = appointment + consultation;
+  
+  // Calculate percentages
+  const appointmentPercentage = totalInteractions > 0 
+    ? (appointment / totalInteractions) * 100 
+    : 0;
+  
+  const consultationPercentage = totalInteractions > 0 
+    ? (consultation / totalInteractions) * 100 
+    : 0;
+  
   const dataInfo = [
-    { name: "Total", count: total || 0, fill: "#fde68a" },
+    { name: "Total", count: 100, fill: "#fde68a" },
     {
       name: "Appointments",
-      count: data?.PENDING + data?.SCHEDULED || 0,
+      count: appointmentPercentage,
       fill: "#48d380",
     },
-    { name: "Consultation", count: data?.COMPLETED || 0, fill: "#2563eb" },
+    { name: "Consultation", count: consultationPercentage, fill: "#2563eb" },
   ];
-
-  const appointment = dataInfo[1].count;
-  const consultation = dataInfo[2].count;
 
   return (
     <div className="bg-black-800 rounded-xl w-full h-full p-4">
@@ -62,8 +74,7 @@ export const StatSummary = ({ data, total }: { data: any; total: number }) => {
             <h1 className="font-bold">{formatNumber(appointment)}</h1>
           </div>
           <h2 className="text-xs text-gray-400">
-            {dataInfo[1].name}(
-            {((appointment / (appointment + consultation)) * 100).toFixed(0)})
+            {dataInfo[1].name}({appointmentPercentage.toFixed(0)}%)
           </h2>
         </div>
 
@@ -74,22 +85,10 @@ export const StatSummary = ({ data, total }: { data: any; total: number }) => {
           </div>
 
           <h2 className="text-xs text-gray-400">
-            {dataInfo[2].name}(
-            {((consultation / (appointment + consultation)) * 100).toFixed(0)})
+            {dataInfo[2].name}({consultationPercentage.toFixed(0)}%)
           </h2>
         </div>
       </div>
     </div>
   );
 };
-
-{/**
- * Calculate what percentage of total interactions are appointments:
- * 1. Divide appointments by total interactions (appointments + consultations)
- * 2. Multiply by 100 to convert to percentage
- * 3. Round to nearest whole number using toFixed(0)
- * 4. Returns the appointment percentage as a string
- * 
- * Example: If appointment=30 and consultation=70
- * Then: (30 / (30 + 70)) * 100 = 30%
- */}

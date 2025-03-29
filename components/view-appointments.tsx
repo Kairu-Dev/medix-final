@@ -2,8 +2,8 @@
 
 import { getAppointmentById } from '@/utils/services/appointment';
 import React from 'react'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
-import { DialogTrigger } from '@radix-ui/react-dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+
 import { Button } from './ui/button';
 import { calculateAge, formatDateTime } from '@/utils';
 import { ProfileImage } from './profile-image';

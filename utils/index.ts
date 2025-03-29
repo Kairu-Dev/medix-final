@@ -3,6 +3,15 @@ export function formatNumber(amount: number): string {
       maximumFractionDigits: 0,
     });
   }
+
+  export function formatPesos(amount: number): string {
+    return amount?.toLocaleString("en-PH", {
+      style: "currency",
+      currency: "PHP",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }
   
   export function getInitials(name: string): string {
     const words = name.trim().split(" ");

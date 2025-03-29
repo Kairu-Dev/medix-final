@@ -4,6 +4,7 @@ import { ProfileImage } from '@/components/profile-image';
 import { Card } from '@/components/ui/card';
 import { getPatientFullDataById } from '@/utils/services/patientFetchInfo';
 import { auth } from '@clerk/nextjs/server';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { format, formatDate } from 'date-fns';
 import Link from 'next/link';
 import React from 'react'
@@ -124,19 +125,24 @@ const PatientProfilePage = async(props: ParamsProps) => {
                             >
                             Medical Records
                             </Link>
+                            <VisuallyHidden>
                             <Link
                             className="p-3 rounded-md bg-purple-900/40 hover:bg-purple-900/60 text-purple-300 border border-purple-700/50 transition-colors duration-200 shadow-inner hover:shadow-[0_0_8px_rgba(147,51,234,0.3)]"
-                            href={`?cat=payments`}
+                            href={`?category=payments`}
                             >
                             Medical Bills
                             </Link>
+                            </VisuallyHidden>
+                            
                             <Link className="p-3 rounded-md bg-emerald-900/40 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-700/50 transition-colors duration-200 shadow-inner hover:shadow-[0_0_8px_rgba(16,185,129,0.3)]" href={`/`}>
                             Dashboard
                             </Link>
-
+                            
+                            <VisuallyHidden>
                             <Link className="p-3 rounded-md bg-rose-900/40 hover:bg-rose-900/60 text-rose-300 border border-rose-700/50 transition-colors duration-200 shadow-inner hover:shadow-[0_0_8px_rgba(225,29,72,0.3)]" href={`#`}>
                             Lab Test & Result
                             </Link>
+                            </VisuallyHidden>
                             {patientId === "self" && (
                             <Link
                                 className="p-3 rounded-md bg-amber-900/40 hover:bg-amber-900/60 text-amber-300 border border-amber-700/50 transition-colors duration-200 shadow-inner hover:shadow-[0_0_8px_rgba(245,158,11,0.3)]"

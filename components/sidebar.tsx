@@ -86,18 +86,6 @@ export const sidebar = async() => {
             icon: Receipt,
           },
           {
-            name: "Patient Management",
-            href: "/nurse/patient-management",
-            access: ["nurse"],
-            icon: Users,
-          },
-          {
-            name: "Administer Medications",
-            href: "/nurse/administer-medications",
-            access: ["admin", "doctor", "nurse"],
-            icon: Pill,
-          },
-          {
             name: "Appointments",
             href: "/record/appointments",
             access: ["patient"],
@@ -108,12 +96,6 @@ export const sidebar = async() => {
             href: "/patient/self",
             access: ["patient"],
             icon: List,
-          },
-          {
-            name: "Prescription",
-            href: "#",
-            access: ["patient"],
-            icon: Pill,
           },
           {
             name: "Billing",
@@ -127,18 +109,6 @@ export const sidebar = async() => {
         label: "System",
         links: [
           {
-            name: "Notifications",
-            href: "/notifications",
-            access: ACCESS_LEVELS_ALL,
-            icon: Bell,
-          },
-          {
-            name: "Audit Logs",
-            href: "/admin/audit-logs",
-            access: ["admin"],
-            icon: Logs,
-          },
-          {
             name: "Settings",
             href: "/admin/system-settings",
             access: ["admin"],
@@ -147,7 +117,7 @@ export const sidebar = async() => {
         ],
       },
     ];
-
+    
     return (
 
     <div className="sidebar w-full p-4 flex flex-col justify-between gap-4 bg-black-600 min-h-full overflow-auto "> {/* removed overflow-y-scroll added sidebar template remove if something weird happens */}

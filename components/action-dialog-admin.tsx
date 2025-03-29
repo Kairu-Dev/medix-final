@@ -21,7 +21,7 @@ interface ActionDialogProps {
   type: "doctor" | "staff" | "delete";
   id: string;
   data?: any;
-  deleteType?: "doctor" | "staff" | "patient" | "payment";
+  deleteType?: "doctor" | "staff" | "patient" | "payment" | "bill";
 }
 export const ActionDialog = ({
   id,

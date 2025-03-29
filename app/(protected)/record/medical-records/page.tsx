@@ -15,26 +15,25 @@ import { getMedicalRecords } from '@/utils/services/medical-records';
 import { getAllPatients } from '@/utils/services/patientFetchInfo';
 import { getAllStaff } from '@/utils/services/staff';
 import { DATA_LIMIT } from '@/utils/setting';
-import { Doctor, MedicalRecords, Patient, Staff } from '@prisma/client';
+import { Diagnosis, Doctor, LabTest, MedicalRecords, Patient, Staff } from '@prisma/client';
 import { format, formatDate } from 'date-fns';
 import { BriefcaseBusiness, BriefcaseMedical, UserPen, Users } from 'lucide-react';
 import React from 'react'
 
 
 const columns = [
-    {
-      header: "No",
-      key: "no",
-    },
-    {
-      header: "Info",
-      key: "name",
-    },
-    {
-      header: "Date & Time",
-      key: "medical_date",
-      className: "hidden md:table-cell",
-    },
+  {
+    header: "Info",
+    key: "name",
+  },
+  {
+    header: "Date & Time",
+    key: "medical_date",
+    className: "hidden md:table-cell",
+  },
+   
+   
+
     {
       header: "Doctor",
       key: "doctor",
@@ -113,7 +112,7 @@ const columns = [
         <td className="hidden 2xl:table-cell text-emerald-300">{item?.doctor_id}</td>
         
         <td className="hidden lg:table-cell text-emerald-200/90">{item?.diagnosis?.length === 0
-            ? <span className="text-gray-500 italic">No diagnosis found </span> : <span>{item?.diagnosis.length} </span>
+            ? <span className="text-gray-500 italic">No diagnosis found </span> : <span>{item?.diagnosis.length} Found</span>
         }</td>
         <td className="hidden xl:table-cell text-emerald-200/90">
 
@@ -125,7 +124,7 @@ const columns = [
         
         <td>
             
-                <ViewAction href={`/appointments/${item?.appointment_id}`} />
+                <ViewAction href={`/record/appointments/${item?.appointment_id}`} />
 
           
         </td>

@@ -5,6 +5,7 @@ import { Card, CardContent, CardFooter, CardHeader } from './ui/card';
 import { Button } from './ui/button';
 import Link from 'next/link';
 import { formatNumber } from '@/utils';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 interface CardProps {
     title: string;
@@ -40,7 +41,7 @@ export const StatCard = ({
             variant="outline"
             className="font-normal text-xs bg-transparent p-2 h-0 hover:underline"
             >
-                <Link href={link}>see details</Link>
+                <VisuallyHidden><Link href={link}>see details</Link></VisuallyHidden>
             </Button>
         </CardHeader>
 

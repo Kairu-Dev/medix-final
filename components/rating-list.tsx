@@ -1,7 +1,7 @@
 import React from 'react';
 import { Sparkles } from 'lucide-react';
 
-const GenshinPrimogem = (props) => {
+const GenshinPrimogem = (props: { filled: boolean }) => { //Changed from (props) to props: { filled: boolean } verify later
   const { filled } = props;
   // Custom Primogem SVG
   return (
@@ -23,7 +23,7 @@ const GenshinPrimogem = (props) => {
   );
 };
 
-const RatingList = ({ data }) => {
+export const RatingList = ({ data }: {data: any[] }) => {
   return (
     <div className="bg-black-800 rounded-lg mt-6 border border-gray-800">
       <div className="flex items-center justify-between p-4 border-b border-gray-800">

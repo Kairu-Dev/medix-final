@@ -1,7 +1,7 @@
 "use server";
 
 import db from "@/lib/db";
-import { DoctorSchema, StaffSchema, WorkingDaysSchema } from "@/lib/validation";
+import { DoctorSchema, ServicesSchema, StaffSchema, WorkingDaysSchema } from "@/lib/validation";
 import { generateRandomColor } from "@/utils";
 import { checkRole } from "@/utils/roles";
 import { auth, clerkClient } from "@clerk/nextjs/server";
@@ -133,5 +133,26 @@ export async function createNewStaff(data: any) {
     } catch (error) {
       console.log(error);
       return { error: true, success: false, message: "Something went wrong" };
+    }
+  }
+
+  export async function addNewService(data: any) {
+    try {
+      const isValidData = ServicesSchema.safeParse(data);
+  
+      const validatedData = isValidData.data;
+  
+      await db.services.create({
+        data: { ...validatedData!, price: Number(data.price!) },
+      });
+  
+      return {
+        success: true,
+        error: false,
+        msg: `Service added successfully`,
+      };
+    } catch (error) {
+      console.log(error);
+      return { success: false, msg: "Internal Server Error" };
     }
   }

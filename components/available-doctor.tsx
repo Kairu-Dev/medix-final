@@ -51,7 +51,7 @@ export const AvailableDoctors = async ({ data }: DataProps ) => {
                 disabled={data?.length === 0}
                 className="disabled:cursor-not-allowed disabled:text-gray-200 bg-transparent hover:bg-teal-500/20 border-teal-500/50 text-teal-400 hover:text-teal-300 transition-all duration-300"
                 >
-                    <Link href="/records/doctors">View All</Link>
+                    <Link href="/record/doctors">View All</Link>
                 </Button>
             )}
         </div>

@@ -204,7 +204,7 @@ const columns = [
 
             <div className="mt-6 bg-gradient-to-b from-emerald-50/15 to-emerald-900/30 rounded-xl p-4 border border-emerald-500/40 shadow-md backdrop-blur-sm relative">
                 <div className="absolute -left-4 h-6 w-1 bg-emerald-400 rounded-full shadow-[0_0_15px_rgba(52,211,153,0.8)]"></div>
-                <h2 className="text-lg font-bold text-white tracking-wider pl-2 font-mono uppercase mb-4">Medical Records Log</h2>
+                <h2 className="text-lg font-bold text-white tracking-wider pl-2 font-mono uppercase mb-4">Billing Records Log</h2>
                 
                 <Table columns={columns} data={data} renderRow={renderRow} />
 
