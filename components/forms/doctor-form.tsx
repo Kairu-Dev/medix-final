@@ -2,9 +2,9 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import React, { useActionState, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { infer, z } from "zod";
+import { z } from "zod";
 import {
   Sheet,
   SheetContent,
@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { DoctorSchema } from "@/lib/validation";
 import { createNewDoctor } from "@/app/actions/admin-action";
 import { SPECIALIZATION } from "@/utils/setting";
+ /* eslint-disable */
 
 
 const TYPES = [

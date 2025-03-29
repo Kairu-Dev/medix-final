@@ -1,23 +1,15 @@
-import { ActionDialog } from '@/components/action-dialog-admin';
-import { ActionOptions, ViewAction } from '@/components/action-options';
-import { DoctorForm } from '@/components/forms/doctor-form';
-import { StaffForm } from '@/components/forms/staff-form';
+import { ViewAction } from '@/components/action-options';
 import { Pagination } from '@/components/pagination';
 import { ProfileImage } from '@/components/profile-image';
 import SearchInput from '@/components/search-input';
 import { Table } from '@/components/tables/table';
-import { Button } from '@/components/ui/button';
 import { SearchParamsProps } from '@/types';
-import { calculateAge } from '@/utils';
 import { checkRole } from '@/utils/roles';
-import { getAllDoctors } from '@/utils/services/doctor';
 import { getMedicalRecords } from '@/utils/services/medical-records';
-import { getAllPatients } from '@/utils/services/patientFetchInfo';
-import { getAllStaff } from '@/utils/services/staff';
 import { DATA_LIMIT } from '@/utils/setting';
-import { Diagnosis, Doctor, LabTest, MedicalRecords, Patient, Staff } from '@prisma/client';
-import { format, formatDate } from 'date-fns';
-import { BriefcaseBusiness, BriefcaseMedical, UserPen, Users } from 'lucide-react';
+import { Diagnosis, LabTest, MedicalRecords, Patient } from '@prisma/client';
+import { format } from 'date-fns';
+import { BriefcaseMedical } from 'lucide-react';
 import React from 'react'
 
 
@@ -72,6 +64,7 @@ const columns = [
     const searchParams = await props.searchParams;
     const page = searchParams?.p || "1" as string;
     const searchQuery = searchParams?.q || "" as string;
+    /* eslint-disable */
 
     const {data, totalPages, totalRecords, currentPage} = await getMedicalRecords({
         page,

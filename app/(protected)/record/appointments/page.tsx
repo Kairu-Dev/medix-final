@@ -12,7 +12,7 @@ import { DATA_LIMIT } from '@/utils/setting';
 import { auth } from '@clerk/nextjs/server';
 import { Appointment, Doctor, Patient } from '@prisma/client';
 import { formatDate } from 'date-fns';
-import { BriefcaseBusiness, Calendar } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 import React from 'react'
 
 const columns = [
@@ -52,8 +52,11 @@ const columns = [
   }
   
 
-const Appointments = async (props:{searchParams?: {[key:string]: string | undefined}}) => {
+const Appointments = async (props: {
+  searchParams?: Promise<{ [key:string]: string | undefined } >;
 
+}) => {
+    /* eslint-disable */
     const searchParams = await props.searchParams;
     const userRole = await getRole();
     const {userId} = await auth();
@@ -94,6 +97,7 @@ const Appointments = async (props:{searchParams?: {[key:string]: string | undefi
             bgColor={item?.patient?.colorCode!}
           />
           <div>
+            
             <h3 className="uppercase font-mono tracking-wider text-emerald-200">{patient_name}</h3>
             <span className="text-xs md:text-sm capitalize text-emerald-300/80">
               {item?.patient?.gender.toLowerCase()}

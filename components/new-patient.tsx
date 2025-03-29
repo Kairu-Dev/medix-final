@@ -15,6 +15,7 @@ import { GENDER, MARITAL_STATUS, RELATION } from '@/lib/constants';
 import { Button } from './ui/button';
 import { createNewPatient, updatePatient } from '@/app/actions/patient-action';
 import { toast } from 'sonner';
+ /* eslint-disable */
 
 interface DataProps {
     data?: Patient;

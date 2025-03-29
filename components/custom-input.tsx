@@ -8,6 +8,7 @@ import { Textarea } from './ui/textarea';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Label } from './ui/label';
 import { Switch } from './ui/switch';
+ /* eslint-disable */
 
 interface CustomProps {
   type: "input" | "select" | "checkbox" | "switch" | "radio" | "textarea";

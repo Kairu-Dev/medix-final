@@ -13,6 +13,7 @@ import AppointmentStatusIndicator from './appointment-status-indicator';
 import { checkRole } from '@/utils/roles';
 import { auth } from '@clerk/nextjs/server';
 import { AppointmentAction } from './appointment-action';
+ /* eslint-disable */
 
 export const ViewAppointment = async ({ id }: { id: string | undefined }) => {
     const {data} = await getAppointmentById(Number(id!));

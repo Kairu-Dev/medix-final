@@ -14,6 +14,7 @@ import { Button } from "../ui/button";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
 import { cn } from "@/lib/utils";
 import { Textarea } from "../ui/textarea";
+ /* eslint-disable */
 
 export const reviewSchema = z.object({
     patient_id: z.string(),

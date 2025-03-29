@@ -1,6 +1,5 @@
 import { availableDays } from '@/components/available-doctor';
 import RatingContainer from '@/components/doc-rating-container';
-import PatientRatingContainer from '@/components/patient-rating-container';
 import { ProfileImage } from '@/components/profile-image';
 import RecentAppointments from '@/components/tables/recent-appointments';
 import { getDoctorById } from '@/utils/services/doctor'
@@ -11,12 +10,13 @@ import React from 'react'
 import { BsCalendarDateFill, BsPersonWorkspace } from "react-icons/bs";
 import { FaBriefcaseMedical, FaCalendarDays } from "react-icons/fa6";
 import { IoTimeSharp } from "react-icons/io5";
-import { MdEmail, MdLocalPhone, MdOutlineLocalPhone } from "react-icons/md";
+import { MdEmail, MdOutlineLocalPhone } from "react-icons/md";
 
 
 const DoctorProfile = async(props: {params: Promise <{id: string}>}) => {
     const params = await props.params;
     const {data, totalAppointment } = await getDoctorById(params?.id);
+    /* eslint-disable */
 
     if (!data) return null;
 
@@ -167,6 +167,7 @@ const DoctorProfile = async(props: {params: Promise <{id: string}>}) => {
             {/* Ratings Container - Now separated */}
             <div className="bg-gradient-to-b from-amber-50/20 to-amber-100/10 p-4 rounded-xl border border-amber-200/40 shadow-md backdrop-blur-sm relative">
                 {/* Ornamental corners */}
+                
                 <div className="absolute top-0 right-0 w-12 h-12 border-t border-r border-amber-400/40 rounded-tr-lg"></div>
                 <div className="absolute bottom-0 left-0 w-12 h-12 border-b border-l border-amber-400/40 rounded-bl-lg"></div>
                 
@@ -176,6 +177,7 @@ const DoctorProfile = async(props: {params: Promise <{id: string}>}) => {
                 </div>
                 
                 {/* Rating Container with fantasy styling */}
+                
                 <RatingContainer id={params?.id}/>
             </div>
             

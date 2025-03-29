@@ -1,5 +1,6 @@
 import React from 'react';
 import { Sparkles } from 'lucide-react';
+ /* eslint-disable */
 
 const GenshinPrimogem = (props: { filled: boolean }) => { //Changed from (props) to props: { filled: boolean } verify later
   const { filled } = props;

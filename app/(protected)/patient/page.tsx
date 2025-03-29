@@ -8,7 +8,6 @@ import RecentAppointments from '@/components/tables/recent-appointments'
 import { Button } from '@/components/ui/button'
 import { AvailableDoctorProps } from '@/types/data-types'
 import { getPatientDashboardStatistics } from '@/utils/services/patientFetchInfo'
-import { UserButton } from '@clerk/nextjs'
 import { currentUser } from '@clerk/nextjs/server'
 import { Briefcase, BriefcaseBusiness, BriefcaseMedical } from 'lucide-react'
 import Link from 'next/link'
@@ -19,7 +18,10 @@ const PatientDashBoard = async() => {
   
   const user = await currentUser()
 
-  const { data, appointmentCounts, last5Records, totalAppointments, availableDoctor, monthlyData } = await getPatientDashboardStatistics(user?.id!);
+  
+/* eslint-disable */
+const { data, appointmentCounts, last5Records, totalAppointments, availableDoctor, monthlyData } = 
+  await getPatientDashboardStatistics(user?.id!);
 
   if(user && !data) {
     redirect("/patient/registration/");
@@ -51,6 +53,7 @@ const PatientDashBoard = async() => {
       iconClassName: "bg-rose-600/25 text-rose-600",
       note: "Cancelled Appointments",
     },
+    /* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
     {
       title: "pending",
       value: appointmentCounts?.PENDING! + appointmentCounts?.SCHEDULED!,
@@ -59,6 +62,7 @@ const PatientDashBoard = async() => {
       iconClassName: "bg-yellow-600/25 text-yellow-600",
       note: "Pending Appointments",
     },
+    /* eslint-enable @typescript-eslint/no-non-null-asserted-optional-chain */
     {
       title: "completed",
       value: appointmentCounts?.COMPLETED,

@@ -2,9 +2,9 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import React, { useActionState, useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { infer, z } from "zod";
+import { z } from "zod";
 import {
   Sheet,
   SheetContent,
@@ -15,13 +15,11 @@ import {
 import { Button } from "../ui/button";
 import { Plus } from "lucide-react";
 import { Form } from "../ui/form";
-import { CustomInput, SwitchInput } from "../custom-input";
+import { CustomInput } from "../custom-input";
 
-import { Label } from "../ui/label";
 import { toast } from "sonner";
-import { DoctorSchema, StaffSchema } from "@/lib/validation";
-import { createNewDoctor, createNewStaff } from "@/app/actions/admin-action";
-import { SPECIALIZATION } from "@/utils/setting";
+import { StaffSchema } from "@/lib/validation";
+import { createNewStaff } from "@/app/actions/admin-action";
 
 
 const TYPES = [

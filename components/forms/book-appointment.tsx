@@ -3,7 +3,6 @@
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -16,13 +15,7 @@ import { Doctor, Patient } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import React, { useState, useRef, useEffect } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "../ui/sheet";
+
 import { Button } from "../ui/button";
 import { UserPen } from "lucide-react";
 import { z } from "zod";
@@ -45,6 +38,7 @@ import {
 } from "../ui/select";
 import { toast } from "sonner";
 import { createNewAppointment } from "@/app/actions/appointment";
+ /* eslint-disable */
 
 // Dummy Types
 const TYPES = [

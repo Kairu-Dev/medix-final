@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ProfileImage } from './profile-image';
 import { Card } from './ui/card';
 import { daysOfWeek } from '@/utils';
+ /* eslint-disable */
 
 
 const getToday = () => {

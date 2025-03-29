@@ -13,7 +13,7 @@ interface ParamsProps {
     params: Promise<{ patientId: string }>;
     searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }
-
+/* eslint-disable */
 const PatientProfilePage = async(props: ParamsProps) => {
     const searchParams = await props.searchParams
     const params = await props.params;

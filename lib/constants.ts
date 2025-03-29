@@ -1,4 +1,3 @@
-import { CANCELLED } from "node:dns";
 
 export const GENDER = [
     { label: "Male", value: "MALE" },

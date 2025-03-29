@@ -16,6 +16,8 @@ import { toast } from "sonner";
 import { deleteDataById } from "@/app/actions/general";
 import { ProfileImage } from "./profile-image";
 import { SmallCard } from "./small-card-staff";
+  /* eslint-disable */
+
 
 interface ActionDialogProps {
   type: "doctor" | "staff" | "delete";

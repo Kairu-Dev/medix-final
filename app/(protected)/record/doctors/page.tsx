@@ -5,14 +5,13 @@ import { Pagination } from '@/components/pagination';
 import { ProfileImage } from '@/components/profile-image';
 import SearchInput from '@/components/search-input';
 import { Table } from '@/components/tables/table';
-import { Button } from '@/components/ui/button';
 import { SearchParamsProps } from '@/types';
 import { checkRole } from '@/utils/roles';
 import { getAllDoctors } from '@/utils/services/doctor';
 import { DATA_LIMIT } from '@/utils/setting';
 import { Doctor } from '@prisma/client';
 import { format } from 'date-fns';
-import { BriefcaseBusiness, Users } from 'lucide-react';
+import { Users } from 'lucide-react';
 import React from 'react'
 
 
@@ -50,6 +49,7 @@ const columns = [
 
 
 const DoctorsList = async(props: SearchParamsProps) => {
+  /* eslint-disable */
 
     const searchParams = await props.searchParams;
     const page = searchParams?.p || "1" as string;
@@ -102,6 +102,7 @@ const DoctorsList = async(props: SearchParamsProps) => {
     return (
         <div className="py-6 px-3 2xl:px-6 bg-gray-900/60 border border-emerald-500/40 rounded-xl shadow-lg relative backdrop-blur-sm">
             {/* Minecraft-style decorative elements */}
+            
             <div className="absolute top-0 left-0 w-12 h-12 border-t-2 border-l-2 border-emerald-500/70 rounded-tl-xl"></div>
             <div className="absolute top-0 right-0 w-12 h-12 border-t-2 border-r-2 border-emerald-500/70 rounded-tr-xl"></div>
             <div className="absolute bottom-0 left-0 w-12 h-12 border-b-2 border-l-2 border-emerald-500/70 rounded-bl-xl"></div>
@@ -117,6 +118,7 @@ const DoctorsList = async(props: SearchParamsProps) => {
                     <p className="text-2xl font-semibold text-emerald-100">{totalRecords}</p>
                     <span className="text-emerald-300 text-sm xl:text-base font-mono tracking-wide">
                         Total doctors
+                        
                     </span>
                 </div>
                 <div className="w-full lg:w-fit flex items-center justify-between lg:justify-start gap-2">

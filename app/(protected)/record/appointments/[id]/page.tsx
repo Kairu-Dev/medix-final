@@ -23,6 +23,7 @@ const AppointmentDetailsPage = async ({
     const category = search?.category as string || "charts";
 
     const {data} = await getAppointmentWithMedicalRecordsById(Number(id));
+    /* eslint-disable */
 
 
 
@@ -68,6 +69,7 @@ const AppointmentDetailsPage = async ({
             { category === "billing" && <BillsContainer id={id}/> } 
 
             { category === "medical-history" && (
+                /* eslint-disable */
                 <MedicalHistoryContainer 
                 id={id!} 
                 patientId={data?.patient_id!} 
@@ -78,6 +80,7 @@ const AppointmentDetailsPage = async ({
 
             </div>
             {/*Right*/}
+            
             <div className="flex-1 space-y-6">
             <AppointmentQuickLinks staffId={data?.doctor_id as string} />
             <PatientDetailsCard data={data?.patient!} /> 

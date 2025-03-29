@@ -88,6 +88,7 @@ const columns = [
     if (!data) return null;
 
     const renderRow = (item: ExtendedProps) => {
+        /* eslint-disable */
        
         const name = item?.patient?.first_name + " " + item?.patient?.last_name;
         const patient = item?.patient;

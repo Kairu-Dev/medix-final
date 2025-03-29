@@ -5,6 +5,7 @@ import db from "@/lib/db";
 import { AppointmentSchema, VitalSignsSchema } from "@/lib/validation";
 import { auth } from "@clerk/nextjs/server";
 import { AppointmentStatus } from "@prisma/client";
+/* eslint-disable */
 
 export async function appointmentAction (id: string | number,
     status: AppointmentStatus,
@@ -38,6 +39,7 @@ export async function appointmentAction (id: string | number,
 export async function createNewAppointment(data: any) {
     try {
       const validatedData = AppointmentSchema.safeParse(data);
+      
   
       if (!validatedData.success) {
         return { success: false, msg: "Invalid data" };

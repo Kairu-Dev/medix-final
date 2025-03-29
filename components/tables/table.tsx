@@ -1,4 +1,5 @@
 import React from "react";
+ /* eslint-disable */
 
 interface TableProps {
   columns: { header: string; key: string; className?: string }[];

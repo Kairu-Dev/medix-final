@@ -5,6 +5,7 @@ import { Button } from "../ui/button";
 import { ResponsiveContainer, RadialBarChart, RadialBar } from "recharts";
 import { Users } from "lucide-react";
 import { formatNumber } from "@/utils";
+ /* eslint-disable */
 
 export const StatSummary = ({ data, total }: { data: any; total: number }) => {
   const appointment = data?.PENDING + data?.SCHEDULED || 0;

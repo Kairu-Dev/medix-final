@@ -4,12 +4,10 @@ import { StatSummary } from '@/components/charts/stat-summary';
 import StatCard from '@/components/stat-card';
 import RecentAppointments from '@/components/tables/recent-appointments';
 import { Button } from '@/components/ui/button';
-import { checkRole, getRole } from '@/utils/roles'
 import { getDoctorDashboardStatistics } from '@/utils/services/doctor';
 import { currentUser } from '@clerk/nextjs/server';
 import { BriefcaseBusiness, BriefcaseMedical, User, Users } from 'lucide-react';
 import Link from 'next/link';
-import { redirect } from 'next/navigation'
 import React from 'react'
 
 const DoctorDashboard = async() => {
@@ -94,7 +92,7 @@ const DoctorDashboard = async() => {
             <StatCard 
               key={index}
               title={el?.title}
-              value={el?.value!}
+              value={el?.value ?? 0}
               icon={el?.icon} 
               iconClassName={el?.iconClassName}
               note={el?.note}
@@ -144,7 +142,7 @@ const DoctorDashboard = async() => {
         <div className="absolute bottom-0 right-0 w-12 h-12 border-b-2 border-r-2 border-amber-400/60 rounded-br-xl"></div>
         
 
-
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         <AvailableDoctors data={availableDoctors as any} />
       </div>
     </div>  

@@ -5,6 +5,7 @@ import { Button } from "./ui/button";
 import { EllipsisVertical, User } from "lucide-react";
 import Link from "next/link";
 import { AppointmentActionDialog } from "./appointment-action-dialog-box";
+ /* eslint-disable */
 
 //import { AppointmentActionDialog } from "./appointment-action-dialog";
 

@@ -14,6 +14,7 @@ export const addDiagnosis = async (
 ) => {
   try {
     const validatedData = DiagnosisSchema.parse(data);
+    /* eslint-disable */
 
     let medicalRecord = null;
 

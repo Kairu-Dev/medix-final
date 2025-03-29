@@ -1,7 +1,6 @@
 import db from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { calculateBMI } from "@/utils";
-import { stat } from "fs";
 import { format } from "date-fns";
 
 import { checkRole } from "@/utils/roles";

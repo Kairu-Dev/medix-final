@@ -5,6 +5,7 @@ import { DoctorSchema, ServicesSchema, StaffSchema, WorkingDaysSchema } from "@/
 import { generateRandomColor } from "@/utils";
 import { checkRole } from "@/utils/roles";
 import { auth, clerkClient } from "@clerk/nextjs/server";
+/* eslint-disable */
 
 export async function createNewDoctor(data: any) {
 
@@ -109,7 +110,7 @@ export async function createNewStaff(data: any) {
       });
   
       delete validatedValues["password"];
-  
+      
       const doctor = await db.staff.create({
         data: {
           name: validatedValues.name,

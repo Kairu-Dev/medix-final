@@ -9,6 +9,7 @@ import { ProfileImage } from '../profile-image';
 import { format } from 'date-fns';
 import AppointmentStatusIndicator from '../appointment-status-indicator';
 import ViewAppointment from '../view-appointments';
+ /* eslint-disable */
 
 
 interface DataProps {

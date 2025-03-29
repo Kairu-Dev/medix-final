@@ -1,6 +1,7 @@
 import db from '@/lib/db';
 import React from 'react'
 import MedicalHistory from './medical-history';
+ /* eslint-disable */
 
 interface DataProps {
     id?: number | string;

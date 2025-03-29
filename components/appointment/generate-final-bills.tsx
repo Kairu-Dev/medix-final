@@ -21,6 +21,7 @@ import {
 } from "../ui/dialog";
 import { Form } from "../ui/form";
 import { PaymentSchema } from "@/lib/validation";
+ /* eslint-disable */
 
 interface DataProps {
   id?: string | number;

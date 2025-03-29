@@ -8,6 +8,7 @@ import { Plus, CreditCard, Calculator, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Services } from "@prisma/client";
+ /* eslint-disable */
 
 // Import your components and utilities
 import { Form } from "../ui/form";

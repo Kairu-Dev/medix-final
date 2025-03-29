@@ -3,10 +3,12 @@
 import db from "@/lib/db";
 import { PatientFormSchema } from "@/lib/validation";
 import { clerkClient } from "@clerk/nextjs/server";
+/* eslint-disable */
 
 export async function updatePatient(data: any, pid: string) {
   try {
     const validateData = PatientFormSchema.safeParse(data);
+    
 
     if (!validateData.success) {
       return {

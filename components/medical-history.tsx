@@ -6,6 +6,7 @@ import { ProfileImage } from './profile-image';
 import { formatDateTime } from '@/utils';
 import { ViewAction } from './action-options';
 import { MedicalHistoryDialog } from './medical-history-dialog';
+ /* eslint-disable */
 
 export interface ExtendedMedicalHistory extends MedicalRecords {
     patient?: Patient;

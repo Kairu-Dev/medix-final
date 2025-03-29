@@ -1,5 +1,5 @@
 import { getRole } from '@/utils/roles';
-import { Bell, LayoutDashboard, List, ListOrdered, Logs, LucideIcon, LucideUnlockKeyhole, Pill, Receipt, Settings, SquareActivity, User, UserRound, Users, UsersRound } from 'lucide-react';
+import { LayoutDashboard, List, ListOrdered, LucideIcon, Receipt, Settings, SquareActivity, User, UserRound, Users, UsersRound } from 'lucide-react';
 import Link from 'next/link';
 import React from 'react'
 import LogoutButton from './logout-button';

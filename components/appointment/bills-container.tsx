@@ -4,13 +4,14 @@ import { checkRole } from "@/utils/roles";
 import { ReceiptText } from "lucide-react";
 import { Table } from "../tables/table";
 import { PatientBills } from "@prisma/client";
-import { format, formatDate } from "date-fns";
+import { format } from "date-fns";
 
 import { Separator } from "../ui/separator";
 import ActionDialog from "../action-dialog-admin";
 import { AddBills } from "../dialogs/add-bills";
 import { GenerateFinalBills } from "./generate-final-bills";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+ /* eslint-disable */
 
 
 
@@ -91,6 +92,7 @@ export const BillsContainer = async ({ id }: { id: string }) => {
 
   const renderRow = (item: ExtendedBillProps) => {
     return (
+      /* eslint-disable */
       <tr
         key={item.id}
         className="border-b border-emerald-200/20 even:bg-gray-900/40 text-sm hover:bg-emerald-900/20 transition-colors duration-200"

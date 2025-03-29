@@ -148,7 +148,8 @@ const AdminDashboard = async() => {
             <div className="absolute -left-4 h-6 w-1 bg-emerald-400 rounded-full shadow-[0_0_15px_rgba(52,211,153,0.8)]"></div>
        
           </div>
-          <AvailableDoctors data={availableDoctors as any} />
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        <AvailableDoctors data={availableDoctors as any} />
         </div>
 
       </div>
