@@ -16,6 +16,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Textarea } from "../ui/textarea";
 import { createReview } from "@/app/actions/general";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
  /* eslint-disable */
 
 // Custom Primogem component to match the RatingList aesthetic
@@ -123,17 +124,25 @@ export const ReviewForm = ({ staffId }: {staffId: string }) => {
                         <FormItem>
                             <FormLabel className="text-white">Rating</FormLabel>
                             <FormControl>
-                                <div className="flex items-center space-x-3">
-                                    {[1, 2, 3, 4, 5].map((rating) => (
-                                        <button
-                                        key={rating}
-                                        type="button"
-                                        onClick={() => field.onChange(rating)}
-                                        className="focus:outline-none hover:scale-110 transition-transform duration-200"
-                                        >
-                                            <GenshinPrimogem filled={rating <= field.value} />
-                                        </button>
-                                    ))}
+                                 <div className="flex items-center space-x-3">
+                                     {[1, 2, 3, 4, 5].map((sparkle) => (
+                                         <button
+                                         key={sparkle}
+ 
+ 
+                                         onClick={() => field.onChange(sparkle)}
+ 
+                                         >
+ 
+                                         <Sparkles
+                                         size={30}
+                                         className={cn(
+                                             sparkle <= field.value ? "text-gray-500 fill-teal-500" : "text-gray-400"
+                                         )} 
+                                         />
+ 
+                                         </button>
+                                     ))}
                                 </div>
                             </FormControl>
                             <FormDescription className="text-gray-400">Please rate the staff based on your experience.</FormDescription>

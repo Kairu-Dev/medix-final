@@ -1,7 +1,7 @@
 import { Diagnosis, Doctor } from "@prisma/client";
 import { Card } from "../ui/card";
 import { Separator } from "../ui/separator";
-import { User, Calendar, FileText, Activity, Stethoscope } from "lucide-react";
+import { User, Calendar, FileText, Activity } from "lucide-react";
 
 interface ExtendedMedicalRecord extends Diagnosis {
   doctor: Doctor;
