@@ -6,9 +6,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-
-
-
 import { z } from "zod";
 
 import { Button } from "../ui/button";
@@ -45,9 +42,7 @@ export const AddService = () => {
 
       if (resp.success) {
         toast.success("Service added successfully!");
-
         router.refresh();
-
         form.reset();
       } else if (resp.error) {
         toast.error(resp.msg);
@@ -64,15 +59,28 @@ export const AddService = () => {
     <>
       <Dialog>
         <DialogTrigger asChild>
-          <Button size="sm" className="text-sm font-normal">
-            <Plus size={22} className="text-gray-500" /> Add New Service
+          <Button 
+            size="sm" 
+            className="text-emerald-200 bg-gray-900/60 border border-emerald-500/40 rounded-lg hover:bg-emerald-900/20 transition-colors duration-200 font-mono tracking-wide text-sm"
+          >
+            <Plus size={22} className="text-emerald-500 mr-2" /> Add New Service
           </Button>
         </DialogTrigger>
-        <DialogContent>
-          <CardHeader className="px-0">
-            <DialogTitle>Add New Service</DialogTitle>
-            <CardDescription>
-              Ensure accurate readings are perform as this may affect the
+        <DialogContent className="bg-gray-900/90 border border-emerald-500/40 rounded-xl shadow-lg backdrop-blur-sm overflow-hidden">
+          {/* Ambient glow effects */}
+          <div className="absolute -top-5 right-10 w-36 h-36 bg-emerald-300/15 rounded-full blur-3xl"></div>
+          <div className="absolute -bottom-5 left-10 w-32 h-32 bg-emerald-200/10 rounded-full blur-2xl"></div>
+          
+          {/* Minecraft-style decorative elements */}
+          <div className="absolute top-0 left-0 w-10 h-10 border-t-2 border-l-2 border-emerald-500/70 rounded-tl-xl"></div>
+          <div className="absolute top-0 right-0 w-10 h-10 border-t-2 border-r-2 border-emerald-500/70 rounded-tr-xl"></div>
+          <div className="absolute bottom-0 left-0 w-10 h-10 border-b-2 border-l-2 border-emerald-500/70 rounded-bl-xl"></div>
+          <div className="absolute bottom-0 right-0 w-10 h-10 border-b-2 border-r-2 border-emerald-500/70 rounded-br-xl"></div>
+          
+          <CardHeader className="px-0 relative z-10">
+            <DialogTitle className="font-mono uppercase tracking-wider text-xl text-emerald-200">Add New Service</DialogTitle>
+            <CardDescription className="text-emerald-300/80 font-mono text-sm">
+              Ensure accurate readings are performed as this may affect the
               diagnosis and other medical processes.
             </CardDescription>
           </CardHeader>
@@ -80,39 +88,46 @@ export const AddService = () => {
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(handleOnSubmit)}
-              className="space-y-8"
+              className="space-y-6 relative z-10"
             >
-              <CustomInput
-                type="input"
-                control={form.control}
-                name="service_name"
-                label="Service Name"
-                placeholder=""
-              />
+              <div className="bg-gradient-to-b from-emerald-50/10 to-emerald-900/20 rounded-lg border border-emerald-500/30 p-4 shadow-md backdrop-blur-sm">
+                <CustomInput
+                  type="input"
+                  control={form.control}
+                  name="service_name"
+                  label="Service Name"
+                  placeholder=""
+                />
+              </div>
 
-              <CustomInput
-                type="input"
-                control={form.control}
-                name="price"
-                placeholder=""
-                label="Service Price"
-              />
-              <div className="flex items-center gap-4">
+              <div className="bg-gradient-to-b from-emerald-50/10 to-emerald-900/20 rounded-lg border border-emerald-500/30 p-4 shadow-md backdrop-blur-sm">
+                <CustomInput
+                  type="input"
+                  control={form.control}
+                  name="price"
+                  placeholder=""
+                  label="Service Price"
+                />
+              </div>
+
+              <div className="bg-gradient-to-b from-emerald-50/10 to-emerald-900/20 rounded-lg border border-emerald-500/30 p-4 shadow-md backdrop-blur-sm">
                 <CustomInput
                   type="textarea"
                   control={form.control}
                   name="description"
                   placeholder=""
                   label="Service Description"
+          
                 />
               </div>
 
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="bg-blue-600 w-full"
+                className="bg-gray-900/60 border border-emerald-500/40 hover:bg-emerald-900/30 text-emerald-200 w-full font-mono tracking-wide transition-all duration-300 relative overflow-hidden group"
               >
-                Submit
+                <span className="relative z-10">Submit</span>
+                <span className="absolute inset-0 w-full h-full bg-emerald-500/20 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></span>
               </Button>
             </form>
           </Form>

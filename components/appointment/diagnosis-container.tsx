@@ -70,7 +70,7 @@ export const DiagnosisContainer = async({
                             <CardHeader className="flex flex-row items-center justify-between relative z-10 border-b border-emerald-500/30 bg-gradient-to-r from-emerald-900/40 to-emerald-950/60">
                                 <CardTitle className="text-emerald-100 font-mono uppercase tracking-wider flex items-center">
                                     <div className="h-4 w-1 bg-emerald-400 rounded-full shadow-[0_0_10px_rgba(52,211,153,0.8)] mr-3"></div>
-                                    Medical Records
+                                    Diagnosis
                                 </CardTitle>
                                 {
                                     !isPatient && (

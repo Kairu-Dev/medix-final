@@ -3,6 +3,7 @@ import RatingContainer from '@/components/doc-rating-container';
 import { ProfileImage } from '@/components/profile-image';
 import RecentAppointments from '@/components/tables/recent-appointments';
 import { getDoctorById } from '@/utils/services/doctor'
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import React from 'react'
@@ -156,11 +157,14 @@ const DoctorProfile = async(props: {params: Promise <{id: string}>}) => {
                     Doctor Appointments
                     </Link>
 
+                    <VisuallyHidden>
+
                     <Link href="#"
                     className="p-3 rounded-md bg-amber-600/70 hover:bg-amber-600/90 text-white font-medium border border-amber-300/50 transition-colors duration-200 shadow-md hover:shadow-[0_0_8px_rgba(251,191,36,0.5)]"
                     >
                     Apply for Leave
                     </Link>
+                    </VisuallyHidden>
                 </div>
             </div>
 

@@ -29,6 +29,7 @@ const PatientProfilePage = async(props: ParamsProps) => {
 
 
     const {data} = await getPatientFullDataById(id);
+       
 
     const SmallCard = ({ label, value }: { label: string; value: string }) => (
         <div className="w-full md:w-1/3">
@@ -91,7 +92,7 @@ const PatientProfilePage = async(props: ParamsProps) => {
 
         <div className="mt-10">
             {
-                category === "medical-history" && <MedicalHistoryContainer patientId={id} />
+                category === "medical-history" && <MedicalHistoryContainer patientId={id!} />
             }
 
             {/*
@@ -119,12 +120,14 @@ const PatientProfilePage = async(props: ParamsProps) => {
                             >
                             Patient&apos;s Appointments
                             </Link>
+                            <VisuallyHidden>
                             <Link
                             className="p-3 rounded-md bg-indigo-900/40 hover:bg-indigo-900/60 text-indigo-300 border border-indigo-700/50 transition-colors duration-200 shadow-inner hover:shadow-[0_0_8px_rgba(99,102,241,0.3)]"
-                            href="?cat=medical-history"
+                            href="?category=medical-history"
                             >
                             Medical Records
                             </Link>
+                            </VisuallyHidden>
                             <VisuallyHidden>
                             <Link
                             className="p-3 rounded-md bg-purple-900/40 hover:bg-purple-900/60 text-purple-300 border border-purple-700/50 transition-colors duration-200 shadow-inner hover:shadow-[0_0_8px_rgba(147,51,234,0.3)]"

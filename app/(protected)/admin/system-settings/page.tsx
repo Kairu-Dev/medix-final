@@ -10,7 +10,7 @@ const SystemSettingPage = async (props: SearchParamsProps) => {
   const cat = (searchParams?.cat || "services") as string;
 
   return (
-    <div className="p-6 flex flex-col lg:flex-row w-full min-h-screen gap-10">
+    <div className="p-6  lg:flex-row w-full min-h-screen gap-10">
       <div className="w-full lg:w-[70%] flex flex-col gap-4">
         <Card className="shadow-none rounded-xl">
           {cat === "services" && <ServiceSettings />}

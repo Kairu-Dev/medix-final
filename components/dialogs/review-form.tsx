@@ -12,9 +12,33 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Plus, Sparkles } from "lucide-react";
 import { Button } from "../ui/button";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
-import { cn } from "@/lib/utils";
+
 import { Textarea } from "../ui/textarea";
+import { createReview } from "@/app/actions/general";
+import { toast } from "sonner";
  /* eslint-disable */
+
+// Custom Primogem component to match the RatingList aesthetic
+const GenshinPrimogem = (props: { filled: boolean }) => {
+  const { filled } = props;
+  return (
+    <svg 
+      width="30" 
+      height="30" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      xmlns="http://www.w3.org/2000/svg"
+      className="inline-block"
+    >
+      <path 
+        d="M12 2L15.5 8.5L22 9.5L17 14.5L18.5 21L12 18L5.5 21L7 14.5L2 9.5L8.5 8.5L12 2Z" 
+        fill={filled ? "#00c2b8" : "transparent"} 
+        stroke={filled ? "#00c2b8" : "#6b7280"} 
+        strokeWidth="1.5"
+      />
+    </svg>
+  );
+};
 
 export const reviewSchema = z.object({
     patient_id: z.string(),
@@ -45,7 +69,24 @@ export const ReviewForm = ({ staffId }: {staffId: string }) => {
         },
     });
 
-    const handleSubmit = async (values: ReviewFormValues) => {}
+    const handleSubmit = async (values: ReviewFormValues) => {
+        try {
+          setLoading(true);
+          const response = await createReview(values);
+    
+          if (response.success) {
+            toast.success(response.message);
+            router.refresh();
+          } else {
+            toast.error(response.message);
+          }
+        } catch (error) {
+          console.log(error);
+          toast.error("Failed to create review");
+        } finally {
+          setLoading(false);
+        }
+      };
 
     return (
         <>
@@ -55,17 +96,17 @@ export const ReviewForm = ({ staffId }: {staffId: string }) => {
 
                 <Button 
                 size={"sm"} 
-                className="px-4 py-2 rounded-lg bg-dark-500/10 text-black hover:bg-emerald-400 font-light"
+                className="px-4 py-2 rounded-lg bg-black-800 text-white hover:bg-emerald-400 hover:text-black transition-all duration-200 font-light border border-gray-800"
                 >
-                    <Plus />Add New Review
+                    <Plus className="mr-1" />Add New Review
                 </Button>
             </DialogTrigger>
-            <DialogContent className="">
+            <DialogContent className="bg-black-800 border border-gray-800 text-white">
                 <DialogHeader>
-                    <DialogTitle>
+                    <DialogTitle className="text-white">
                         Add New Review
                     </DialogTitle>
-                    <DialogDescription>
+                    <DialogDescription className="text-gray-400">
                         Please fill in the form below to add a new review.
                     </DialogDescription>
                 </DialogHeader>
@@ -80,31 +121,23 @@ export const ReviewForm = ({ staffId }: {staffId: string }) => {
                     name="rating"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Rating</FormLabel>
+                            <FormLabel className="text-white">Rating</FormLabel>
                             <FormControl>
                                 <div className="flex items-center space-x-3">
-                                    {[1, 2, 3, 4, 5].map((sparkle) => (
+                                    {[1, 2, 3, 4, 5].map((rating) => (
                                         <button
-                                        key={sparkle}
-                                   
-                                        
-                                        onClick={() => field.onChange(sparkle)}
-                                        
+                                        key={rating}
+                                        type="button"
+                                        onClick={() => field.onChange(rating)}
+                                        className="focus:outline-none hover:scale-110 transition-transform duration-200"
                                         >
-
-                                        <Sparkles
-                                        size={30}
-                                        className={cn(
-                                            sparkle <= field.value ? "text-gray-500 fill-teal-500" : "text-gray-400"
-                                        )} 
-                                        />
-                                            
+                                            <GenshinPrimogem filled={rating <= field.value} />
                                         </button>
                                     ))}
                                 </div>
                             </FormControl>
-                            <FormDescription>Please rate the staff based on your experience.</FormDescription>
-                            <FormMessage />
+                            <FormDescription className="text-gray-400">Please rate the staff based on your experience.</FormDescription>
+                            <FormMessage className="text-teal-400" />
 
                             
                         </FormItem>
@@ -116,22 +149,27 @@ export const ReviewForm = ({ staffId }: {staffId: string }) => {
                     name="comment"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Comment</FormLabel>
+                            <FormLabel className="text-white">Comment</FormLabel>
                             <FormControl>
                                 <Textarea
                                 placeholder="Write your review here..."
-                              
+                                className="bg-black-800 border border-gray-800 text-white placeholder:text-gray-500 focus:border-teal-400 hover:border-gray-700 transition-colors duration-200"
                                 {...field}
                                 />
                             </FormControl>
-                            <FormDescription>
+                            <FormDescription className="text-gray-400">
                                 Please write a detailed review of your experience.
                             </FormDescription>
+                            <FormMessage className="text-teal-400" />
                         </FormItem>
                     )}
                     />
 
-                    <Button type="submit" disabled={loading} className="w-full">
+                    <Button 
+                      type="submit" 
+                      disabled={loading} 
+                      className="w-full bg-teal-400 hover:bg-teal-500 text-black transition-all duration-200"
+                    >
                         {loading ? "Submitting...." : "Submit" }
                     </Button>
                         

@@ -187,6 +187,7 @@ export const AddVitalSigns = ({
                 className="w-full bg-gradient-to-b from-emerald-500/70 to-emerald-900/70 border border-emerald-500/40 text-white font-mono uppercase tracking-wider hover:from-emerald-400/70 hover:to-emerald-800/70 transition-all duration-300 disabled:opacity-50"
               >
                 {isLoading ? "Submitting..." : "Submit"}
+                
               </Button>
             </form>
           </Form>

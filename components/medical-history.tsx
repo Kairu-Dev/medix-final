@@ -6,6 +6,7 @@ import { ProfileImage } from './profile-image';
 import { formatDateTime } from '@/utils';
 import { ViewAction } from './action-options';
 import { MedicalHistoryDialog } from './medical-history-dialog';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
  /* eslint-disable */
 
 export interface ExtendedMedicalHistory extends MedicalRecords {
@@ -49,11 +50,8 @@ export const MedicalHistory = ({data, isShowProfile }: DataProps) => {
           key: "diagnosis",
           className: "hidden md:table-cell text-amber-400/90",
         },
-        {
-          header: "Lab Test",
-          key: "lab_test",
-          className: "hidden 2xl:table-cell text-amber-400/90",
-        },
+
+        
       ];
 
       const renderRow = (item: ExtendedMedicalHistory) => {
@@ -110,19 +108,6 @@ export const MedicalHistory = ({data, isShowProfile }: DataProps) => {
                   
                 </>
                 
-              )}
-            </td>
-            <td className="hidden 2xl:table-cell">
-              {item?.lab_test?.length === 0 ? (
-                <span className="text-sm italic text-amber-500/60">
-                  No lab test found
-                </span>
-              ) : (
-                <div className="flex gap-x-2 items-center text-lg text-amber-700">
-                  {item?.lab_test?.length}
-    
-                  <span className="text-sm text-amber-600">Found</span>
-                </div>
               )}
             </td>
     
