@@ -33,7 +33,7 @@ export async function createNewDoctor(data: any) {
 
 
         const user = await client.users.createUser({
-            emailAddress: [validatedValues.email],
+      emailAddress: [validatedValues.email],
       password: validatedValues.password,
       firstName: validatedValues.name.split(" ")[0],
       lastName: validatedValues.name.split(" ")[1],
@@ -74,41 +74,46 @@ export async function createNewDoctor(data: any) {
 } 
 
 export async function createNewStaff(data: any) {
+  try {
+    console.log("Create staff started with data:", JSON.stringify(data, null, 2));
+    
+    const { userId } = await auth();
+    if (!userId) {
+      return { success: false, msg: "Unauthorized" };
+    }
+
+    const isAdmin = await checkRole("ADMIN");
+    if (!isAdmin) {
+      return { success: false, msg: "Unauthorized" };
+    }
+
+    const values = StaffSchema.safeParse(data);
+    if (!values.success) {
+      console.log("Validation failed:", values.error);
+      return {
+        success: false,
+        errors: true,
+        message: "Please provide all required info",
+      };
+    }
+
+    const validatedValues = values.data;
+    console.log("Validated values:", JSON.stringify(validatedValues, null, 2));
+
     try {
-      const { userId } = await auth();
-  
-      if (!userId) {
-        return { success: false, msg: "Unauthorized" };
-      }
-  
-      const isAdmin = await checkRole("ADMIN");
-  
-      if (!isAdmin) {
-        return { success: false, msg: "Unauthorized" };
-      }
-  
-      const values = StaffSchema.safeParse(data);
-  
-      if (!values.success) {
-        return {
-          success: false,
-          errors: true,
-          message: "Please provide all required info",
-        };
-      }
-  
-      const validatedValues = values.data;
-  
       const client = await clerkClient();
-  
+      console.log("About to create Clerk user");
+      
       const user = await client.users.createUser({
         emailAddress: [validatedValues.email],
         password: validatedValues.password,
         firstName: validatedValues.name.split(" ")[0],
         lastName: validatedValues.name.split(" ")[1],
-        publicMetadata: { role: "doctor" },
+        publicMetadata: { role: validatedValues.role.toLowerCase() }, // Keep original for now
       });
-  
+      
+      console.log("Clerk user created successfully:", user.id);
+      
       delete validatedValues["password"];
       
       const doctor = await db.staff.create({
@@ -125,17 +130,26 @@ export async function createNewStaff(data: any) {
           status: "ACTIVE",
         },
       });
-  
+      
+      console.log("Staff created in database");
+      
       return {
         success: true,
-        message: "Doctor added successfully",
+        message: "Staff added successfully",
         error: false,
       };
-    } catch (error) {
-      console.log(error);
-      return { error: true, success: false, message: "Something went wrong" };
+    } catch (clerkError) {
+      console.error("Clerk error:", clerkError);
+      if (clerkError.errors) {
+        console.error("Clerk error details:", JSON.stringify(clerkError.errors, null, 2));
+      }
+      return { error: true, success: false, message: "Failed to create user in authentication system" };
     }
+  } catch (error) {
+    console.error("Unexpected error:", error);
+    return { error: true, success: false, message: "Something went wrong" };
   }
+}
 
   export async function addNewService(data: any) {
     try {

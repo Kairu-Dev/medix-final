@@ -10,24 +10,32 @@ import { z } from "zod";
 
 export async function deleteDataById(
   id: string,
-
   deleteType: "doctor" | "staff" | "patient" | "payment" | "bill" | "auditLog"
 ) {
   try {
     switch (deleteType) {
       case "doctor":
         await db.doctor.delete({ where: { id: id } });
+        break;
       case "staff":
-        await db.staff.delete({ where: {id: id } });
+        await db.staff.delete({ where: { id: id } });
+        break;
       case "patient":
-        await db.patient.delete({ where: {id: id } });
+        await db.patient.delete({ where: { id: id } });
+        break;
       case "payment":
-        await db.payment.delete({ where: {id: Number(id) } });
-        case "auditLog":
-        await db.services.delete({ where: {id: Number(id) } });
+        await db.payment.delete({ where: { id: Number(id) } });
+        break;
+      case "bill":
+        // Add implementation for bill deletion
+        // await db.bill.delete({ where: { id: Number(id) } });
+        break;
+      case "auditLog":
+        await db.services.delete({ where: { id: Number(id) } });
+        break;
+      default:
+        throw new Error(`Unsupported deleteType: ${deleteType}`);
     }
-
-    
 
     if (
       deleteType === "staff" ||
@@ -38,8 +46,6 @@ export async function deleteDataById(
       await client.users.deleteUser(id);
     }
 
-    
-
     return {
       success: true,
       message: "Data deleted successfully",
@@ -47,6 +53,15 @@ export async function deleteDataById(
     };
   } catch (error) {
     console.log(error);
+    
+    // Provide more specific error messages
+    if (error.code === 'P2025') {
+      return {
+        success: false,
+        message: `The ${deleteType} record with ID ${id} does not exist`,
+        status: 404,
+      };
+    }
 
     return {
       success: false,

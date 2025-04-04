@@ -1,4 +1,4 @@
-import { AppointmentStatus, Doctor, Patient } from "@prisma/client";
+import { AppointmentStatus, Doctor, Patient, Role, Status } from "@prisma/client";
 
 export type AppointmentsChartProps = {
   name: string;
@@ -31,3 +31,19 @@ export type AvailableDoctorProps = {
     close_time: string;
   }[];
 }[];
+
+export type AvailableNurseProps = {
+  id: string;
+  email: string;
+  name: string;
+  phone: string;
+  address: string;
+  department?: string;
+  img?: string;
+  license_number?: string;
+  colorCode?: string;
+  role: Role;
+  status: Status;
+  created_at: Date;
+  updated_at: Date;
+};
