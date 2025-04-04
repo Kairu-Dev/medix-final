@@ -7,7 +7,7 @@ import RecentAppointments from '@/components/tables/recent-appointments';
 import { Button } from '@/components/ui/button';
 import { getStaffDashboardStatistics } from '@/utils/services/staff';
 import { currentUser } from '@clerk/nextjs/server';
-import { BriefcaseBusiness, BriefcaseMedical, Link, User, Users } from 'lucide-react';
+import { BriefcaseBusiness, BriefcaseMedical, User, Users } from 'lucide-react';
 import React from 'react'
 
 const StaffDashboard = async() => {

@@ -138,10 +138,11 @@ export async function createNewStaff(data: any) {
         message: "Staff added successfully",
         error: false,
       };
-    } catch (clerkError) {
-      console.error("Clerk error:", clerkError);
-      if (clerkError.errors) {
-        console.error("Clerk error details:", JSON.stringify(clerkError.errors, null, 2));
+    } catch (error) {
+      console.error("Clerk error:", error);
+      // Add type guard for error
+      if (error && typeof error === 'object' && 'errors' in error) {
+        console.error("Clerk error details:", JSON.stringify(error.errors, null, 2));
       }
       return { error: true, success: false, message: "Failed to create user in authentication system" };
     }
