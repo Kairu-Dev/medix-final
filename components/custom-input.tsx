@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Control } from 'react-hook-form';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form';
 import { Input } from './ui/input';
@@ -8,7 +8,7 @@ import { Textarea } from './ui/textarea';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Label } from './ui/label';
 import { Switch } from './ui/switch';
- /* eslint-disable */
+/* eslint-disable */
 
 interface CustomProps {
   type: "input" | "select" | "checkbox" | "switch" | "radio" | "textarea";
@@ -151,145 +151,134 @@ type Day = {
   day: string;
   start_time?: string;
   close_time?: string;
+  isActive?: boolean;
 };
+
 interface SwitchProps {
   data: { label: string; value: string }[];
   setWorkSchedule: React.Dispatch<React.SetStateAction<Day[]>>;
 }
 
 export const SwitchInput = ({ data, setWorkSchedule }: SwitchProps) => {
-  const handleChange = (day: string, field: any, value: string) => {
-    setWorkSchedule((prevDays) => {
-      const dayExist = prevDays.find((d) => d.day === day);
+  // Initialize with all days
+  const [days, setDays] = useState<{ [key: string]: Day }>({});
 
-      if (dayExist) {
-        return prevDays.map((d) =>
-          d.day === day ? { ...d, [field]: value } : d
-        );
-      } else {
-        if (field === true) {
-          return [
-            ...prevDays,
-            { day, start_time: "09:00", close_time: "17:00" },
-          ];
-        } else {
-          return [...prevDays, { day, [field]: value }];
-        }
+  // Initialize days on component mount
+  useEffect(() => {
+    const initialDays: { [key: string]: Day } = {};
+    data.forEach(item => {
+      initialDays[item.value] = { 
+        day: item.value, 
+        isActive: false,
+        start_time: "09:00",
+        close_time: "17:00"
+      };
+    });
+    setDays(initialDays);
+    
+    // Only include active days in the workSchedule (which should be none initially)
+    setWorkSchedule([]);
+  }, [data, setWorkSchedule]);
+
+  const toggleDay = (day: string, isActive: boolean) => {
+    setDays(prev => ({
+      ...prev,
+      [day]: {
+        ...prev[day],
+        isActive
       }
+    }));
+
+    setWorkSchedule(prevSchedule => {
+      // If toggling on, add to schedule
+      if (isActive) {
+        const existingDay = prevSchedule.find(d => d.day === day);
+        if (existingDay) {
+          return prevSchedule.map(d => 
+            d.day === day ? { ...d, isActive: true } : d
+          );
+        } else {
+          return [
+            ...prevSchedule,
+            { 
+              day, 
+              isActive: true,
+              start_time: "09:00", 
+              close_time: "17:00" 
+            }
+          ];
+        }
+      } 
+      // If toggling off, remove from schedule
+      else {
+        return prevSchedule.filter(d => d.day !== day);
+      }
+    });
+  };
+
+  const updateTime = (day: string, field: "start_time" | "close_time", value: string) => {
+    setDays(prev => ({
+      ...prev,
+      [day]: {
+        ...prev[day],
+        [field]: value
+      }
+    }));
+
+    setWorkSchedule(prevSchedule => {
+      return prevSchedule.map(d => 
+        d.day === day ? { ...d, [field]: value } : d
+      );
     });
   };
 
   return (
     <div className="space-y-1 mt-2">
-      {data?.map((el, id) => (
-        <div
-          key={id}
-          className="w-full flex items-center space-y-3 border-t border-emerald-500/20 py-4 hover:bg-emerald-900/10 transition-all rounded-md px-1"
-        >
-          <Switch
-            id={el.value}
-            className="data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-400 border-emerald-300/50 peer [&>span]:bg-emerald-200/80"
-            onCheckedChange={(e) => handleChange(el.value, true, "09:00")}
-          />
-          <Label htmlFor={el.value} className="w-20 capitalize text-emerald-100 font-medium ml-2">
-            {el.value}
-          </Label>
-
-          <Label className="text-emerald-400/60 text-sm font-light italic peer-data-[state=checked]:hidden pl-10">
-            Not working on this day
-          </Label>
-
-          <div className="hidden peer-data-[state=checked]:flex items-center gap-2 pl-6">
-            <Input
-              name={`${el.label}.start_time`}
-              type="time"
-              defaultValue="09:00"
-              onChange={(e) =>
-                handleChange(el.value, "start_time", e.target.value)
-              }
-              className="bg-emerald-900/30 border-emerald-500/30 text-emerald-100"
+      {data?.map((el, id) => {
+        const dayData = days[el.value] || { day: el.value, isActive: false };
+        
+        return (
+          <div
+            key={id}
+            className="w-full flex items-center border-t border-emerald-500/20 py-4 hover:bg-emerald-900/10 transition-all rounded-md px-1"
+          >
+            <Switch
+              id={el.value}
+              checked={dayData.isActive}
+              onCheckedChange={(checked) => toggleDay(el.value, checked)}
+              className="data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-400 border-emerald-300/50 [&>span]:bg-emerald-200/80"
             />
-            <Input
-              name={`${el.label}.close_time`}
-              type="time"
-              defaultValue="17:00"
-              onChange={(e) =>
-                handleChange(el.value, "close_time", e.target.value)
-              }
-              className="bg-emerald-900/30 border-emerald-500/30 text-emerald-100"
-            />
+            <Label htmlFor={el.value} className="w-20 capitalize text-emerald-100 font-medium ml-2">
+              {el.value}
+            </Label>
+
+            {!dayData.isActive && (
+              <span className="text-emerald-400/60 text-sm font-light italic pl-10">
+                Not working on this day
+              </span>
+            )}
+
+            {dayData.isActive && (
+              <div className="flex items-center gap-2 pl-6">
+                <Input
+                  name={`${el.value}.start_time`}
+                  type="time"
+                  value={dayData.start_time || "09:00"}
+                  onChange={(e) => updateTime(el.value, "start_time", e.target.value)}
+                  className="bg-emerald-900/30 border-emerald-500/30 text-emerald-100"
+                />
+                <Input
+                  name={`${el.value}.close_time`}
+                  type="time"
+                  value={dayData.close_time || "17:00"}
+                  onChange={(e) => updateTime(el.value, "close_time", e.target.value)}
+                  className="bg-emerald-900/30 border-emerald-500/30 text-emerald-100"
+                />
+              </div>
+            )}
           </div>
-        </div>
-      ))}
-    </div>
-  );
-};
-{/*
-export const SwitchInput = ({ data, setWorkSchedule }: SwitchProps) => {
-  const handleChange = (day: string, field: any, value: string) => {
-    setWorkSchedule((prevDays) => {
-      const dayExist = prevDays.find((d) => d.day === day);
-
-      if (dayExist) {
-        return prevDays.map((d) =>
-          d.day === day ? { ...d, [field]: value } : d
         );
-      } else {
-        if (field === true) {
-          return [
-            ...prevDays,
-            { day, start_time: "09:00", close_time: "17:00" },
-          ];
-        } else {
-          return [...prevDays, { day, [field]: value }];
-        }
-      }
-    });
-  };
-
-  return (
-    <div className="">
-      {data?.map((el, id) => (
-        <div
-          key={id}
-          className="w-full flex items-center space-y-3 border-t border-t-gray-200  py-3"
-        >
-          <Switch
-            id={el.value}
-            className="data-[state=checked]:bg-green-500 peer"
-            onCheckedChange={(e) => handleChange(el.value, true, "09:00")}
-          />
-          <Label htmlFor={el.value} className="w-20 capitalize">
-            {el.value}
-          </Label>
-
-          <Label className="text-gray-400 font-normal italic peer-data-[state=checked]:hidden pl-10">
-            Not working on this day
-          </Label>
-
-          <div className="hidden peer-data-[state=checked]:flex items-center gap-2 pl-6:">
-            <Input
-              name={`${el.label}.start_time`}
-              type="time"
-              defaultValue="09:00"
-              onChange={(e) =>
-                handleChange(el.value, "start_time", e.target.value)
-              }
-            />
-            <Input
-              name={`${el.label}.close_time`}
-              type="time"
-              defaultValue="17:00"
-              onChange={(e) =>
-                handleChange(el.value, "close_time", e.target.value)
-              }
-            />
-          </div>
-        </div>
-      ))}
+      })}
     </div>
   );
 };
-*/}
-
-export default CustomInput

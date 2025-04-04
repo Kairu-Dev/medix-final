@@ -32,9 +32,34 @@ export const availableDays = ({ data }: { data: Days[] }) => {
       (dayObj) => dayObj?.day?.toLowerCase() === todayDay
     );
   
-    return isTodayWorkingDay
-      ? `${isTodayWorkingDay?.start_time} - ${isTodayWorkingDay?.close_time}`
-      : "Not Available";
+    if (!isTodayWorkingDay) {
+      return "Not Available";
+    }
+  
+    // Format the start time with AM/PM
+    const formatTime = (timeString: string) => {
+      // Handle empty or invalid time strings
+      if (!timeString) return '';
+      
+      // Parse the time (assuming format like "9:00" or "14:30")
+      const [hours, minutes] = timeString.split(':').map(num => parseInt(num, 10));
+      
+      if (isNaN(hours)) return timeString; // Return original if parsing fails
+      
+      // Determine if it's AM or PM
+      const period = hours >= 12 ? 'PM' : 'AM';
+      
+      // Convert to 12-hour format
+      const hours12 = hours % 12 || 12;
+      
+      // Format the result
+      return `${hours12}:${minutes?.toString().padStart(2, '0')} ${period}`;
+    };
+  
+    const formattedStartTime = formatTime(isTodayWorkingDay.start_time);
+    const formattedCloseTime = formatTime(isTodayWorkingDay.close_time);
+    
+    return `${formattedStartTime} - ${formattedCloseTime}`;
   };
 
 export const AvailableDoctors = async ({ data }: DataProps ) => {

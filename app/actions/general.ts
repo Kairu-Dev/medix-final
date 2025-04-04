@@ -17,14 +17,19 @@ export async function deleteDataById(
     switch (deleteType) {
       case "doctor":
         await db.doctor.delete({ where: { id: id } });
+        break;
       case "staff":
         await db.staff.delete({ where: {id: id } });
+        break;
       case "patient":
         await db.patient.delete({ where: {id: id } });
+        break;
       case "payment":
         await db.payment.delete({ where: {id: Number(id) } });
+        break;
         case "auditLog":
         await db.services.delete({ where: {id: Number(id) } });
+        break;
     }
 
     

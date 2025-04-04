@@ -10,11 +10,12 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PatientFormSchema } from '@/lib/validation';
 import { z } from 'zod';
-import CustomInput from './custom-input';
+
 import { GENDER, MARITAL_STATUS, RELATION } from '@/lib/constants';
 import { Button } from './ui/button';
 import { createNewPatient, updatePatient } from '@/app/actions/patient-action';
 import { toast } from 'sonner';
+import { CustomInput } from './custom-input';
  /* eslint-disable */
 
 interface DataProps {
