@@ -107,7 +107,7 @@ export const AddBills = ({ id, appId, servicesData }: DataProps) => {
           ADD BILL
         </Button>
       </DialogTrigger>
-      <DialogContent className="bg-gray-900/95 border border-emerald-500/40 shadow-lg backdrop-blur-xl max-w-md overflow-hidden">
+      <DialogContent className="bg-gray-900/95 border border-emerald-500/40 shadow-lg backdrop-blur-xl max-w-md overflow-y-auto remove-scrollbar">
         {/* Ambient glow effects */}
         <div className="absolute -top-10 right-10 w-36 h-36 bg-emerald-300/10 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-5 left-10 w-32 h-32 bg-emerald-200/10 rounded-full blur-2xl"></div>
