@@ -13,7 +13,11 @@ import { GenerateFinalBills } from "./generate-final-bills";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
  /* eslint-disable */
 
-
+// Add currency symbol and formatter for Philippine Pesos
+const CURRENCY_SYMBOL = "₱";
+const formatCurrency = (amount: number) => {
+  return `${CURRENCY_SYMBOL}${amount.toFixed(2)}`;
+};
 
 const columns = [
   {
@@ -106,8 +110,8 @@ export const BillsContainer = async ({ id }: { id: string }) => {
         <td className="hidden items-center py-2 md:table-cell text-emerald-200/80">
           {item?.quantity}
         </td>
-        <td className="hidden lg:table-cell text-emerald-200/80">{item?.unit_cost.toFixed(2)}</td>
-        <td className="font-medium text-white">{item?.total_cost.toFixed(2)}</td>
+        <td className="hidden lg:table-cell text-emerald-200/80">{formatCurrency(item?.unit_cost)}</td>
+        <td className="font-medium text-white">{formatCurrency(item?.total_cost)}</td>
 
         <td className="hidden xl:table-cell">
           
@@ -165,13 +169,13 @@ export const BillsContainer = async ({ id }: { id: string }) => {
         <div className="w-[120px] bg-gray-900/40 p-3 rounded-lg border border-emerald-500/20 backdrop-blur-sm">
           <span className="text-emerald-300/80 font-mono text-sm tracking-wide">Total Bill</span>
           <p className="text-xl font-semibold text-white">
-            {(data?.total_amount || totalBills).toFixed(2)}
+            {formatCurrency(data?.total_amount || totalBills)}
           </p>
         </div>
         <div className="w-[120px] bg-gray-900/40 p-3 rounded-lg border border-emerald-500/20 backdrop-blur-sm">
           <span className="text-emerald-300/80 font-mono text-sm tracking-wide">Discount</span>
           <p className="text-xl font-semibold text-yellow-400">
-            {(data?.discount || 0.0).toFixed(2)}{" "}
+            {formatCurrency(data?.discount || 0.0)}{" "}
             <span className="text-sm text-emerald-300/60">
               {" "}
               ({discount?.discountPercentage?.toFixed(2) || "0.0"}%)
@@ -181,21 +185,21 @@ export const BillsContainer = async ({ id }: { id: string }) => {
         <div className="w-[120px] bg-gray-900/40 p-3 rounded-lg border border-emerald-500/20 backdrop-blur-sm">
           <span className="text-emerald-300/80 font-mono text-sm tracking-wide">Payable</span>
           <p className="text-xl font-semibold text-white">
-            {(discount?.finalAmount || 0.0).toFixed(2)}
+            {formatCurrency(discount?.finalAmount || 0.0)}
           </p>
         </div>
         <VisuallyHidden>
         <div className="w-[120px] bg-gray-900/40 p-3 rounded-lg border border-emerald-500/20 backdrop-blur-sm">
           <span className="text-emerald-300/80 font-mono text-sm tracking-wide">Amount Paid</span>
           <p className="text-xl font-semibold text-emerald-400">
-            {(data?.amount_paid || 0.0).toFixed(2)}
+            {formatCurrency(data?.amount_paid || 0.0)}
           </p>
         </div>
         </VisuallyHidden>
         <div className="w-[120px] bg-gray-900/40 p-3 rounded-lg border border-emerald-500/20 backdrop-blur-sm">
           <span className="text-emerald-300/80 font-mono text-sm tracking-wide">Unpaid Amount</span>
           <p className="text-xl font-semibold text-red-400">
-            {(discount?.finalAmount! - data?.amount_paid! || 0.0).toFixed(2)}
+            {formatCurrency(discount?.finalAmount! - data?.amount_paid! || 0.0)}
           </p>
         </div>
       </div>
