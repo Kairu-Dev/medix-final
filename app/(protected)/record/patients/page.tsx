@@ -11,6 +11,7 @@ import { checkRole } from '@/utils/roles';
 import { getAllPatients } from '@/utils/services/patientFetchInfo';
 import { DATA_LIMIT } from '@/utils/setting';
 import { Patient } from '@prisma/client';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { format } from 'date-fns';
 import { UserPen, Users } from 'lucide-react';
 import React from 'react'
@@ -121,11 +122,12 @@ const columns = [
                 <ViewAction href={`/patient/${item?.id}`} />
                 <ActionOptions>
                     <div className="space-y-3">
-
+                        <VisuallyHidden>
                         <Button className="text-sm font-medium">
                             <UserPen size={16} className="text-emerald-300"/>
                             Edit
                         </Button>
+                        </VisuallyHidden>
 
                         {
                             isAdmin && <ActionDialog 
