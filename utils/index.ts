@@ -25,16 +25,16 @@ export function formatNumber(amount: number): string {
   
   export function formatDateTime(isoDate: string): string {
     const date = new Date(isoDate);
-  
+    
     const options: Intl.DateTimeFormatOptions = {
-      weekday: "long", //change to long instead of short
+      weekday: "long",
       year: "numeric",
       month: "short",
       day: "numeric",
       hour: "numeric",
       minute: "numeric",
       second: "numeric",
-      // timeZoneName: "short", // "UTC"
+      timeZone: "Asia/Manila",
     };
   
     return date.toLocaleString("en-US", options);

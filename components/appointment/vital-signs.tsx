@@ -120,7 +120,7 @@ export const VitalSigns = async ({
                   />
                   <ItemCard
                     label="Reading Date"
-                    value={format(el?.created_at, "MMM d, yyyy hh:mm a")}
+                    value={format(el?.created_at, "MMM dd, yyyy hh:mm a")}
                   />
                 </div>
                 <Separator className="mt-4 bg-emerald-500/30" />

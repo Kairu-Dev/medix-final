@@ -30,7 +30,7 @@ export const AppointmentDetails = ({
           <SmallCard label="Appointment #" value={`# ${id}`} />
           <SmallCard
             label="Date"
-            value={format(appointment_date, "MMM d, yyyy")}
+            value={format(appointment_date, "MMM dd, yyyy")}
           />
           <SmallCard label="Time" value={time} />
         </div>

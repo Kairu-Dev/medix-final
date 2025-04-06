@@ -7,6 +7,9 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 const AppointmentQuickLinks = async({ staffId }: { staffId: string }) => {
     const isPatient = await checkRole("PATIENT");
+    const isAdmin = await checkRole("ADMIN");
+    const isDoctor = await checkRole("DOCTOR");
+
   return (
     <Card className="w-full rounded-xl bg-gray-900/60 border border-emerald-500/40 shadow-lg relative backdrop-blur-sm">  
         {/* Minecraft-style decorative elements */}
@@ -35,12 +38,16 @@ const AppointmentQuickLinks = async({ staffId }: { staffId: string }) => {
             >
             Appointments
             </Link>
-            <Link 
-            href="?category=diagnosis"
-            className="px-4 py-2 rounded-lg bg-blue-900 text-blue-100 border border-blue-500/50 hover:bg-blue-800 transition-colors duration-200 shadow-md hover:shadow-blue-500/20"
-            >
-            Diagnosis
-            </Link>
+
+            {isAdmin || isDoctor && (
+              <Link 
+              href="?category=diagnosis"
+              className="px-4 py-2 rounded-lg bg-blue-900 text-blue-100 border border-blue-500/50 hover:bg-blue-800 transition-colors duration-200 shadow-md hover:shadow-blue-500/20"
+              >
+              Diagnosis
+              </Link>
+            )}
+            
             <Link 
             href="?category=billing"
             className="px-4 py-2 rounded-lg bg-amber-900 text-amber-100 border border-amber-500/50 hover:bg-amber-800 transition-colors duration-200 shadow-md hover:shadow-amber-500/20"

@@ -5,7 +5,7 @@ import { format } from "date-fns";
 import { ViewAction } from "../action-options";
 import { checkRole } from "@/utils/roles";
 import ActionDialog from "../action-dialog-admin";
-import { DollarSign } from "lucide-react";
+import { PhilippinePeso } from "lucide-react";
 
 const columns = [
   {
@@ -113,7 +113,7 @@ export const PaymentsContainer = async ({
 
       <div className="flex items-center justify-between relative z-10">
         <div className="hidden lg:flex items-center gap-1 bg-gradient-to-r from-emerald-900/70 to-emerald-950/60 p-3 rounded-lg border border-emerald-500/30">
-          <DollarSign size={20} className="text-emerald-400" />
+          <PhilippinePeso size={20} className="text-emerald-400" />
           <p className="text-2xl font-semibold text-emerald-100">{data?.length ?? 0}</p>
           <span className="text-emerald-300 text-sm xl:text-base font-mono tracking-wide">
             total payments
