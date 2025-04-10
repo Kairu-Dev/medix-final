@@ -89,6 +89,8 @@ const columns = [
 
     const renderRow = (item: ExtendedProps) => {
         /* eslint-disable */
+
+      
        
         const name = item?.patient?.first_name + " " + item?.patient?.last_name;
         const patient = item?.patient;
@@ -120,45 +122,42 @@ const columns = [
         
         
         
-        <td className="hidden xl:table-cell text-emerald-200/90">
+{/* Total */}
+<td className="hidden xl:table-cell text-emerald-200/90">
+  {item?.total_amount.toFixed(2)}
+</td>
 
-        {
-            item?.total_amount.toFixed(2)
-        }
+{/* Discount */}
+<td className="hidden xl:table-cell text-emerald-200/90">
+  {item?.discount.toFixed(2)}
+</td>
 
-        </td>
+{/* Payable */}
+<td className="hidden xl:table-cell text-emerald-200/90">
+  {(item?.total_amount - item?.discount).toFixed(2)}
+</td>
 
-        <td className="hidden xl:table-cell text-emerald-200/90">
+{/* Paid */}
+<td className="hidden xl:table-cell text-emerald-200/90">
+  {(item?.amount_paid).toFixed(2)}
+</td>
 
-        {(item?.total_amount - item?.discount).toFixed(2)}
-
-        </td>
-
-        <td className="hidden xl:table-cell text-emerald-200/90">
-
-        {(item?.amount_paid).toFixed(2)}
-
-        </td>
-
-        <td className="hidden xl:table-cell text-emerald-200/90">
-
-        <span className={cn(
-            item?.status === "UNPAID" 
-            ? "text-red-600" 
-            : item?.status === "PAID" 
-            ? "text-emerald-600" 
-            : "text-gray-600"
-        )}>
-
-            {item?.status}
-            
-        </span>
-
-        </td>
+{/* Status */}
+<td className="hidden xl:table-cell text-emerald-200/90">
+  <span className={cn(
+      item?.status === "UNPAID" 
+      ? "text-red-400" 
+      : item?.status === "PAID" 
+      ? "text-emerald-600" 
+      : "text-gray-600"
+  )}>
+      {item?.status}
+  </span>
+</td>
         
         <td>
             
-                <ViewAction href={`/appointments/${item?.appointment_id}?category=bills`} 
+                <ViewAction href={`/record/appointments/${item?.appointment_id}?category=billing`} 
                 
                 />
 

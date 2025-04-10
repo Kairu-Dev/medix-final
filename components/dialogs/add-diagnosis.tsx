@@ -101,8 +101,8 @@ export const AddDiagnosis = ({
           <CardHeader className="px-0 relative z-10">
             <DialogTitle className="text-emerald-100 font-mono uppercase tracking-wider text-xl">Add New Diagnosis</DialogTitle>
             <CardDescription className="text-emerald-300/80">
-             Ensure findings are accurate and presented clearly. 
-             Double-check the details to prevent potential errors in your application.
+             Add patient diagnosis information with precision and clarity. 
+             Include all relevant medical findings and assessments for proper patient care.
             </CardDescription>
           </CardHeader>
 

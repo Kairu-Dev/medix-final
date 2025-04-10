@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react"; // Added useEffect
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -27,10 +27,17 @@ interface DataProps {
   id?: string | number;
   total_bill: number;
 }
+
 export const GenerateFinalBills = ({ id, total_bill }: DataProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [open, setOpen] = useState(false); // Add this state to control dialog
   const router = useRouter();
-  let discountInfo = null;
+  
+
+  // Reset the form whenever the total_bill prop changes
+  useEffect(() => {
+    form.setValue("total_amount", total_bill.toString());
+  }, [total_bill]);
 
   const form = useForm<z.infer<typeof PaymentSchema>>({
     resolver: zodResolver(PaymentSchema),
@@ -50,10 +57,9 @@ export const GenerateFinalBills = ({ id, total_bill }: DataProps) => {
 
       if (resp.success) {
         toast.success("Patient bill generated successfully!");
-
         router.refresh();
-
         form.reset();
+        setOpen(false); // Close the dialog after successful submission
       } else if (resp.error) {
         toast.error(resp.msg);
       }
@@ -67,7 +73,7 @@ export const GenerateFinalBills = ({ id, total_bill }: DataProps) => {
 
   return (
     <>
-      <Dialog>
+      <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           <Button 
             variant="outline" 
@@ -79,7 +85,7 @@ export const GenerateFinalBills = ({ id, total_bill }: DataProps) => {
           </Button>
         </DialogTrigger>
         <DialogContent className="bg-gray-900/90 border border-red-500/40 rounded-xl shadow-lg backdrop-blur-sm">
-          {/* Minecraft-style decorative elements */}
+          {/* Existing decorative elements */}
           <div className="absolute top-0 left-0 w-12 h-12 border-t-2 border-l-2 border-red-500/70 rounded-tl-xl"></div>
           <div className="absolute top-0 right-0 w-12 h-12 border-t-2 border-r-2 border-red-500/70 rounded-tr-xl"></div>
           <div className="absolute bottom-0 left-0 w-12 h-12 border-b-2 border-l-2 border-red-500/70 rounded-bl-xl"></div>
@@ -132,7 +138,7 @@ export const GenerateFinalBills = ({ id, total_bill }: DataProps) => {
                 disabled={isLoading}
                 className="w-full bg-gradient-to-r from-red-700 to-red-900 hover:from-red-600 hover:to-red-800 text-white font-mono tracking-wide border border-red-500/50 shadow-lg shadow-red-900/30"
               >
-                Generate Bill
+                {isLoading ? 'Processing...' : 'Generate Bill'}
               </Button>
             </form>
           </Form>

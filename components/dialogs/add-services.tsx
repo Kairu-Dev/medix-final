@@ -80,8 +80,8 @@ export const AddService = () => {
           <CardHeader className="px-0 relative z-10">
             <DialogTitle className="font-mono uppercase tracking-wider text-xl text-emerald-200">Add New Service</DialogTitle>
             <CardDescription className="text-emerald-300/80 font-mono text-sm">
-              Ensure accurate readings are performed as this may affect the
-              diagnosis and other medical processes.
+              Create new hospital services with accurate names and pricing information.
+              Example: Checkup - ₱1500
             </CardDescription>
           </CardHeader>
 

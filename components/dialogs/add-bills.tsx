@@ -44,6 +44,8 @@ export const AddBills = ({ id, appId, servicesData }: DataProps) => {
     },
   });
 
+  const [open, setOpen] = useState(false);
+
   const handleOnSubmit = async (values: z.infer<typeof PatientBillSchema>) => {
     try {
       setIsLoading(true);
@@ -53,6 +55,7 @@ export const AddBills = ({ id, appId, servicesData }: DataProps) => {
         toast.success("Patient bill added successfully!");
         router.refresh();
         form.reset();
+        setOpen(false);
       } else if (resp.error) {
         toast.error(resp.msg);
       }
@@ -97,7 +100,7 @@ export const AddBills = ({ id, appId, servicesData }: DataProps) => {
   }, [selectedService, quantity, form, servicesData]);
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button 
           size="sm" 
@@ -124,8 +127,8 @@ export const AddBills = ({ id, appId, servicesData }: DataProps) => {
             <DialogTitle className="text-emerald-200 font-mono tracking-wide text-xl">ADD PATIENT BILL</DialogTitle>
           </div>
           <CardDescription className="text-emerald-300/70 ml-3 font-light">
-            Ensure accurate readings are performed as this may affect the
-            diagnosis and other medical processes.
+            Enter bill details accurately as this information will be used for
+            patient billing records and financial reporting.
           </CardDescription>
         </CardHeader>
 
