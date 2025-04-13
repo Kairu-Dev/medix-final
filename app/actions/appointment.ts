@@ -2,38 +2,68 @@
 
 import { VitalSignsFormData } from "@/components/dialogs/add-vital-signs";
 import db from "@/lib/db";
+import { sendAppointmentEmail } from "@/lib/email-service";
 import { AppointmentSchema, VitalSignsSchema } from "@/lib/validation";
 import { auth } from "@clerk/nextjs/server";
 import { AppointmentStatus } from "@prisma/client";
 /* eslint-disable */
 
-export async function appointmentAction (id: string | number,
-    status: AppointmentStatus,
-    reason: string
+export async function appointmentAction(
+  id: string | number,
+  status: AppointmentStatus,
+  reason: string
 ) {
-    try {
+  try {
+    // Update the appointment status in the database
+    const updatedAppointment = await db.appointment.update({
+      where: {
+        id: Number(id),
+      },
+      data: {
+        status,
+        reason,
+      },
+      include: {
+        patient: true,
+        doctor: true,
+      },
+    });
 
-        await db.appointment.update({
-            where: { id: Number(id) },
-            data: {
-                status,
-                reason,
-            },
-            
-        });
+    // Check if the status is either SCHEDULED or CANCELLED to send email
+    if (status === 'SCHEDULED' || status === 'CANCELLED') {
+      // Get patient email
+      const patientEmail = updatedAppointment.patient.email;
+      
+      // Prepare data for the email
+      const emailData = {
+        patientName: `${updatedAppointment.patient.first_name} ${updatedAppointment.patient.last_name}`,
+        doctorName: updatedAppointment.doctor.name,
+        appointmentDate: updatedAppointment.appointment_date,
+        appointmentTime: updatedAppointment.time,
+        appointmentType: updatedAppointment.type,
+        reason: updatedAppointment.reason || undefined,
+      };
 
-        return {
-            success: true, error: false, msg: `Appointment ${status.toLowerCase()} successfully`,
-        }
-        
-    } catch (error) {
-        console.log(error);
-        return {
-            success: false,
-            msg: "Something went wrong. Try again later."
-        }
-        
+      // Send the appropriate email based on the status
+      await sendAppointmentEmail(
+        patientEmail,
+        status === 'SCHEDULED' ? 'SCHEDULED' : 'CANCELLED',
+        emailData
+      );
     }
+
+    return {
+      success: true,
+      msg: `Appointment ${status.toLowerCase()} successfully.`,
+    };
+  } catch (error) {
+    console.error("Error updating appointment:", error);
+    return {
+      success: false,
+      error: true,
+      msg: "Failed to update appointment status.",
+    };
+  }
 }
 
 export async function createNewAppointment(data: any) {
@@ -111,3 +141,4 @@ export async function createNewAppointment(data: any) {
       return { success: false, msg: "Internal Server Error" };
     }
   }
+
