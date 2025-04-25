@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react"; // Added useEffect
+import { useState, useEffect, useCallback } from "react"; // Added useCallback
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -30,55 +30,101 @@ interface DataProps {
 
 export const GenerateFinalBills = ({ id, total_bill }: DataProps) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [open, setOpen] = useState(false); // Add this state to control dialog
+  const [open, setOpen] = useState(false);
   const router = useRouter();
   
-
-  // Reset the form whenever the total_bill prop changes
-  useEffect(() => {
-    form.setValue("total_amount", total_bill.toString());
-  }, [total_bill]);
+  console.log("GenerateFinalBills rendering with:", { id, total_bill });
 
   const form = useForm<z.infer<typeof PaymentSchema>>({
     resolver: zodResolver(PaymentSchema),
     defaultValues: {
-      id: id?.toString(),
+      id: id?.toString() || "",
       bill_date: new Date(),
       discount: "0",
-      total_amount: total_bill.toString(),
+      total_amount: total_bill?.toString() || "0",
     },
   });
 
-  const handleOnSubmit = async (values: z.infer<typeof PaymentSchema>) => {
+  // Reset form values when dialog opens or when total_bill/id changes
+  useEffect(() => {
+    console.log("Form values being updated:", { 
+      id: id?.toString() || "", 
+      total_bill: total_bill?.toString() || "0" 
+    });
+    
+    // Reset the form with current values when dependencies change
+    form.reset({
+      id: id?.toString() || "",
+      bill_date: new Date(),
+      discount: form.getValues("discount"), // Keep existing discount value
+      total_amount: total_bill?.toString() || "0",
+    });
+  }, [total_bill, id, open]);
+
+  // Separated form submission logic
+  const handleOnSubmit = useCallback(async (values: z.infer<typeof PaymentSchema>) => {
+    console.log("Submit handler called with values:", values);
+    
     try {
       setIsLoading(true);
+      console.log("Starting submission process");
 
       const resp = await generateBill(values);
+      console.log("Received response:", resp);
 
       if (resp.success) {
         toast.success("Patient bill generated successfully!");
         router.refresh();
         form.reset();
-        setOpen(false); // Close the dialog after successful submission
+        setOpen(false);
       } else if (resp.error) {
         toast.error(resp.msg);
       }
     } catch (error) {
-      console.log(error);
+      console.error("Submission error:", error);
       toast.error("Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
+      console.log("Submission process completed");
     }
-  };
+  }, [form, router]);
+
+  // Handle dialog open state
+  const handleOpenChange = useCallback((newOpen: boolean) => {
+    console.log("Dialog open state changing to:", newOpen);
+    
+    if (newOpen) {
+      // When opening the dialog, ensure form has fresh values
+      console.log("Dialog opening, resetting form");
+      form.reset({
+        id: id?.toString() || "",
+        bill_date: new Date(),
+        discount: "0",
+        total_amount: total_bill?.toString() || "0",
+      });
+    }
+    
+    setOpen(newOpen);
+  }, [form, id, total_bill]);
+
+  // Form submission wrapper for logging
+  const onSubmit = useCallback((e: React.FormEvent) => {
+    console.log("Form onSubmit triggered");
+    form.handleSubmit((values) => {
+      console.log("Form validation passed, calling handleOnSubmit");
+      handleOnSubmit(values);
+    })(e);
+  }, [form, handleOnSubmit]);
 
   return (
     <>
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogTrigger asChild>
           <Button 
             variant="outline" 
             size="sm" 
             className="text-sm font-normal bg-gray-900/60 border border-red-500/40 rounded-lg shadow-lg relative backdrop-blur-sm text-red-100 hover:bg-red-800/40 transition-colors duration-200 font-mono tracking-wide"
+            onClick={() => console.log("Dialog trigger button clicked")}
           >
             <Plus size={22} className="text-red-400 mr-1" />
             Generate Final Bill
@@ -104,14 +150,14 @@ export const GenerateFinalBills = ({ id, total_bill }: DataProps) => {
 
           <Form {...form}>
             <form
-              onSubmit={form.handleSubmit(handleOnSubmit)}
+              onSubmit={onSubmit}
               className="space-y-8 bg-gradient-to-b from-red-50/15 to-red-900/30 rounded-xl p-4 border border-red-500/40 shadow-md backdrop-blur-sm relative"
             >
               <div className="flex items-center gap-2">
                 <div className="bg-gradient-to-r from-red-900/70 to-red-950/60 p-3 rounded-lg border border-red-500/30">
                   <span className="text-red-300 text-sm font-mono tracking-wide">Total Bill</span>
                   <p className="text-3xl font-semibold text-red-100">
-                    {total_bill?.toFixed(2)}
+                    {total_bill?.toFixed(2) || "0.00"}
                   </p>
                 </div>
               </div>
@@ -137,6 +183,7 @@ export const GenerateFinalBills = ({ id, total_bill }: DataProps) => {
                 type="submit"
                 disabled={isLoading}
                 className="w-full bg-gradient-to-r from-red-700 to-red-900 hover:from-red-600 hover:to-red-800 text-white font-mono tracking-wide border border-red-500/50 shadow-lg shadow-red-900/30"
+                onClick={() => console.log("Submit button clicked")}
               >
                 {isLoading ? 'Processing...' : 'Generate Bill'}
               </Button>

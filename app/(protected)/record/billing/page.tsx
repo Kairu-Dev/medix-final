@@ -96,7 +96,7 @@ const columns = [
         const patient = item?.patient;
        return (
     <tr
-    key={item?.id + patient?.id}
+    key={`${item?.id || 'unknown'}-${patient?.id || 'unknown'}`}
     className="border-b border-emerald-500/30 even:bg-emerald-900/30 text-emerald-50 hover:bg-emerald-800/40 transition-colors duration-200"
     >
         <td># {item?.id}</td>

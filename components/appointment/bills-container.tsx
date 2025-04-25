@@ -63,7 +63,11 @@ interface ExtendedBillProps extends PatientBills {
   };
 }
 export const BillsContainer = async ({ id }: { id: string }) => {
+  // Store role check result in variables to ensure consistency
   const isAdmin = await checkRole("ADMIN");
+  const isDoctor = await checkRole("DOCTOR");
+  const isAdminOrDoctor = isAdmin || isDoctor;
+  
   const [data, servicesData] = await Promise.all([
     db.payment.findFirst({
       where: { appointment_id: Number(id) },
@@ -82,19 +86,34 @@ export const BillsContainer = async ({ id }: { id: string }) => {
 
   let totalBills = 0;
 
+  // Ensure billData is always an array
   const billData = data?.bills || [];
+  
   const discount = data
     ? calculateDiscount({
-        amount: data?.total_amount,
-        discount: data?.discount,
+        amount: data.total_amount || 0,
+        discount: data.discount || 0,
       })
-    : null;
+    : { finalAmount: 0, discountPercentage: 0 };
 
-  if (billData) {
+  if (billData && billData.length > 0) {
     totalBills = billData.reduce((sum, acc) => sum + acc.total_cost, 0);
   }
 
+  // Pre-calculate values to avoid calculations in JSX
+  const totalAmount = data?.total_amount || totalBills || 0;
+  const discountAmount = data?.discount || 0;
+  const discountPercentage = discount?.discountPercentage || 0;
+  const finalAmount = discount?.finalAmount || 0;
+  const amountPaid = data?.amount_paid || 0;
+  const unpaidAmount = finalAmount - amountPaid;
+
   const renderRow = (item: ExtendedBillProps) => {
+    // Safely format the date
+    const formattedDate = item?.service_date 
+      ? format(new Date(item.service_date), "MMM d, yyyy") 
+      : "N/A";
+      
     return (
       /* eslint-disable */
       <tr
@@ -103,21 +122,21 @@ export const BillsContainer = async ({ id }: { id: string }) => {
       >
         <td className="hidden md:table-cell py-2 xl:py-6 text-emerald-200/80 font-mono"># {item?.id}</td>
 
-        <td className="items-center py-2 text-white">{item?.service?.service_name}</td>
+        <td className="items-center py-2 text-white">{item?.service?.service_name || "Unknown Service"}</td>
 
-        <td className="text-emerald-300/80 font-mono">{format(item?.service_date, "MMM d, yyyy")}</td>
+        <td className="text-emerald-300/80 font-mono">{formattedDate}</td>
 
         <td className="hidden items-center py-2 md:table-cell text-emerald-200/80">
-          {item?.quantity}
+          {item?.quantity || 0}
         </td>
-        <td className="hidden lg:table-cell text-emerald-200/80">{formatCurrency(item?.unit_cost)}</td>
-        <td className="font-medium text-white">{formatCurrency(item?.total_cost)}</td>
+        <td className="hidden lg:table-cell text-emerald-200/80">{formatCurrency(item?.unit_cost || 0)}</td>
+        <td className="font-medium text-white">{formatCurrency(item?.total_cost || 0)}</td>
 
         <td className="hidden xl:table-cell">
           
           <ActionDialog
             type="delete"
-            id={item?.id.toString()}
+            id={item?.id?.toString() || ""}
             deleteType="bill"
           />
           
@@ -143,24 +162,23 @@ export const BillsContainer = async ({ id }: { id: string }) => {
           <h1 className="font-mono uppercase tracking-wider text-xl text-emerald-200">Patient Bills</h1>
           <div className="hidden lg:flex items-center gap-1">
             <ReceiptText size={20} className="text-emerald-500" />
-            <p className="text-2xl font-semibold text-emerald-200">{billData?.length}</p>
+            <p className="text-2xl font-semibold text-emerald-200">{billData?.length || 0}</p>
             <span className="text-emerald-300/80 text-sm xl:text-base font-mono">
               total records
             </span>
           </div>
         </div>
 
-        {((await checkRole("ADMIN")) || (await checkRole("DOCTOR"))) && (
+        {isAdmin && (
           <div className="flex gap-5 items-center mt-5 justify-end">
             <AddBills id={data?.id} appId={id} servicesData={servicesData} />
-
             <GenerateFinalBills id={data?.id} total_bill={totalBills} />
           </div>
         )}
       </div>
 
       <div className="relative z-10 bg-gradient-to-b from-emerald-50/10 to-emerald-900/20 rounded-xl border border-emerald-500/30 shadow-md backdrop-blur-sm">
-        <Table columns={columns} renderRow={renderRow} data={billData!} />
+        <Table columns={columns} renderRow={renderRow} data={billData} />
       </div>
 
       <Separator className="my-4 bg-emerald-500/30" />
@@ -169,37 +187,37 @@ export const BillsContainer = async ({ id }: { id: string }) => {
         <div className="w-[120px] bg-gray-900/40 p-3 rounded-lg border border-emerald-500/20 backdrop-blur-sm">
           <span className="text-emerald-300/80 font-mono text-sm tracking-wide">Total Bill</span>
           <p className="text-xl font-semibold text-white">
-            {formatCurrency(data?.total_amount || totalBills)}
+            {formatCurrency(totalAmount)}
           </p>
         </div>
         <div className="w-[120px] bg-gray-900/40 p-3 rounded-lg border border-emerald-500/20 backdrop-blur-sm">
           <span className="text-emerald-300/80 font-mono text-sm tracking-wide">Discount</span>
           <p className="text-xl font-semibold text-yellow-400">
-            {formatCurrency(data?.discount || 0.0)}{" "}
+            {formatCurrency(discountAmount)}{" "}
             <span className="text-sm text-emerald-300/60">
               {" "}
-              ({discount?.discountPercentage?.toFixed(2) || "0.0"}%)
+              ({discountPercentage.toFixed(2)}%)
             </span>
           </p>
         </div>
         <div className="w-[120px] bg-gray-900/40 p-3 rounded-lg border border-emerald-500/20 backdrop-blur-sm">
           <span className="text-emerald-300/80 font-mono text-sm tracking-wide">Payable</span>
           <p className="text-xl font-semibold text-white">
-            {formatCurrency(discount?.finalAmount || 0.0)}
+            {formatCurrency(finalAmount)}
           </p>
         </div>
         <VisuallyHidden>
         <div className="w-[120px] bg-gray-900/40 p-3 rounded-lg border border-emerald-500/20 backdrop-blur-sm">
           <span className="text-emerald-300/80 font-mono text-sm tracking-wide">Amount Paid</span>
           <p className="text-xl font-semibold text-emerald-400">
-            {formatCurrency(data?.amount_paid || 0.0)}
+            {formatCurrency(amountPaid)}
           </p>
         </div>
         </VisuallyHidden>
         <div className="w-[120px] bg-gray-900/40 p-3 rounded-lg border border-emerald-500/20 backdrop-blur-sm">
           <span className="text-emerald-300/80 font-mono text-sm tracking-wide">Unpaid Amount</span>
           <p className="text-xl font-semibold text-red-400">
-            {formatCurrency(discount?.finalAmount! - data?.amount_paid! || 0.0)}
+            {formatCurrency(unpaidAmount)}
           </p>
         </div>
       </div>
