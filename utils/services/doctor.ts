@@ -16,6 +16,53 @@ export async function getDoctors() {
   }
 }
 
+export async function fetchDoctorsReferrals(department?: string) {
+  try {
+    // If no department is specified, fetch all active doctors
+    if (!department) {
+      return await db.doctor.findMany({
+        select: {
+          id: true,
+          name: true,
+          specialization: true,
+          department: true,
+          availability_status: true,
+          img: true,
+        },
+        where: {
+          availability_status: 'ACTIVE',
+        },
+        orderBy: {
+          name: 'asc'
+        }
+      });
+    }
+
+    // If department is specified, filter by department
+    return await db.doctor.findMany({
+      select: {
+        id: true,
+        name: true,
+        specialization: true,
+        department: true,
+        availability_status: true,
+        img: true,
+      },
+      where: {
+        department: department,
+        availability_status: 'ACTIVE',
+      },
+      orderBy: {
+        name: 'asc'
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching doctors:', error);
+    throw new Error('Failed to fetch doctors');
+  }
+}
+
+
 
 export async function getDoctorDashboardStatistics() {
     try {

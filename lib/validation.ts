@@ -224,3 +224,66 @@ export const PatientFormSchema = z.object({
 
     });
 
+
+// Enum values matching Prisma schema
+export const ReferralStatus = {
+  PENDING: "PENDING",
+  ACCEPTED: "ACCEPTED",
+  REJECTED: "REJECTED",
+  COMPLETED: "COMPLETED",
+  CANCELLED: "CANCELLED"
+} as const;
+
+export const ReferralUrgency = {
+  ROUTINE: "ROUTINE",
+  URGENT: "URGENT",
+  EMERGENCY: "EMERGENCY"
+} as const;
+
+// Referral form validation schema
+export const ReferralSchema = z.object({
+  // Required fields
+  referral_number: z.string().min(1, "Referral number is required"),
+  referring_doctor_id: z.string().min(1, "Referring doctor is required"),
+  referred_department: z.string().min(1, "Department is required"),
+  referral_type: z.string().min(1, "Referral type is required"),
+  reason_for_referral: z.string().min(1, "Reason for referral is required"),
+  
+  // Optional fields
+  referred_to_doctor_id: z.string().optional(),
+  external_doctor_name: z.string().optional(),
+  external_facility: z.string().optional(),
+  external_contact: z.string().optional(),
+  diagnosis: z.string().optional(),
+  symptoms: z.string().optional(),
+  clinical_notes: z.string().optional(),
+  medical_history: z.string().optional(),
+  current_medications: z.string().optional(),
+  allergies: z.string().optional(),
+  test_results: z.string().optional(),
+  follow_up_instructions: z.string().optional(),
+  follow_up_date: z.string().optional(),
+  insurance_details: z.string().optional(),
+  authorization_number: z.string().optional(),
+  special_instructions: z.string().optional(),
+  
+  // Status fields with default values
+  status: z.enum(["PENDING", "ACCEPTED", "REJECTED", "COMPLETED", "CANCELLED"]).default("PENDING"),
+  urgency: z.enum(["ROUTINE", "URGENT", "EMERGENCY"]).default("ROUTINE"),
+  priority_level: z.number().min(1).max(10).optional(),
+})
+.refine(
+  // Ensure either referred_to_doctor_id or external_doctor_name is provided
+  (data) => {
+    return !!data.referred_to_doctor_id || !!data.external_doctor_name;
+  },
+  {
+    message: "You must select an internal doctor or provide external doctor information",
+    path: ["referred_to_doctor_id"], // Show error on this field
+  }
+);
+
+// Type representing the schema
+export type ReferralFormValues = z.infer<typeof ReferralSchema>;
+
+ 

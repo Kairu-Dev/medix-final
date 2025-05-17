@@ -115,7 +115,6 @@ export const BillsContainer = async ({ id }: { id: string }) => {
       : "N/A";
       
     return (
-      /* eslint-disable */
       <tr
         key={item.id}
         className="border-b border-emerald-200/20 even:bg-gray-900/40 text-sm hover:bg-emerald-900/20 transition-colors duration-200"
