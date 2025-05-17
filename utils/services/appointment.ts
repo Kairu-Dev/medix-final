@@ -127,6 +127,9 @@ export async function getPatientAppointments({
           appointment_date: true,
           time: true,
           status: true,
+          priority_level: true,
+          priority_score: true,
+          priority_override: true,
           patient: {
             select: {
               id: true,

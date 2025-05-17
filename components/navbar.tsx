@@ -5,7 +5,6 @@ import { Bell } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import React, { useState, useEffect } from 'react'
 
-/* eslint-disable */
 export const Navbar = () => {
     console.log("Navbar component rendering");
     
