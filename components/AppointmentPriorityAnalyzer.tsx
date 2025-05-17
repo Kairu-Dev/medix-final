@@ -5,7 +5,7 @@
 // ADD SYMPTOM COMBINATION LOGIC: Add logic to handle combinations of symptoms for better matching
 // ADD AN OPTION TO PROVIDE A SETTINGS OF THIS COMPONENT TO ALLOW THE ADMIN TO ADD MORE KEYWORDS SIMILAR TO TAGS IN MANGADEX (EX. MAGIC, FANTASY, HAREM GANON GANON BUT IN MEDICAL TERMS OF COURSE)
 // Create an Interface to customize values for each departments and use tags to add words to the list.
-
+// The Override tag is kinda buggy fix it  in a later patch
 
 
 
