@@ -5,7 +5,7 @@
 // ADD SYMPTOM COMBINATION LOGIC: Add logic to handle combinations of symptoms for better matching
 // ADD AN OPTION TO PROVIDE A SETTINGS OF THIS COMPONENT TO ALLOW THE ADMIN TO ADD MORE KEYWORDS SIMILAR TO TAGS IN MANGADEX (EX. MAGIC, FANTASY, HAREM GANON GANON BUT IN MEDICAL TERMS OF COURSE)
 // Create an Interface to customize values for each departments and use tags to add words to the list.
-
+// The Override tag is kinda buggy fix it  in a later patch
 
 
 
@@ -1004,7 +1004,7 @@ const [lastToastTime, setLastToastTime] = useState<number>(0);
                     <SelectTrigger className="h-6 py-0 px-2 text-xs w-auto min-w-[140px]">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-black-800">
                       {availableDepartments.map((dept) => (
                         <SelectItem key={dept} value={dept}>{dept}</SelectItem>
                       ))}
@@ -1078,7 +1078,7 @@ const [lastToastTime, setLastToastTime] = useState<number>(0);
               <SelectTrigger>
                 <SelectValue placeholder="Select a doctor" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-black-800">
                 {(suggestedDoctors.length > 0 ? suggestedDoctors : doctors).map((doctor) => (
                   <SelectItem key={doctor.id} value={doctor.id}>
                     {doctor.name} ({doctor.specialization || doctor.department || 'General'})

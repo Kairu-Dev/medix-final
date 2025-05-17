@@ -192,7 +192,7 @@ const Appointments = async (props: {
         </td>
 
         <td className="hidden md:table-cell text-emerald-200/90">
-           {formatDate(item.appointment_date, "yyyy-MM-dd hh:mm a")}
+           {formatDate(item.appointment_date, "yyyy-MM-dd")}
         </td>
 
         <td className="hidden md:table-cell text-emerald-300">{item.time}</td>
