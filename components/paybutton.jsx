@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { CreditCard, DollarSign, Loader2 } from 'lucide-react';
 
-export function PayButton({ payment = { id: '1747795081903', total_amount: 250, discount: 0, amount_paid: 0, receipt_number: '1234', patient: { first_name: '', last_name: '', phone: '', email: '' } } }) {
+export default function PayButton({ payment = { id: '1747795081903', total_amount: 250, discount: 0, amount_paid: 0, receipt_number: '1234', patient: { first_name: '', last_name: '', phone: '', email: '' } } }) {
   const [isLoading, setIsLoading] = useState(false);
   const [showPaymentOptions, setShowPaymentOptions] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState(null);
