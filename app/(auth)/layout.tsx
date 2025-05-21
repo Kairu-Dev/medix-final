@@ -1,5 +1,7 @@
 import React from 'react'
 import Image from 'next/image'
+import { SpeedInsights } from '@vercel/speed-insights/next';
+
 
 const AuthLayout = ({children}:{children: React.ReactNode}) => {
   return (
@@ -17,8 +19,10 @@ const AuthLayout = ({children}:{children: React.ReactNode}) => {
             alt="patient"
             className="h-8 w-fit mb-3"
           />
-
+          
           {children}
+          <SpeedInsights />
+
 
           
 

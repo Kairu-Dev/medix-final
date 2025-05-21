@@ -2,6 +2,8 @@
 import Navbar from "@/components/navbar";
 import Sidebar from "@/components/sidebar";
 import React from "react";
+import { SpeedInsights } from '@vercel/speed-insights/next';
+
 
 const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -20,7 +22,10 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
       <div className="w-[86%] md:w-[92%] lg:w-[84%] xl:w-[86%] bg-dark-300 flex flex-col">
         <Navbar />
         
-        <div className="h-full w-full p-2">{children}</div>
+        <div className="h-full w-full p-2">
+          {children}
+          <SpeedInsights />
+          </div>
       </div>
     </div>
   );
