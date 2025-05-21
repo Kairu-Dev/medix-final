@@ -3,10 +3,42 @@
 import { useState } from 'react';
 import { CreditCard, DollarSign, Loader2 } from 'lucide-react';
 
-export default function PayButton({ payment = { id: '1747795081903', total_amount: 250, discount: 0, amount_paid: 0, receipt_number: '1234', patient: { first_name: '', last_name: '', phone: '', email: '' } } }) {
+interface PaymentPatient {
+  first_name: string;
+  last_name: string;
+  phone: string;
+  email: string;
+}
+
+interface PaymentProps {
+  id: string;
+  total_amount: number;
+  discount: number;
+  amount_paid: number;
+  receipt_number: string;
+  patient: PaymentPatient;
+}
+
+interface PayButtonProps {
+  payment?: PaymentProps;
+}
+
+export function PayButton({ payment = { 
+  id: '1747795081903', 
+  total_amount: 250, 
+  discount: 0, 
+  amount_paid: 0, 
+  receipt_number: '1234', 
+  patient: { 
+    first_name: '', 
+    last_name: '', 
+    phone: '', 
+    email: '' 
+  } 
+} }: PayButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showPaymentOptions, setShowPaymentOptions] = useState(false);
-  const [selectedMethod, setSelectedMethod] = useState(null);
+  const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     customerName: '',
     phone: '',
@@ -22,7 +54,7 @@ export default function PayButton({ payment = { id: '1747795081903', total_amoun
   const balance = payment.total_amount - payment.discount - payment.amount_paid;
   const hasBalance = balance > 0;
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -31,7 +63,7 @@ export default function PayButton({ payment = { id: '1747795081903', total_amoun
     setShowPaymentOptions(!showPaymentOptions);
   };
 
-  const initiatePayment = async (method) => {
+  const initiatePayment = async (method: string) => {
     setIsLoading(true);
     setSelectedMethod(method);
     
@@ -165,7 +197,7 @@ export default function PayButton({ payment = { id: '1747795081903', total_amoun
   };
 
   // Function to listen for payment status updates
-  const listenToPayment = async (paymentIntentId, clientKey) => {
+  const listenToPayment = async (paymentIntentId: string, clientKey: string) => {
     let attempts = 5;
     
     const checkStatus = async () => {
@@ -329,7 +361,7 @@ export default function PayButton({ payment = { id: '1747795081903', total_amoun
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border rounded-md focus:ring-emerald-500 focus:border-emerald-500"
                       placeholder="XXXX XXXX XXXX XXXX"
-                      maxLength="19"
+                      maxLength={19}
                       required
                     />
                   </div>
@@ -344,7 +376,7 @@ export default function PayButton({ payment = { id: '1747795081903', total_amoun
                         onChange={handleInputChange}
                         className="w-full px-3 py-2 border rounded-md focus:ring-emerald-500 focus:border-emerald-500"
                         placeholder="MM"
-                        maxLength="2"
+                        maxLength={2}
                         required
                       />
                     </div>
@@ -358,7 +390,7 @@ export default function PayButton({ payment = { id: '1747795081903', total_amoun
                         onChange={handleInputChange}
                         className="w-full px-3 py-2 border rounded-md focus:ring-emerald-500 focus:border-emerald-500"
                         placeholder="YY"
-                        maxLength="2"
+                        maxLength={2}
                         required
                       />
                     </div>
@@ -373,7 +405,7 @@ export default function PayButton({ payment = { id: '1747795081903', total_amoun
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border rounded-md focus:ring-emerald-500 focus:border-emerald-500"
                       placeholder="123"
-                      maxLength="4"
+                      maxLength={4}
                       required
                     />
                   </div>
@@ -404,159 +436,3 @@ export default function PayButton({ payment = { id: '1747795081903', total_amoun
     </div>
   );
 }
-
-
-
-
-
-
-{/*'use client';
-
-import { useState } from 'react';
-import { CreditCard, DollarSign, Loader2 } from 'lucide-react';
-
-export function PayButton({ payment, onPaymentComplete }) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [showPaymentOptions, setShowPaymentOptions] = useState(false);
-  const [selectedMethod, setSelectedMethod] = useState(null);
-
-  const balance = payment.total_amount - payment.discount - payment.amount_paid;
-  const hasBalance = balance > 0;
-
-  const handlePayNow = () => {
-    setShowPaymentOptions(!showPaymentOptions);
-  };
-
-  const initiatePayment = async (method) => {
-    setIsLoading(true);
-    setSelectedMethod(method);
-    
-    try {
-      // Create payment intent
-      const response = await fetch('/api/payments/createPaymentIntentV2', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          data: {
-            attributes: {
-              amount: Math.round(balance * 100), // Convert to centavos (Paymongo requires integer)
-              payment_method_allowed: [method],
-              payment_method_options: {
-                card: {
-                  request_three_d_secure: 'any'
-                }
-              },
-              currency: 'PHP',
-              description: `Payment for Receipt #${payment.receipt_number}`,
-              statement_descriptor: 'MedSys Clinic'
-            }
-          }
-        }),
-      });
-
-      const result = await response.json();
-      
-      if (method === 'card') {
-        // Redirect to card payment page with intent ID
-        window.location.href = `/payment/card?intent_id=${result.body.data.id}&payment_id=${payment.id}`;
-      } else if (method === 'gcash' || method === 'grabpay') {
-        // Create source for e-wallets
-        const sourceResponse = await fetch('/api/payments/createSource', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            data: {
-              attributes: {
-                amount: Math.round(balance * 100),
-                redirect: {
-                  success: `${window.location.origin}/payment/success?payment_id=${payment.id}`,
-                  failed: `${window.location.origin}/payment/failed?payment_id=${payment.id}`
-                },
-                billing: {
-                  name: `${payment.patient.first_name} ${payment.patient.last_name}`,
-                  phone: payment.patient.phone,
-                  email: payment.patient.email || `patient${payment.patient.id}@example.com` // Add email field
-                },
-                type: method,
-                currency: 'PHP'
-              }
-            }
-          }),
-        });
-        
-        const sourceResult = await sourceResponse.json();
-        // Redirect to checkout URL provided by Paymongo
-        window.location.href = sourceResult.body.data.attributes.redirect.checkout_url;
-      }
-    } catch (error) {
-      console.error('Payment initiation failed:', error);
-      alert('Payment initiation failed. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // If payment is already fully paid, don't show the button
-  if (!hasBalance) {
-    return null;
-  }
-
-  return (
-    <div className="mt-4">
-      <button
-        onClick={handlePayNow}
-        disabled={isLoading}
-        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-3 rounded-lg border border-emerald-500/50 transition-colors duration-200 flex items-center justify-center gap-2"
-      >
-        {isLoading ? (
-          <>
-            <Loader2 className="h-5 w-5 animate-spin" />
-            <span>Processing...</span>
-          </>
-        ) : (
-          <>
-            <CreditCard className="h-5 w-5" />
-            <span>Pay Now (₱{balance.toFixed(2)})</span>
-          </>
-        )}
-      </button>
-
-      {showPaymentOptions && !isLoading && (
-        <div className="mt-3 bg-gray-900/90 rounded-lg border border-emerald-500/30 p-3 animate-fadeIn">
-          <h4 className="text-emerald-300 font-mono text-sm mb-2">SELECT PAYMENT METHOD</h4>
-          
-          <div className="grid grid-cols-1 gap-2">
-            <button
-              onClick={() => initiatePayment('card')}
-              className="bg-emerald-900/60 hover:bg-emerald-800/60 text-white px-3 py-2 rounded border border-emerald-500/30 transition-colors duration-200 flex items-center gap-2"
-            >
-              <CreditCard className="h-4 w-4 text-emerald-400" />
-              <span>Credit/Debit Card</span>
-            </button>
-            
-            <button
-              onClick={() => initiatePayment('gcash')}
-              className="bg-emerald-900/60 hover:bg-emerald-800/60 text-white px-3 py-2 rounded border border-emerald-500/30 transition-colors duration-200 flex items-center gap-2"
-            >
-              <DollarSign className="h-4 w-4 text-emerald-400" />
-              <span>GCash</span>
-            </button>
-            
-            <button
-              onClick={() => initiatePayment('grabpay')}
-              className="bg-emerald-900/60 hover:bg-emerald-800/60 text-white px-3 py-2 rounded border border-emerald-500/30 transition-colors duration-200 flex items-center gap-2"
-            >
-              <DollarSign className="h-4 w-4 text-emerald-400" />
-              <span>GrabPay</span>
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-  */}

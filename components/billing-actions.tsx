@@ -1,8 +1,9 @@
+
 'use client';
-// components/ClientPaymentButton.tsx
-  /* eslint-disable */
+// components/billing-actions.tsx
+/* eslint-disable */
 import { useState } from 'react';
-import  PayButton  from './PayButton'; // Import the original PayButton
+import { PayButton } from './PayButton'; // Import using the named export
 
 interface ClientPaymentButtonProps {
   payment: any; // Replace 'any' with the appropriate type for 'payment' if known
