@@ -157,7 +157,7 @@ const columns = [
         
         <td>
             
-                <ViewAction href={`/record/appointments/${item?.appointment_id}?category=billing`} 
+                <ViewAction href={`/record/payments/${item?.appointment_id}?category=billing`} 
                 
                 />
 
