@@ -9,6 +9,7 @@ const AppointmentQuickLinks = async({ staffId, patientId }: { staffId: string, p
     const isPatient = await checkRole("PATIENT");
     const isAdmin = await checkRole("ADMIN");
     const isDoctor = await checkRole("DOCTOR");
+    const isNurse = await checkRole("NURSE");
 
     // Debug log to check values
     console.log("AppointmentQuickLinks received patientId:", patientId);
@@ -67,12 +68,16 @@ const AppointmentQuickLinks = async({ staffId, patientId }: { staffId: string, p
                   </Link>
                 )}
                 
+                
+                {!isNurse && (
                 <Link 
                 href="?category=billing"
                 className="px-4 py-2 rounded-lg bg-amber-900 text-amber-100 border border-amber-500/50 hover:bg-amber-800 transition-colors duration-200 shadow-md hover:shadow-amber-500/20"
                 >
                 Bills
                 </Link>
+                )}
+                
                 <Link 
                 href="?category=medical-history"
                 className="px-4 py-2 rounded-lg bg-red-900 text-red-100 border border-red-500/50 hover:bg-red-800 transition-colors duration-200 shadow-md hover:shadow-red-500/20"
@@ -80,13 +85,15 @@ const AppointmentQuickLinks = async({ staffId, patientId }: { staffId: string, p
                 Medical History
                 </Link>
 
+                {!isNurse && (
                 <Link 
                 href="?category=payments"
                 className="px-4 py-2 rounded-lg bg-purple-900 text-purple-100 border border-purple-500/50 hover:bg-purple-800 transition-colors duration-200 shadow-md hover:shadow-purple-500/20"
                 >
                 Payments
                 </Link>
-
+                )}
+                
                 <VisuallyHidden>
                 <Link 
                 href="?category=lab-test"

@@ -295,3 +295,30 @@ export async function getReferralById(referralId: string) {
     return { success: false, message: "Failed to fetch referral", status: 500 };
   }
 }
+
+// Add this server action to your referral-utils.ts
+export async function sendReferralNotification(referralData: any) {
+  try {
+    const { sendReferralEmail } = await import("@/lib/email-service");
+    
+    const emailData = {
+      patientName: referralData.patientName,
+      referringDoctorName: referralData.referringDoctorName,
+      referredDoctorName: referralData.referredDoctorName,
+      referredDepartment: referralData.referredDepartment,
+      referralType: referralData.referralType,
+      urgency: referralData.urgency,
+      reasonForReferral: referralData.reasonForReferral,
+      referralNumber: referralData.referralNumber,
+      appointmentInstructions: referralData.appointmentInstructions
+    };
+
+    const result = await sendReferralEmail(referralData.patientEmail, emailData);
+    return result;
+  } catch (error) {
+    console.error("Server action email error:", error);
+    return { success: false, error };
+  }
+}
+
+

@@ -32,7 +32,8 @@ import {
   createReferral as createReferralAction, 
   getPatientById as getPatientByIdAction, 
   getDoctorById as getDoctorByIdAction, 
-  getAllDoctors as getAllDoctorsAction 
+  getAllDoctors as getAllDoctorsAction,
+  sendReferralNotification 
 } from "@/utils/services/referral-utils";
 import { SPECIALIZATION } from '@/utils/setting';
 
@@ -207,7 +208,7 @@ export const ReferralForm = ({
     // Add patient_id and new referral number to the form data
     const referralData = {
       ...values,
-      referral_number: uniqueReferralNumber, // Use the newly generated number
+      referral_number: uniqueReferralNumber,
       patient_id: patientId.trim()
     };
     
@@ -215,7 +216,38 @@ export const ReferralForm = ({
     const result = await createReferralAction(referralData);
     
     if (result.success) {
-      toast.success("Referral created successfully!");
+      // Send referral email to patient
+      if (patient?.email) {
+        const referredDoctor = externalReferral 
+          ? values.external_doctor_name 
+          : doctors.find(doc => doc.id === values.referred_to_doctor_id)?.name || 'Specialist';
+        
+        const emailNotificationData = {
+          patientEmail: patient.email,
+          patientName: `${patient.first_name} ${patient.last_name}`,
+          referringDoctorName: currentDoctor?.name || 'Your Doctor',
+          referredDoctorName: referredDoctor,
+          referredDepartment: departments.find(dept => dept.value === values.referred_department)?.label || values.referred_department,
+          referralType: REFERRAL_TYPES.find(type => type.value === values.referral_type)?.label || values.referral_type,
+          urgency: URGENCY_TYPES.find(urgency => urgency.value === values.urgency)?.label || values.urgency,
+          reasonForReferral: values.reason_for_referral,
+          referralNumber: uniqueReferralNumber,
+          appointmentInstructions: externalReferral 
+            ? `Please contact ${values.external_facility || 'the external facility'} at ${values.external_contact || 'the provided contact information'} to schedule your appointment.`
+            : undefined
+        };
+
+        try {
+          await sendReferralNotification(emailNotificationData);
+          toast.success("Referral created and notification email sent successfully!");
+        } catch (emailError) {
+          console.error("Failed to send referral email:", emailError);
+          toast.success("Referral created successfully, but email notification failed to send.");
+        }
+      } else {
+        toast.success("Referral created successfully!");
+      }
+      
       form.reset();
       router.refresh();
     } else {

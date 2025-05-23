@@ -1,7 +1,8 @@
 import nodemailer from 'nodemailer';
-import { CancelledAppointmentEmail, ScheduledAppointmentEmail, AppointmentEmailProps } from '@/components/email-template';
+import { CancelledAppointmentEmail, ScheduledAppointmentEmail, AppointmentEmailProps, DoctorWelcomeEmailProps, DoctorWelcomeEmail } from '@/components/email-template';
 import { renderAsync } from '@react-email/components';
 import React from 'react';
+import { ReferralEmail, ReferralEmailProps } from '@/components/email-template';
 
 // Create a transporter using Gmail
 const transporter = nodemailer.createTransport({
@@ -57,6 +58,78 @@ export async function sendAppointmentEmail(
   }
 }
 
+export async function sendReferralEmail(
+  patientEmail: string,
+  referralData: ReferralEmailProps
+) {
+  try {
+    // Create the referral email component
+    const emailComponent = React.createElement(ReferralEmail, referralData);
+
+    // Render the React component to HTML
+    const html = await renderAsync(emailComponent);
+
+    // Send the email using Nodemailer
+    const info = await transporter.sendMail({
+      from: '"Medix - Centro Medico" <' + process.env.GMAIL_USER + '>',
+      to: [patientEmail],
+      subject: `Medical Referral - ${referralData.referralNumber}`,
+      html,
+      headers: {
+        'X-Priority': '1', // High priority
+        'Importance': 'high',
+        'X-MSMail-Priority': 'High'
+      }
+    });
+
+    console.log('Referral email sent successfully:');
+    console.log('- Message ID:', info.messageId);
+    console.log('- Accepted recipients:', info.accepted);
+    console.log('- Response:', info.response);
+
+    return { success: true, data: info };
+  } catch (error) {
+    console.error('Referral email service error:', error);
+    return { success: false, error };
+  }
+}
+
+export async function sendDoctorWelcomeEmail(
+  to: string,
+  doctorData: DoctorWelcomeEmailProps
+) {
+  try {
+    // Create the email component with React.createElement
+    const emailComponent = React.createElement(DoctorWelcomeEmail, doctorData);
+
+    // Render the React component to HTML
+    const html = await renderAsync(emailComponent);
+
+    // Send the email using Nodemailer
+    const info = await transporter.sendMail({
+      from: '"MEDIX IHMS - Admin" <' + process.env.GMAIL_USER + '>',
+      to: [to],
+      subject: 'Welcome to MEDIX IHMS - Your Account Credentials',
+      html,
+      headers: {
+        'X-Priority': '1', // High priority
+        'Importance': 'high',
+        'X-MSMail-Priority': 'High'
+      }
+    });
+
+    // Enhanced logging
+    console.log('Doctor welcome email sent successfully:');
+    console.log('- Message ID:', info.messageId);
+    console.log('- Accepted recipients:', info.accepted);
+    console.log('- Response:', info.response);
+
+    return { success: true, data: info };
+  } catch (error) {
+    console.error('Doctor welcome email service error:', error);
+    return { success: false, error };
+  }
+}
 
 
 {/*// lib/email-service.ts

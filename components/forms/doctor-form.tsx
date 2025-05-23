@@ -20,7 +20,7 @@ import { CustomInput, SwitchInput } from "../custom-input";
 import { Label } from "../ui/label";
 import { toast } from "sonner";
 import { DoctorSchema } from "@/lib/validation";
-import { createNewDoctor } from "@/app/actions/admin-action";
+import { createNewDoctor, sendWelcomeDoctorEmailAction } from "@/app/actions/admin-action";
 import { SPECIALIZATION } from "@/utils/setting";
  /* eslint-disable */
 
@@ -75,16 +75,40 @@ export const DoctorForm = () => {
         toast.error("Please select work schedule");
         return;
       }
-
+  
       setIsLoading(true);
       const resp = await createNewDoctor({
         ...values,
         work_schedule: workSchedule,
       });
-
+  
       if (resp.success) {
         toast.success("Doctor added successfully!");
-
+        
+        // Send welcome email to the doctor using server action
+        try {
+          const emailResult = await sendWelcomeDoctorEmailAction(values.email, {
+            doctorName: values.name,
+            doctorEmail: values.email,
+            password: values.password!,
+            adminName: "System Administrator", // You can get this from your auth context or make it dynamic
+            specialization: values.specialization,
+            department: values.department,
+            licenseNumber: values.license_number,
+            workSchedule: workSchedule,
+          });
+  
+          if (emailResult.success) {
+            toast.success("Welcome email sent to doctor successfully!");
+          } else {
+            toast.error("Doctor added but failed to send welcome email");
+            console.error("Email error:", emailResult.error);
+          }
+        } catch (emailError) {
+          console.error("Failed to send welcome email:", emailError);
+          toast.error("Doctor added but failed to send welcome email");
+        }
+  
         setWorkSchedule([]);
         form.reset();
         router.refresh();

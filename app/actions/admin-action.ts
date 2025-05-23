@@ -1,6 +1,7 @@
 "use server";
 
 import db from "@/lib/db";
+import { sendDoctorWelcomeEmail } from "@/lib/email-service";
 import { DoctorSchema, ServicesSchema, StaffSchema, WorkingDaysSchema } from "@/lib/validation";
 import { generateRandomColor } from "@/utils";
 import { checkRole } from "@/utils/roles";
@@ -172,3 +173,30 @@ export async function createNewStaff(data: any) {
       return { success: false, msg: "Internal Server Error" };
     }
   }
+
+
+export async function sendWelcomeDoctorEmailAction(
+  email: string,
+  doctorData: {
+    doctorName: string;
+    doctorEmail: string;
+    password: string;
+    adminName: string;
+    specialization: string;
+    department: string;
+    licenseNumber: string;
+    workSchedule: Array<{
+      day: string;
+      start_time?: string;
+      close_time?: string;
+    }>;
+  }
+) {
+  try {
+    const result = await sendDoctorWelcomeEmail(email, doctorData);
+    return result;
+  } catch (error) {
+    console.error("Failed to send doctor welcome email:", error);
+    return { success: false, error: "Failed to send welcome email" };
+  }
+}
