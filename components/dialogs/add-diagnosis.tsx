@@ -26,7 +26,11 @@ interface AddDiagnosisProps {
   doctorId: string;
   appointmentId: string;
   medicalId: string;
+
+  isNurse?: boolean;
 }
+
+
 
 export type DiagnosisFormData = z.infer<typeof DiagnosisSchema>;
 export const AddDiagnosis = ({
@@ -34,6 +38,7 @@ export const AddDiagnosis = ({
   doctorId,
   appointmentId,
   medicalId,
+  isNurse = false,
 }: AddDiagnosisProps) => {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -75,17 +80,18 @@ export const AddDiagnosis = ({
 
   return (
     <>
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button
-            variant={"outline"}
-            size={"lg"}
-            className="bg-gradient-to-r from-emerald-700 to-emerald-900 text-emerald-100 mt-4 border border-emerald-500/40 shadow-[0_0_15px_rgba(52,211,153,0.3)] font-mono uppercase tracking-wider hover:bg-emerald-800 transition-all duration-300"
-          >
-            <Plus size={22} className="text-emerald-300 mr-2" />
-            Add Diagnosis
-          </Button>
-        </DialogTrigger>
+      {!isNurse && (
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button
+              variant={"outline"}
+              size={"lg"}
+              className="bg-gradient-to-r from-emerald-700 to-emerald-900 text-emerald-100 mt-4 border border-emerald-500/40 shadow-[0_0_15px_rgba(52,211,153,0.3)] font-mono uppercase tracking-wider hover:bg-emerald-800 transition-all duration-300"
+            >
+              <Plus size={22} className="text-emerald-300 mr-2" />
+              Add Diagnosis
+            </Button>
+          </DialogTrigger>
 
         <DialogContent className="sm:max-w-[60%] 2xl:max-w-[40%] bg-gradient-to-b from-gray-900/90 to-gray-950/90 border border-emerald-500/40 rounded-xl shadow-lg backdrop-blur-sm">
           {/* Decorative corners */}
@@ -169,6 +175,7 @@ export const AddDiagnosis = ({
           </Form>
         </DialogContent>
       </Dialog>
+      )}
     </>
   );
 };

@@ -17,9 +17,13 @@ export const DiagnosisContainer = async({
     id: string;
 }) => {
    
+    const isNurse = await checkRole("NURSE");
     const {userId} = await auth();
 
     if(!userId) redirect("/sign-in");
+
+   
+
 
     const data = await db.medicalRecords.findFirst({
         where: { appointment_id: Number(id) },
@@ -80,6 +84,8 @@ export const DiagnosisContainer = async({
                                         doctorId={doctorId}
                                         appointmentId={id}
                                         medicalId={data?.id.toString() || ""}
+                                        isNurse={isNurse} // <- ADD THIS LINE
+
                                         />
                                     )}
                             </CardHeader>

@@ -14,6 +14,33 @@ import {
 
 } from '@react-email/components';
 
+export interface ReferralEmailProps {
+  patientName: string;
+  referringDoctorName: string;
+  referredDoctorName: string;
+  referredDepartment: string;
+  referralType: string;
+  urgency: string;
+  reasonForReferral: string;
+  referralNumber: string;
+  appointmentInstructions?: string;
+}
+
+export interface DoctorWelcomeEmailProps {
+  doctorName: string;
+  doctorEmail: string;
+  password: string;
+  adminName: string;
+  specialization: string;
+  department: string;
+  licenseNumber: string;
+  workSchedule: Array<{
+    day: string;
+    start_time?: string;
+    close_time?: string;
+  }>;
+}
+
 export interface AppointmentEmailProps {
   patientName: string;
   doctorName: string;
@@ -225,4 +252,161 @@ const styles = {
     textAlign: 'center' as const,
     margin: '20px 0',
   },
+};
+
+export const ReferralEmail: React.FC<ReferralEmailProps> = ({
+  patientName,
+  referringDoctorName,
+  referredDoctorName,
+  referredDepartment,
+  referralType,
+  urgency,
+  reasonForReferral,
+  referralNumber,
+  appointmentInstructions,
+}) => {
+  return (
+    <Html>
+      <Head />
+      <Preview>You have been referred to a specialist</Preview>
+      <Body style={styles.body}>
+        <Container style={styles.container}>
+          <Heading style={styles.header}>Medical Referral Notification</Heading>
+          <Section style={styles.section}>
+            <Text style={styles.text}>Dear {patientName},</Text>
+            <Text style={styles.text}>
+              Dr. {referringDoctorName} has referred you to a specialist for further evaluation and care.
+            </Text>
+            
+            <Section style={styles.detailsSection}>
+              <Text style={styles.detailsHeading}>Referral Details:</Text>
+              <Text style={styles.detailsText}>• <strong>Referral Number:</strong> {referralNumber}</Text>
+              <Text style={styles.detailsText}>• <strong>Referred to:</strong> Dr. {referredDoctorName}</Text>
+              <Text style={styles.detailsText}>• <strong>Department:</strong> {referredDepartment}</Text>
+              <Text style={styles.detailsText}>• <strong>Referral Type:</strong> {referralType}</Text>
+              <Text style={styles.detailsText}>• <strong>Urgency Level:</strong> {urgency}</Text>
+              <Text style={styles.detailsText}>• <strong>Reason:</strong> {reasonForReferral}</Text>
+            </Section>
+            
+            <Text style={styles.text}>
+              {appointmentInstructions || 
+                "Please contact the specialist's office to schedule your appointment. They will be expecting your call and have received your referral information."
+              }
+            </Text>
+            
+            <Text style={styles.text}>
+              <strong>Important:</strong> Please bring this referral number ({referralNumber}) when you visit the specialist, along with your insurance card and any relevant medical records.
+            </Text>
+            
+            <Button style={styles.button} href="https://medix-final.vercel.app/">
+              Schedule Your Appointment
+            </Button>
+            
+            <Text style={styles.text}>
+            If you have any questions about this referral, please contact Dr. {referringDoctorName}&apos;s office.
+            </Text>
+            
+            <Text style={styles.text}>
+              Best regards,<br />
+              The Medical Team
+            </Text>
+          </Section>
+          <Hr style={styles.hr} />
+          <Text style={styles.footer}>
+            © {new Date().getFullYear()} MEDIX IHMS. All rights reserved.
+          </Text>
+        </Container>
+      </Body>
+    </Html>
+  );
+};
+
+export const DoctorWelcomeEmail: React.FC<DoctorWelcomeEmailProps> = ({
+  doctorName,
+  doctorEmail,
+  password,
+  adminName,
+  specialization,
+  department,
+  licenseNumber,
+  workSchedule,
+}) => {
+  const formatWorkSchedule = () => {
+    return workSchedule.map(schedule => {
+      const timeRange = schedule.start_time && schedule.close_time 
+        ? `${schedule.start_time} - ${schedule.close_time}`
+        : 'Full Day';
+      return `${schedule.day.charAt(0).toUpperCase() + schedule.day.slice(1)}: ${timeRange}`;
+    }).join('\n');
+  };
+
+  return (
+    <Html>
+      <Head />
+      <Preview>Welcome to MEDIX IHMS - Your account has been created</Preview>
+      <Body style={styles.body}>
+        <Container style={styles.container}>
+          <Heading style={{...styles.header, color: '#059669'}}>Welcome to MEDIX IHMS</Heading>
+          <Section style={styles.section}>
+            <Text style={styles.text}>Dear Dr. {doctorName},</Text>
+            <Text style={styles.text}>
+              Welcome to the MEDIX Integrated Hospital Management System! Your account has been successfully created by <strong>{adminName}</strong>.
+            </Text>
+            
+            <Section style={styles.detailsSection}>
+              <Text style={styles.detailsHeading}>Your Account Details:</Text>
+              <Text style={styles.detailsText}>• <strong>Email:</strong> {doctorEmail}</Text>
+              <Text style={styles.detailsText}>• <strong>Password:</strong> {password}</Text>
+              <Text style={styles.detailsText}>• <strong>Specialization:</strong> {specialization}</Text>
+              <Text style={styles.detailsText}>• <strong>Department:</strong> {department}</Text>
+              <Text style={styles.detailsText}>• <strong>License Number:</strong> {licenseNumber}</Text>
+            </Section>
+
+            {workSchedule.length > 0 && (
+              <Section style={styles.detailsSection}>
+                <Text style={styles.detailsHeading}>Your Work Schedule:</Text>
+                <Text style={{...styles.detailsText, whiteSpace: 'pre-line', fontFamily: 'monospace'}}>
+                  {formatWorkSchedule()}
+                </Text>
+              </Section>
+            )}
+            
+            <Text style={styles.text}>
+              <strong>Important Security Notice:</strong> For your security, please change your password after your first login. You can do this by accessing your profile settings.
+            </Text>
+            
+            <Button style={{...styles.button, backgroundColor: '#059669'}} href="https://medix-final.vercel.app/">
+              Access MEDIX System
+            </Button>
+            
+            <Text style={styles.text}>
+              <strong>Getting Started:</strong>
+            </Text>
+            <Text style={styles.text}>
+              1. Click the button above to access the system<br />
+              2. Log in using your credentials<br />
+              3. Complete your profile information<br />
+              4. Change your default password<br />
+              5. Familiarize yourself with the dashboard
+            </Text>
+            
+            <Text style={styles.text}>
+            If you have any questions or need assistance getting started, please don&apos;t hesitate to contact the system administrator or IT support team.
+            </Text>
+            
+            <Text style={styles.text}>
+              Best regards,<br />
+              The MEDIX IHMS Team<br />
+              Administrator: {adminName}
+            </Text>
+          </Section>
+          <Hr style={styles.hr} />
+          <Text style={styles.footer}>
+            © {new Date().getFullYear()} MEDIX IHMS. All rights reserved.<br />
+            This is an automated message. Please do not reply to this email.
+          </Text>
+        </Container>
+      </Body>
+    </Html>
+  );
 };

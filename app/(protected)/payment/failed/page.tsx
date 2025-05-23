@@ -92,7 +92,7 @@ function PaymentFailedContent() {
           
           <Link href="/" className="w-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-colors duration-200">
             <ArrowLeft className="h-4 w-4" />
-            <span>Return to Home</span>
+            <span>Back to Dashboard</span>
           </Link>
         </div>
       </div>

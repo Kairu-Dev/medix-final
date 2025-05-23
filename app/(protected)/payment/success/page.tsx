@@ -107,11 +107,11 @@ function PaymentVerification() {
           )}
           
           <Link 
-            href={`/record/appointments/${appointmentId || paymentId}?cat=bills`}
-            className="inline-flex items-center justify-center gap-2 bg-emerald-900/70 hover:bg-emerald-800/70 text-emerald-100 px-4 py-2 rounded-lg border border-emerald-500/30 transition-colors duration-200 w-full"
+href="/"
+className="inline-flex items-center justify-center gap-2 bg-emerald-900/70 hover:bg-emerald-800/70 text-emerald-100 px-4 py-2 rounded-lg border border-emerald-500/30 transition-colors duration-200 w-full"
           >
             <ArrowLeft size={16} />
-            <span>Back to Billing</span>
+            <span>Back to Dashboard</span>
           </Link>
         </div>
       </div>
