@@ -59,35 +59,41 @@
         },
       ];
     
-    interface DataProps {
-      id: number;
-      patient_id: string;
-      doctor_id: string;
-      appointment_date: Date;
-      time: string;
-      status: any; // Replace with actual AppointmentStatus type if available
-      type: string;
-      priority_level: PriorityLevel;
-      priority_score: number;
-      priority_override: boolean;
-      patient: {
-        id: string;
-        first_name: string;
-        last_name: string;
-        phone: string;
-        gender: string;
-        img: string | null;
-        date_of_birth: Date;
-        colorCode: string | null;
-      };
-      doctor: {
-        id: string;
-        name: string;
-        specialization: string;
-        colorCode: string | null;
-        img: string | null;
-      };
-    }
+      interface DataProps {
+        id: number;
+        patient_id: string;
+        doctor_id: string;
+        appointment_date: Date;
+        time: string;
+        status: any;
+        type: string;
+        priority_level: PriorityLevel;
+        priority_score: number;
+        priority_override: boolean;
+        booked_by?: string | null; // Make this optional
+        patient: {
+          id: string;
+          first_name: string;
+          last_name: string;
+          phone: string;
+          gender: string;
+          img: string | null;
+          date_of_birth: Date;
+          colorCode: string | null;
+        };
+        doctor: {
+          id: string;
+          name: string;
+          specialization: string;
+          colorCode: string | null;
+          img: string | null;
+        };
+        bookedByStaff?: { // Add this
+          id: string;
+          name: string;
+          role: string;
+        };
+      }
     
     // Define the type for priority counts
     type PriorityCountsType = {
@@ -159,24 +165,31 @@
         }, {});
     
         const renderItem = (item: DataProps) => {
-            const patient_name = `${item.patient.first_name} ${item.patient.last_name}`;
-            return <tr key={item.id}
-            className="border-b border-emerald-500/30 even:bg-emerald-900/30 text-emerald-50 hover:bg-emerald-800/40 transition-colors duration-200"
-            >
-            <td className="flex items-center gap-2 md:gap-4 py-2 xl:py-4">
-              <ProfileImage
-                url={item.patient.img || undefined}
-                name={patient_name}
-                bgColor={item.patient.colorCode || undefined}
-              />
-              <div>
-                
-                <h3 className="uppercase font-mono tracking-wider text-emerald-200">{patient_name}</h3>
+          const patient_name = `${item.patient.first_name} ${item.patient.last_name}`;
+          return <tr key={item.id}
+          className="border-b border-emerald-500/30 even:bg-emerald-900/30 text-emerald-50 hover:bg-emerald-800/40 transition-colors duration-200"
+          >
+          <td className="flex items-center gap-2 md:gap-4 py-2 xl:py-4">
+            <ProfileImage
+              url={item.patient.img || undefined}
+              name={patient_name}
+              bgColor={item.patient.colorCode || undefined}
+            />
+            <div>
+              <h3 className="uppercase font-mono tracking-wider text-emerald-200">{patient_name}</h3>
+              <div className="flex flex-col">
                 <span className="text-xs md:text-sm capitalize text-emerald-300/80">
                   {item.patient.gender.toLowerCase()}
                 </span>
+                {/* Add booked by info */}
+                {item.bookedByStaff && (
+                  <span className="text-xs text-amber-400/80">
+                    Booked by: {item.bookedByStaff.name} ({item.bookedByStaff.role})
+                  </span>
+                )}
               </div>
-            </td>
+            </div>
+          </td>
     
             <td className="hidden md:table-cell text-emerald-200/90">
                {formatDate(item.appointment_date, "yyyy-MM-dd")}

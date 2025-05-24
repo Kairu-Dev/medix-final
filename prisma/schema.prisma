@@ -254,6 +254,10 @@ model Staff {
 
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
+
+    
+  // New relation to track appointments booked by this staff member
+  bookedAppointments Appointment[]
 }
 
 model Appointment {
@@ -274,6 +278,10 @@ model Appointment {
   
   patient           Patient  @relation(fields: [patient_id], references: [id], onDelete: Cascade)
   doctor            Doctor   @relation(fields: [doctor_id], references: [id], onDelete: Cascade)
+  bookedByStaff     Staff?   @relation(fields: [booked_by], references: [id])
+
+  // New field to track who booked the appointment
+  booked_by         String?  // Staff ID who booked the appointment (null for self-bookings)
 
   bills             Payment[]
   medical           MedicalRecords[]
@@ -286,6 +294,7 @@ model Appointment {
 
   @@index([patient_id])
   @@index([doctor_id])
+  @@index([booked_by])
 }
 
 model PriorityAssessment {

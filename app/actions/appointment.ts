@@ -92,6 +92,7 @@ export async function createNewAppointment(data: any) {
         priority_level: data.priority_level || 'NORMAL',
         priority_score: data.priority_score || 0,
         priority_override: data.priority_override || false,
+        booked_by: data.booked_by, // Add this line
         // Create the related priority assessment if provided
         ...(data.priorityAssessment && {
           priorityAssessment: data.priorityAssessment

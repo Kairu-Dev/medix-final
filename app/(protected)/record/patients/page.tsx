@@ -1,5 +1,6 @@
 import { ActionDialog } from '@/components/action-dialog-admin';
 import { ActionOptions, ViewAction } from '@/components/action-options';
+import NurseAppointmentWrapper from '@/components/nurse-appointment-wrapper';
 import { Pagination } from '@/components/pagination';
 import { ProfileImage } from '@/components/profile-image';
 import SearchInput from '@/components/search-input';
@@ -16,7 +17,7 @@ import { format } from 'date-fns';
 import { UserPen, Users } from 'lucide-react';
 import React from 'react'
 
-
+//record/patients/page.tsx
 const columns = [
     {
       header: "Patient Name",
@@ -82,7 +83,7 @@ const columns = [
 
     if (!data) return null;
 
-    const renderRow = (item: PatientProps) => {
+    const renderRow = async (item: PatientProps) => {
         const lastVisit = item?.appointments[0]?.medical[0] || null;
 
         const name = item?.first_name + " " + item?.last_name;
@@ -117,31 +118,36 @@ const columns = [
         }</td>
 
         
-        <td>
-            <div className="flex items-center gap-2">
-                <ViewAction href={`/patient/${item?.id}`} />
-                <ActionOptions>
-                    <div className="space-y-3">
-                        <VisuallyHidden>
-                        <Button className="text-sm font-medium">
-                            <UserPen size={16} className="text-emerald-300"/>
-                            Edit
-                        </Button>
-                        </VisuallyHidden>
+<td>
+    <div className="flex items-center gap-2">
+      
+        <ViewAction href={`/patient/${item?.id}`} />
 
-                        {
-                            isAdmin && <ActionDialog 
-                            type="delete"
-                            id={item.id}
-                            deleteType="patient"
-            
-                            />
-                        }
+        <ActionOptions>
+            <div className="space-y-3">
+                <VisuallyHidden>
+                <Button className="text-sm font-medium">
+                    <UserPen size={16} className="text-emerald-300"/>
+                    Edit
+                </Button>
+                </VisuallyHidden>
 
-                    </div>
-                </ActionOptions>
+                {/* Add NurseAppointmentWrapper for nurses */}
+                {await checkRole("NURSE") && (
+                    <NurseAppointmentWrapper patient={item} />
+                )}
+
+                {
+                    isAdmin && <ActionDialog 
+                    type="delete"
+                    id={item.id}
+                    deleteType="patient"
+                    />
+                }
             </div>
-        </td>
+        </ActionOptions>
+    </div>
+</td>
     </tr>
 
     )};

@@ -120,6 +120,14 @@ export async function getPatientDashboardStatistics(id: string) {
             colorCode: true,
           },
         },
+
+        bookedByStaff: {
+          select: {
+            id: true,
+            name: true,
+            role: true,
+          },
+        },
       },
       orderBy: { appointment_date: "desc" },
     });
