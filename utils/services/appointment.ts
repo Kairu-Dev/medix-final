@@ -15,7 +15,23 @@ export async function getAppointmentById(id: number) {
       where: { id },
       include: {
         doctor: {
-          select: { id: true, name: true, specialization: true, img: true },
+          select: { 
+            id: true, 
+            name: true, 
+            specialization: true, 
+            img: true,
+            department: true,
+            phone: true, // Add doctor's phone
+            license_number: true, // Add license number
+            availability_status: true, // Add availability status
+            working_days: {
+              select: {
+                day: true,
+                start_time: true,
+                close_time: true
+              }
+            }
+          },
         },
         patient: {
           select: {
@@ -27,8 +43,28 @@ export async function getAppointmentById(id: number) {
             img: true,
             address: true,
             phone: true,
+            email: true,
           },
         },
+        bookedByStaff: {
+          select: {
+            id: true,
+            name: true,
+            img: true,
+            role: true,
+            department: true
+          }
+        },
+        priorityAssessment: {
+          select: {
+            id: true,
+            priority_score: true,
+            priority_level: true,
+            notes: true,
+            condition: true,
+            appointment_type: true
+          }
+        }
       },
     });
 

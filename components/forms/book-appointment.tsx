@@ -58,13 +58,19 @@ const TYPES = [
   { label: "Emergency", value: "Emergency" },
 ];
 
+interface EnhancedBookAppointmentProps {
+  data: Patient;
+  doctors: Doctor[];
+  bookedBy?: string; // Staff ID who is booking (for nurses)
+  isNurseBooking?: boolean;
+}
+
 export const EnhancedBookAppointment = ({
   data,
   doctors,
-}: {
-  data: Patient;
-  doctors: Doctor[];
-}) => {
+  bookedBy,
+  isNurseBooking = false,
+}: EnhancedBookAppointmentProps) => {
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPriorityAnalyzer, setShowPriorityAnalyzer] = useState(false);
@@ -159,21 +165,20 @@ export const EnhancedBookAppointment = ({
     try {
       setIsSubmitting(true);
       
-      // Prepare data with priority information
+      // Prepare data with priority information and booked_by field
       const newData = { 
         ...values, 
         patient_id: data?.id!,
-        // Include priority-related fields directly in the appointment
+        booked_by: bookedBy || null, // Include who booked the appointment
         priority_level: values.priority_level,
         priority_score: values.priority_score,
-        // Create a priority assessment entry
         priorityAssessment: {
           create: {
             condition: values.note || "",
             appointment_type: values.type,
             priority_score: values.priority_score,
             priority_level: values.priority_level,
-            notes: `Auto-assigned priority: ${values.priority_level}`,
+            notes: `Auto-assigned priority: ${values.priority_level}${bookedBy ? ` (Booked by nurse)` : ''}`,
             patient_id: data?.id!
           }
         }
@@ -186,7 +191,11 @@ export const EnhancedBookAppointment = ({
         setPriorityInfo(null);
         setShowPriorityAnalyzer(false);
         router.refresh();
-        toast.success("Appointment created successfully");
+        toast.success(
+          isNurseBooking 
+            ? `Appointment booked successfully for ${patientName}` 
+            : "Appointment created successfully"
+        );
       }
     } catch (error) {
       console.log(error);
@@ -194,9 +203,8 @@ export const EnhancedBookAppointment = ({
     } finally {
       setIsSubmitting(false);
     }
-
-    
   };
+
 
   return (
     <Dialog>
@@ -205,20 +213,22 @@ export const EnhancedBookAppointment = ({
           variant="ghost"
           className="w-full flex items-center gap-2 justify-start text-sm font-light bg-emerald-600 text-white hover:bg-emerald-700"
         >
-          <UserPen size={16} /> Book Appointment
+          <UserPen size={16} /> 
+          {isNurseBooking ? `Book for ${patientName}` : 'Book Appointment'}
         </Button>
       </DialogTrigger>
 
       <DraggableDialogContent className="shad-dialog max-h-[90vh] overflow-hidden">
-        {loading ? (
-          <div className="flex items-center justify-center h-full">
-            <span>Loading...</span>
-          </div>
-        ) : (
+      {!loading && (
           <div className="h-full overflow-y-auto p-4 max-h-[85vh]">
             <DialogHeader className="dialog-header border-b pb-2 mb-2 border-emerald-500/20">
-              <DialogTitle className="text-emerald-400">Book Appointment</DialogTitle>
-              <div className="text-xs text-emerald-300/70">Drag anywhere on the background to move</div>
+              <DialogTitle className="text-emerald-400">
+                {isNurseBooking ? `Book Appointment for ${patientName}` : 'Book Appointment'}
+              </DialogTitle>
+              <div className="text-xs text-emerald-300/70">
+                {isNurseBooking && "Booking as nurse"}
+                <br />Drag anywhere on the background to move
+              </div>
             </DialogHeader>
 
             <Form {...form}>
