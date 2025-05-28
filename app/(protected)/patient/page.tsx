@@ -69,7 +69,7 @@ const { data, appointmentCounts, last5Records, totalAppointments, availableDocto
       icon: BriefcaseMedical,
       className: "bg-emerald-600/15",
       iconClassName: "bg-emerald-600/25 text-emerald-600",
-      note: "Successfully appointments",
+      note: "Successfull appointments",
     },
   ];
 

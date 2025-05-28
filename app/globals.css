@@ -378,3 +378,81 @@
 .PhoneInputInput::placeholder {
   color: #1a1d21;
 }
+
+
+/* NUCLEAR OPTION - Switch and Slider Only */
+
+/* Slider Nuclear Styling */
+* [class*="slider"] *,
+* [class*="Slider"] * {
+  background-color: #363a3d !important;
+  border-radius: 9999px !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Slider thumb/handle */
+* [class*="slider"] *[class*="thumb"],
+* [class*="Slider"] *[class*="thumb"],
+* [class*="slider"] button,
+* [class*="Slider"] button {
+  background-color: #ffffff !important;
+  border: 2px solid #2dd4bf !important;
+  box-shadow: 0 2px 8px rgba(45, 212, 191, 0.2) !important;
+  width: 20px !important;
+  height: 20px !important;
+}
+
+/* Slider active/filled portion */
+* [class*="slider"] *[class*="range"],
+* [class*="Slider"] *[class*="range"],
+* [class*="slider"] *[data-state="checked"],
+* [class*="Slider"] *[data-state="checked"] {
+  background-color: #2dd4bf !important;
+}
+
+/* Switch Nuclear Styling */
+* [class*="switch"],
+* [class*="Switch"],
+* [class*="switch"] *,
+* [class*="Switch"] * {
+  background-color: #363a3d !important;
+  border-radius: 9999px !important;
+  transition: all 0.2s ease !important;
+  border: none !important;
+}
+
+/* Switch disabled state - keep container */
+* [class*="switch"][disabled],
+* [class*="Switch"][disabled],
+* [class*="switch"][data-disabled="true"],
+* [class*="Switch"][data-disabled="true"] {
+  background-color: #363a3d !important;
+  opacity: 0.5 !important;
+}
+
+/* Switch when ON/checked */
+* [class*="switch"][data-state="checked"],
+* [class*="Switch"][data-state="checked"],
+* [class*="switch"]:checked,
+* [class*="Switch"]:checked {
+  background-color: #2dd4bf !important;
+}
+
+/* Switch thumb/toggle button */
+* [class*="switch"] *[class*="thumb"],
+* [class*="Switch"] *[class*="thumb"],
+* [class*="switch"] span,
+* [class*="Switch"] span {
+  background-color: #ffffff !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+  transform: translateX(0) !important;
+  transition: transform 0.2s ease !important;
+}
+
+/* Switch thumb when checked */
+* [class*="switch"][data-state="checked"] *[class*="thumb"],
+* [class*="Switch"][data-state="checked"] *[class*="thumb"],
+* [class*="switch"][data-state="checked"] span,
+* [class*="Switch"][data-state="checked"] span {
+  transform: translateX(20px) !important;
+}

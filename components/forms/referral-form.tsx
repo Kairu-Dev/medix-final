@@ -64,7 +64,20 @@ const DEFAULT_DEPARTMENTS = [
   { label: "Oncology", value: "oncology" },
   { label: "Dermatology", value: "dermatology" },
   { label: "General Surgery", value: "general_surgery" },
+  // ADDED - Missing from original DEFAULT_DEPARTMENTS
+  { label: "Emergency", value: "emergency" },
+  { label: "Urgent Care", value: "urgent_care" },
+  { label: "Neurology", value: "neurology" },
+  { label: "Gastroenterology", value: "gastroenterology" },
+  { label: "ENT", value: "ent" },
+  { label: "Endocrinology", value: "endocrinology" },
+  { label: "General Practice", value: "general_practice" },
+  { label: "Psychiatry", value: "psychiatry" },
+  { label: "Ophthalmology", value: "ophthalmology" },
+  { label: "Urology", value: "urology" },
+  { label: "Gynecology", value: "gynecology" },
 ];
+
 
 export const ReferralForm = ({
   patientId,

@@ -195,7 +195,6 @@ model Patient {
 
 
 
-
 model Doctor {
   id                    String   @id
   email                 String   @unique
@@ -469,6 +468,54 @@ model Services {
 
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
+}
+
+// Add these models to your existing schema.prisma file
+
+model KeywordGroup {
+  id          String      @id @default(cuid())
+  name        String      @unique // e.g., "Emergency Symptoms", "Cardiology Keywords"
+  department  String      // e.g., "Emergency", "Cardiology", "General Practice"
+  priority    PriorityLevel @default(NORMAL)
+  baseScore   Int         @default(50) // Base score for this group (0-100)
+  description String?     // Optional description
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  keywords    Keyword[]
+  
+  @@map("keyword_groups")
+}
+
+model Keyword {
+  id            String       @id @default(cuid())
+  text          String       // The actual keyword/phrase
+  weight        Float        @default(1.0) // Weight/importance of this keyword (0.1 to 2.0)
+  isPartialMatch Boolean     @default(false) // Whether this allows partial matching
+  isActive      Boolean      @default(true)
+  color         String?      // Color theme for the keyword badge (optional)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  
+  groupId       String
+  group         KeywordGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  
+  @@unique([text, groupId]) // Prevent duplicate keywords in same group
+  @@map("keywords")
+}
+
+model AdvancedSettings {
+  id                        String   @id @default("global") // Singleton pattern
+  sensitivityLevel          Int      @default(70)
+  showPartialMatches        Boolean  @default(true)
+  enableSymptomCombinations Boolean  @default(true)
+  urgentThreshold           Int      @default(65)
+  emergencyThreshold        Int      @default(85)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  @@map("advanced_settings")
 }
 
 
