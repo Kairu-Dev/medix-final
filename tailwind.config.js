@@ -16,6 +16,9 @@ module.exports = {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['var(--font-sans)', 'Fira Code', 'monospace'],
+      },
       colors: {
         green: {
           500: "#24AE7C",

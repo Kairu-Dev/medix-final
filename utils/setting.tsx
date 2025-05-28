@@ -96,4 +96,31 @@ export const SPECIALIZATION = [
       value: "geriatrician",
       department: "Geriatrics",
     },
+
+
+    // ADDED - Missing from original SPECIALIZATION list
+    {
+      label: "Emergency Medicine Physician",
+      value: "emergency medicine physician",
+      department: "Emergency",
+    },
+
+    {
+      label: "Urgent Care Physician",
+      value: "urgent care physician",
+      department: "Urgent Care",
+    },
+
+    {
+      label: "General Practitioner",
+      value: "general practitioner",
+      department: "General Practice",
+    },
+
+    {
+      label: "General Surgeon",
+      value: "general surgeon",
+      department: "General Surgery",
+    },
+
   ];
