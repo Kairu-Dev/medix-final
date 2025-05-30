@@ -140,7 +140,7 @@ export const DraggableDialogContent = ({
   return (
     <DialogContent
       ref={dialogRef}
-      className={`bg-black-800 rounded-xl rounded-r-2xl md:h-p-[95%] lg:h-p-[90%] w-full absolute shadow-lg ${
+      className={`bg-black-800 rounded-xl rounded-r-2xl w-full absolute shadow-lg ${
         isDragging ? "cursor-grabbing" : "cursor-grab"
       } ${className || ""}`}
       style={{
@@ -148,8 +148,11 @@ export const DraggableDialogContent = ({
         top: `${position.y}px`,
         left: `${position.x}px`,
         transform: "none",
-        maxWidth: "90vw",
-        width: "500px",
+        maxWidth: "100vw",
+        width: "800px",
+        minHeight: "400px",
+        maxHeight: "85vh",
+        height: "auto",
         margin: 0,
         transition: isDragging ? "none" : "transform 0.05s ease-out",
       }}

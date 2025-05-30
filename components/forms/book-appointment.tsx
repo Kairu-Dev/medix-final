@@ -40,6 +40,7 @@ import { toast } from "sonner";
 import { createNewAppointment } from "@/app/actions/appointment";
 import { DraggableDialogContent } from '../Draggable-Content';
 import AppointmentPriorityAnalyzer from '../AppointmentPriorityAnalyzer';
+import { getDoctorLoadFactors } from '@/app/actions/doctor-load';
 
 // Enhanced appointment schema with priority fields
 const EnhancedAppointmentSchema = AppointmentSchema.extend({
@@ -74,6 +75,7 @@ export const EnhancedBookAppointment = ({
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPriorityAnalyzer, setShowPriorityAnalyzer] = useState(false);
+  const [doctorLoadFactors, setDoctorLoadFactors] = useState<Record<string, number>>({});
   const [priorityInfo, setPriorityInfo] = useState<{
     level: PriorityLevel;
     score: number;
@@ -125,6 +127,20 @@ export const EnhancedBookAppointment = ({
         };
     }
   };
+
+  useEffect(() => {
+    if (doctors.length > 0) {
+      const fetchLoadFactors = async () => {
+        const doctorIds = doctors.map(d => d.id);
+        const result = await getDoctorLoadFactors(doctorIds);
+        if (result.success) {
+          setDoctorLoadFactors(result.loadFactors);
+        }
+      };
+      fetchLoadFactors();
+    }
+  }, [doctors]);
+  
 
   // Watch for note changes to enable analyzer automatically
   const note = form.watch("note");
@@ -285,6 +301,7 @@ export const EnhancedBookAppointment = ({
                       appointmentNote={note || ""}
                       doctors={physicians || []}
                       onPriorityAssigned={handlePriorityAssigned}
+                      doctorLoadFactors={doctorLoadFactors}
                     />
                   </div>
                 )}
