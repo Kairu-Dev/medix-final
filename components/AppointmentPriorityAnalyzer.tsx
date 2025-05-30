@@ -1398,7 +1398,7 @@ const AppointmentPriorityAnalyzer: React.FC<AppointmentPriorityAnalyzerProps> = 
           setLastAnalysisResult(resultSignature);
           toast.success(
             `Priority Analysis Complete: ${result.level} (${result.score}/100) - ${result.suggestedDepartment}`,
-            { duration: 5000}
+            { duration: 300}
           );
         }
         
@@ -1628,7 +1628,7 @@ return (
                     <SelectTrigger className="h-7 py-0 px-2 text-sm w-auto min-w-[140px] bg-background/50">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-black-800">
                       {availableDepartments.map((dept) => (
                         <SelectItem key={dept} value={dept}>{dept}</SelectItem>
                       ))}
@@ -1737,7 +1737,7 @@ return (
             <SelectTrigger className="bg-background/50">
               <SelectValue placeholder="Select a doctor..." />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-black-800">
               {(suggestedDoctors.length > 0 ? suggestedDoctors : doctors).map((doctor) => (
                 <SelectItem key={doctor.id} value={doctor.id}>
                   Dr. {doctor.name} - {doctor.specialization || doctor.department || 'General'}
