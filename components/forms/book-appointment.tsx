@@ -64,7 +64,13 @@ interface EnhancedBookAppointmentProps {
   doctors: Doctor[];
   bookedBy?: string; // Staff ID who is booking (for nurses)
   isNurseBooking?: boolean;
+  isNurse?: boolean; // Added this property
+  isAdmin?: boolean;
+  isDoctor?: boolean;
+  userId?: string | null;
 }
+
+
 
 export const EnhancedBookAppointment = ({
   data,

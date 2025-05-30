@@ -138,6 +138,7 @@ const buildQuery = (id?: string, search?: string) => {
   return combinedQuery;
 };
 
+// Updated getPatientAppointments function with optimal hospital ordering
 export async function getPatientAppointments({
   page,
   limit,
@@ -147,8 +148,7 @@ export async function getPatientAppointments({
   try {
     const PAGE_NUMBER = Number(page) <= 0 ? 1 : Number(page);
     const LIMIT = Number(limit) || 10;
-
-    const SKIP = (PAGE_NUMBER - 1) * LIMIT; //0 -9
+    const SKIP = (PAGE_NUMBER - 1) * LIMIT;
 
     const [data, totalRecord] = await Promise.all([
       db.appointment.findMany({
@@ -166,6 +166,7 @@ export async function getPatientAppointments({
           priority_level: true,
           priority_score: true,
           priority_override: true,
+          booked_by: true,
           patient: {
             select: {
               id: true,
@@ -187,8 +188,43 @@ export async function getPatientAppointments({
               img: true,
             },
           },
+          bookedByStaff: {
+            select: {
+              id: true,
+              name: true,
+              role: true,
+            },
+          },
         },
-        orderBy: { appointment_date: "desc" },
+        // OPTIMAL HOSPITAL ORDERING:
+        orderBy: [
+
+          {
+            priority_override: "asc",
+          },
+          // 1. EMERGENCY first (highest medical priority)
+          {
+            priority_level: "desc", // EMERGENCY > URGENT > NORMAL
+          },
+          // 2. Within same priority, highest scores first
+          {
+            priority_score: "desc",
+          },
+          // 3. Manual overrides get priority (staff clinical judgment)
+         
+          // 4. Status priority: SCHEDULED > PENDING > others
+          {
+            status: "asc", // Depends on enum order, may need custom logic
+          },
+          // 5. Earliest appointments first (time sensitivity)
+          {
+            appointment_date: "asc",
+          },
+          // 6. Final tie-breaker: newest bookings first
+          {
+            created_at: "desc",
+          },
+        ],
       }),
       db.appointment.count({
         where: buildQuery(id, search),
@@ -219,6 +255,7 @@ export async function getPatientAppointments({
     return { success: false, message: "Internal Server Error", status: 500 };
   }
 }
+
 
 export async function getAppointmentWithMedicalRecordsById(id: number) {
   try {
@@ -251,6 +288,7 @@ export async function getAppointmentWithMedicalRecordsById(id: number) {
         success: false,
         message: "Appointment data not found",
         status: 200,
+ 
       };
     }
 

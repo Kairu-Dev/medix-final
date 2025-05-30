@@ -54,6 +54,10 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collap
 
 // Enhanced types for dynamic keyword system
 interface AppointmentPriorityAnalyzerProps {
+  isNurse?: boolean;
+  isAdmin?: boolean;
+  isDoctor?: boolean;
+  userId?: string;
   patientId: string;
   appointmentNote: string;
   defaultDoctorId?: string;
@@ -1005,6 +1009,10 @@ const AppointmentPriorityAnalyzer: React.FC<AppointmentPriorityAnalyzerProps> = 
   doctors = [],
   className,
   doctorLoadFactors = {}, // Add this line
+  isNurse = false,
+  isAdmin = false,
+  isDoctor = false,
+  userId,
 }) => {
   const [note, setNote] = useState(appointmentNote || '');
   const [analyzingPriority, setAnalyzingPriority] = useState(false);
@@ -1782,6 +1790,7 @@ return (
                   </div>
                   <span className="font-semibold text-slate-200">{priorityResult.suggestedDepartment}</span>
                 </div>
+                {(isNurse || isAdmin) && (
                 <Button 
                   variant="outline" 
                   size="sm"
@@ -1793,6 +1802,7 @@ return (
                 >
                   Change Department
                 </Button>
+                )}
               </div>
             )}
           </div>
@@ -1845,6 +1855,340 @@ return (
         )}
 
         {/* Priority Override Controls */}
+        {/* Only medical staff can override priority */}
+{(isNurse || isAdmin || isDoctor) && (
+        <div className="space-y-3">
+          <Label className="text-base font-semibold text-slate-200">Manual Priority Override</Label>
+          <div className="flex gap-3">
+            <Button
+              variant={priorityResult.level === PriorityLevel.EMERGENCY ? "default" : "outline"}
+              size="sm"
+              onClick={() => handlePriorityOverride(PriorityLevel.EMERGENCY)}
+              className={priorityResult.level === PriorityLevel.EMERGENCY 
+                ? 'bg-red-600 hover:bg-red-700 text-white border-red-500' 
+                : 'border-red-500/50 text-red-400 hover:bg-red-900/20 bg-slate-800/50'}
+            >
+              🚨 Emergency
+            </Button>
+            <Button
+              variant={priorityResult.level === PriorityLevel.URGENT ? "default" : "outline"}
+              size="sm"
+              onClick={() => handlePriorityOverride(PriorityLevel.URGENT)}
+              className={priorityResult.level === PriorityLevel.URGENT 
+                ? 'bg-amber-600 hover:bg-amber-700 text-white border-amber-500' 
+                : 'border-amber-500/50 text-amber-400 hover:bg-amber-900/20 bg-slate-800/50'}
+            >
+              ⚡ Urgent
+            </Button>
+            <Button
+              variant={priorityResult.level === PriorityLevel.NORMAL ? "default" : "outline"}
+              size="sm"
+              onClick={() => handlePriorityOverride(PriorityLevel.NORMAL)}
+              className={priorityResult.level === PriorityLevel.NORMAL 
+                ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-500' 
+                : 'border-emerald-500/50 text-emerald-400 hover:bg-emerald-900/20 bg-slate-800/50'}
+            >
+              ✅ Standard
+            </Button>
+          </div>
+          <p className="text-xs text-slate-400">Healthcare staff can manually adjust priority if clinical judgment differs from automated assessment.</p>
+        </div>
+        )}
+
+        {/* Analysis Details */}
+        
+        {priorityResult.pathTrace && priorityResult.pathTrace.length > 0 && (
+          <Collapsible>
+          
+            <CollapsibleTrigger asChild>
+            {(isNurse || isAdmin || isDoctor) && (
+              <Button variant="ghost" className="w-full justify-between p-3 h-auto text-slate-200 hover:bg-slate-700/50">
+                <span className="font-medium">View Detailed Analysis</span>
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            )}
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-2 mt-2">
+              <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-600/50 backdrop-blur-sm">
+                <h4 className="font-medium text-slate-200 mb-2">System Analysis Steps:</h4>
+                <ol className="space-y-1">
+                  {priorityResult.pathTrace.map((trace, index) => (
+                    <li key={index} className="text-sm text-slate-400 flex gap-2">
+                      <span className="font-mono text-xs bg-slate-700/50 px-1 rounded text-slate-300 border border-slate-600/30">{index + 1}</span>
+                      {trace}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        )}
+      </div>
+    )}
+
+{/* Doctor Assignment */}
+
+{priorityResult && (suggestedDoctors.length > 0 || doctors.length > 0) && (
+  <div className="space-y-4 p-4 bg-slate-800/50 rounded-lg border border-slate-600/50 backdrop-blur-sm">
+    <div className="flex items-center gap-2">
+      <User className="h-5 w-5 text-teal-400" />
+      <Label className="text-base font-semibold text-slate-200">Doctor Assignment</Label>
+    </div>
+    
+    <Select value={selectedDoctorId} onValueChange={handleDoctorChange}>
+      <SelectTrigger className="bg-slate-700/50 border-slate-600/50 text-slate-200">
+        <SelectValue placeholder="Select an available doctor..." />
+      </SelectTrigger>
+      <SelectContent className="bg-slate-800 border-slate-600">
+        {(suggestedDoctors.length > 0 ? suggestedDoctors : doctors).map((doctor) => {
+          // Calculate percentage from pending appointments (assuming max capacity of 10 for percentage calculation)
+          const pendingCount = doctorLoadFactors[doctor.id] || 0;
+          const loadPercentage = Math.min(100, Math.round((pendingCount / 10) * 100));
+          
+          return (
+            <SelectItem key={doctor.id} value={doctor.id} className="text-slate-200 focus:bg-slate-700">
+              <div className="flex items-center gap-2">
+                <span className="font-medium">Dr. {doctor.name}</span>
+                <Badge variant="outline" className="text-xs border-slate-500/50 text-slate-300">
+                  {doctor.specialization || doctor.department || 'General Practice'}
+                </Badge>
+                {doctorLoadFactors[doctor.id] !== undefined && (
+                  <span className={`text-xs px-2 py-1 rounded ${
+                    loadPercentage > 80 ? 'bg-red-900/30 text-red-400 border border-red-500/30' : 
+                    loadPercentage > 60 ? 'bg-amber-900/30 text-amber-400 border border-amber-500/30' : 
+                    'bg-emerald-900/30 text-emerald-400 border border-emerald-500/30'
+                  }`}>
+                    {loadPercentage}% load ({pendingCount} pending)
+                  </span>
+                )}
+              </div>
+            </SelectItem>
+          );
+        })}
+      </SelectContent>
+    </Select>
+    
+    <Alert className="border-teal-500/30 bg-teal-900/20">
+      <Info className="h-4 w-4 text-teal-400" />
+      <AlertDescription className="text-teal-400">
+        Doctors are automatically sorted by availability and specialty match to ensure optimal care assignment.
+        Kindly ask a nurse if you want to change your department, doctor or priority.
+      </AlertDescription>
+    </Alert>
+  </div>
+)}
+
+    {/* No Analysis State */}
+    {!priorityResult && !analyzingPriority && note.length >= 2 && !loadingKeywords && (
+      <Alert className="border-orange-500/30 bg-orange-900/20">
+        <AlertTriangle className="h-4 w-4 text-orange-400" />
+        <AlertTitle className="text-orange-300">No Medical Symptoms Detected</AlertTitle>
+        <AlertDescription className="text-orange-400">
+          <p>The system couldn't identify specific medical symptoms in the provided text.</p>
+          <p className="mt-2 font-medium">Suggestions:</p>
+          <ul className="list-disc list-inside mt-1 space-y-1">
+            <li>Use specific medical terminology (e.g., "chest pain" instead of "hurt")</li>
+            <li>Check spelling of medical terms</li>
+            <li>Include symptom duration and severity</li>
+            <li>Describe physical sensations clearly</li>
+          </ul>
+        </AlertDescription>
+      </Alert>
+    )}
+
+    {/* Empty State */}
+    {!note.trim() && !loadingKeywords && (
+      <div className="text-center py-12">
+        <div className="p-4 bg-teal-500/20 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center border border-teal-500/30">
+          <FileText className="h-10 w-10 text-teal-400" />
+        </div>
+        <h3 className="text-lg font-semibold text-slate-200 mb-2">Ready for Medical Assessment</h3>
+        <p className="text-slate-400 max-w-md mx-auto">
+          Enter patient symptoms or appointment notes in the text field above. 
+          Our Algoritm will automatically analyze the content and suggest appropriate care priority and department routing.
+          Medix Self-Triage Processing
+        </p>
+      </div>
+    )}
+  </div>
+);
+}
+
+export default AppointmentPriorityAnalyzer;
+
+
+{/* 
+
+
+  ORIGINAL CODE SNIPPET RETURN
+
+  return (
+  <div className={`space-y-6 p-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-xl border border-slate-700/50 ${className}`}>
+    {/* Header Section 
+    <div className="flex items-center justify-between pb-4 border-b border-slate-700/50">
+      <div className="flex items-center gap-3">
+        <div className="p-2 bg-teal-500/20 rounded-lg border border-teal-500/30">
+          <HeartPulse className="h-6 w-6 text-teal-400" />
+        </div>
+        <div>
+          <h2 className="text-xl font-bold text-slate-200">Medical Priority Assessment</h2>
+          <p className="text-sm text-slate-400">Automated symptom analysis and department routing</p>
+        </div>
+      </div>
+      
+      {loadingKeywords && (
+        <Alert className="w-auto bg-slate-800/50 border-slate-600/50">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-teal-400"></div>
+          <AlertDescription className="ml-2 text-slate-300">
+            Loading medical database...
+          </AlertDescription>
+        </Alert>
+      )}
+    </div>
+
+    {/* Analysis Progress 
+    {analyzingPriority && (
+      <Alert className="border-teal-500/30 bg-teal-900/20">
+        <Activity className="h-5 w-5 text-teal-400 animate-pulse" />
+        <AlertTitle className="text-teal-300">Analysis in Progress</AlertTitle>
+        <AlertDescription className="text-teal-400">
+          Our system is evaluating symptoms and determining appropriate care priority...
+        </AlertDescription>
+      </Alert>
+    )}
+
+    {/* Priority Assessment Results 
+    {priorityResult && !analyzingPriority && (
+      <div className="space-y-4">
+        {/* Priority Level Badge 
+        <div className={`p-6 rounded-xl border ${PRIORITY_INDICATORS[priorityResult.level].bgColor} ${PRIORITY_INDICATORS[priorityResult.level].borderColor} backdrop-blur-sm`}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <div className={`p-3 rounded-full ${PRIORITY_INDICATORS[priorityResult.level].bgColor.replace('/20', '/30')} border ${PRIORITY_INDICATORS[priorityResult.level].borderColor}`}>
+                {priorityResult.level === PriorityLevel.EMERGENCY && (
+                  <AlertTriangle className={`h-8 w-8 ${PRIORITY_INDICATORS[priorityResult.level].textColor}`} />
+                )}
+                {priorityResult.level === PriorityLevel.URGENT && (
+                  <Activity className={`h-8 w-8 ${PRIORITY_INDICATORS[priorityResult.level].textColor}`} />
+                )}
+                {priorityResult.level === PriorityLevel.NORMAL && (
+                  <HeartPulse className={`h-8 w-8 ${PRIORITY_INDICATORS[priorityResult.level].textColor}`} />
+                )}
+              </div>
+              <div>
+                <div className="flex items-center gap-3">
+                  <h3 className={`text-2xl font-bold ${PRIORITY_INDICATORS[priorityResult.level].textColor}`}>
+                    {priorityResult.level.toUpperCase()} PRIORITY
+                  </h3>
+                  <Badge variant="outline" className={`text-lg px-3 py-1 ${PRIORITY_INDICATORS[priorityResult.level].textColor} ${PRIORITY_INDICATORS[priorityResult.level].borderColor} bg-slate-800/50`}>
+                    {priorityResult.score}/100
+                  </Badge>
+                </div>
+                <p className="text-sm text-slate-400 mt-1">
+                  {priorityResult.level === PriorityLevel.EMERGENCY && "Immediate medical attention required"}
+                  {priorityResult.level === PriorityLevel.URGENT && "Prompt medical care recommended"}
+                  {priorityResult.level === PriorityLevel.NORMAL && "Standard appointment scheduling appropriate"}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Department Assignment 
+          <Separator className="my-4 bg-slate-600/50" />
+          <div className="space-y-3">
+            <Label className="text-base font-semibold text-slate-200">Recommended Department</Label>
+            {isManualSelection ? (
+              <div className="flex items-center gap-3">
+                <Select value={manualDepartment || priorityResult.suggestedDepartment} onValueChange={handleManualDepartmentChange}>
+                  <SelectTrigger className="max-w-xs bg-slate-800/50 border-slate-600/50 text-slate-200">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-600">
+                    {availableDepartments.map((dept) => (
+                      <SelectItem key={dept} value={dept} className="text-slate-200 focus:bg-slate-700">{dept}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => {setIsManualSelection(false); setManualDepartment('');}}
+                  className="text-slate-400 hover:text-slate-200 hover:bg-slate-700/50"
+                >
+                  Reset to Auto
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-600/50">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-teal-500/20 rounded border border-teal-500/30">
+                    <Building className="h-4 w-4 text-teal-400" />
+                  </div>
+                  <span className="font-semibold text-slate-200">{priorityResult.suggestedDepartment}</span>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    setManualDepartment(priorityResult.suggestedDepartment);
+                    setIsManualSelection(true);
+                  }}
+                  className="border-slate-600/50 text-slate-300 hover:bg-slate-700/50"
+                >
+                  Change Department
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Secondary Department Recommendations 
+        {multiGroupResult && multiGroupResult.hasCrossGroupMatches && multiGroupResult.secondaryGroups.length > 0 && (
+          <Alert className="border-amber-500/30 bg-amber-900/20">
+            <AlertTriangle className="h-4 w-4 text-amber-400" />
+            <AlertTitle className="text-amber-300">Additional Consultations Recommended</AlertTitle>
+            <AlertDescription className="text-amber-400 mt-2">
+              <div className="space-y-3">
+                {multiGroupResult.secondaryGroups.map((group, index) => (
+                  <div key={group.groupId} className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-600/50">
+                    <div className="flex-1">
+                      <div className="font-medium text-slate-200">{group.department}</div>
+                      <div className="text-sm text-slate-400 mt-1">
+                        Symptoms: {group.matchedKeywords.slice(0, 3).join(', ')}
+                        {group.matchedKeywords.length > 3 && ` +${group.matchedKeywords.length - 3} more`}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className={`${PRIORITY_INDICATORS[group.priority].textColor} bg-slate-700/50`}>
+                        {group.priority}
+                      </Badge>
+                      <span className="text-sm text-slate-400">{Math.round(group.score)}/100</span>
+                    </div>
+                  </div>
+                ))}
+                <p className="text-sm text-amber-400 bg-amber-900/30 p-2 rounded border border-amber-500/30">
+                  💡 Consider scheduling follow-up appointments with these specialists for comprehensive care.
+                </p>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Detected Symptoms 
+        {priorityResult.matchedKeywords.length > 0 && (
+          <div className="space-y-3">
+            <Label className="text-base font-semibold text-slate-200">Detected Medical Symptoms</Label>
+            <div className="flex flex-wrap gap-2">
+              {priorityResult.matchedKeywords.map((keyword, index) => (
+                <Badge key={index} variant="secondary" className="px-3 py-1 text-sm bg-teal-900/30 text-teal-300 border border-teal-500/30">
+                  {keyword}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Priority Override Controls 
         <div className="space-y-3">
           <Label className="text-base font-semibold text-slate-200">Manual Priority Override</Label>
           <div className="flex gap-3">
@@ -1882,7 +2226,7 @@ return (
           <p className="text-xs text-slate-400">Healthcare staff can manually adjust priority if clinical judgment differs from automated assessment.</p>
         </div>
 
-        {/* Analysis Details */}
+        {/* Analysis Details 
         {priorityResult.pathTrace && priorityResult.pathTrace.length > 0 && (
           <Collapsible>
             <CollapsibleTrigger asChild>
@@ -1909,7 +2253,7 @@ return (
       </div>
     )}
 
-{/* Doctor Assignment */}
+{/* Doctor Assignment 
 {priorityResult && (suggestedDoctors.length > 0 || doctors.length > 0) && (
   <div className="space-y-4 p-4 bg-slate-800/50 rounded-lg border border-slate-600/50 backdrop-blur-sm">
     <div className="flex items-center gap-2">
@@ -1959,7 +2303,7 @@ return (
   </div>
 )}
 
-    {/* No Analysis State */}
+    {/* No Analysis State 
     {!priorityResult && !analyzingPriority && note.length >= 2 && !loadingKeywords && (
       <Alert className="border-orange-500/30 bg-orange-900/20">
         <AlertTriangle className="h-4 w-4 text-orange-400" />
@@ -1977,7 +2321,7 @@ return (
       </Alert>
     )}
 
-    {/* Empty State */}
+    {/* Empty State 
     {!note.trim() && !loadingKeywords && (
       <div className="text-center py-12">
         <div className="p-4 bg-teal-500/20 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center border border-teal-500/30">
@@ -1996,3 +2340,7 @@ return (
 }
 
 export default AppointmentPriorityAnalyzer;
+  
+  
+  
+  */}
