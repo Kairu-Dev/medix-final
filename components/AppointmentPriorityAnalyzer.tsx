@@ -22,7 +22,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import { AlertTriangle, Activity, HeartPulse, RefreshCcw, Settings } from 'lucide-react';
+import { AlertTriangle, Activity, HeartPulse, RefreshCcw, Settings, Building, ChevronDown, FileText, Info, UserIcon, User } from 'lucide-react';
 import { PriorityLevel } from '@prisma/client';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -42,9 +42,17 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { getKeywordGroups } from '@/lib/keyword-actions';
+import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+import { Badge } from './ui/badge';
+import { Separator } from './ui/separator';
+import { Label } from './ui/label';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 
 
 //NEW CODE
+
+
+// Enhanced types for dynamic keyword system
 interface AppointmentPriorityAnalyzerProps {
   patientId: string;
   appointmentNote: string;
@@ -59,6 +67,8 @@ interface AppointmentPriorityAnalyzerProps {
   ) => void;
   doctors?: any[];
   className?: string;
+  doctorLoadFactors?: Record<string, number>; // Add this line
+
 }
 
 // Enhanced types for dynamic keyword system
@@ -117,7 +127,24 @@ interface EnhancedAnalysisResult {
   }>;
 }
 
+interface CrossGroupMatch {
+  groupId: string;
+  groupName: string;
+  department: string;
+  priority: PriorityLevel;
+  score: number;
+  matchedKeywords: string[];
+  matchStrength: number; // Combined strength of all matches in this group
+}
 
+interface MultiGroupAnalysisResult {
+  primaryGroup: CrossGroupMatch;
+  secondaryGroups: CrossGroupMatch[];
+  hasCrossGroupMatches: boolean;
+  combinedScore: number;
+  suggestedSecondaryDepartments: string[];
+  suggestedSecondaryPhysicians: string[];
+}
 
 // Medical abbreviations and synonyms database
 const MEDICAL_ABBREVIATIONS = new Map([
@@ -301,6 +328,115 @@ const analyzeContext = (text: string, matchedKeyword: string, matchPosition: num
   const urgencyMarkers = URGENCY_MARKERS.filter(marker => allText.includes(marker));
   
   return { negation, severity, temporal, urgencyMarkers };
+};
+
+// Cross-group keyword analysis - only activates when multiple groups are detected
+const performCrossGroupAnalysis = (
+  inputText: string, 
+  keywordGroups: KeywordGroup[], 
+  settings: AdvancedSettings
+): MultiGroupAnalysisResult | null => {
+  
+  const groupMatches = new Map<string, CrossGroupMatch>();
+  let totalMatchingGroups = 0;
+  
+  // Analyze each group for keyword matches
+  keywordGroups.forEach(group => {
+    if (!group.isActive) return;
+    
+    const groupMatchDetails: Array<{
+      keyword: string;
+      confidence: number;
+      matchType: string;
+    }> = [];
+    
+    let groupTotalScore = 0;
+    let groupMatchStrength = 0;
+    
+    group.keywords.forEach(keyword => {
+      if (!keyword.isActive) return;
+      
+      const matchResult = enhancedKeywordMatch(inputText, keyword, settings);
+      
+      if (matchResult.isMatch) {
+        const keywordScore = matchResult.confidence * matchResult.contextModifier * keyword.weight;
+        groupTotalScore += keywordScore;
+        groupMatchStrength += matchResult.confidence;
+        
+        groupMatchDetails.push({
+          keyword: keyword.text,
+          confidence: matchResult.confidence,
+          matchType: matchResult.matchType
+        });
+      }
+    });
+    
+    // Only consider groups with actual matches
+    if (groupMatchDetails.length > 0) {
+      totalMatchingGroups++;
+      
+      // Apply group base score and sensitivity
+      const finalGroupScore = (groupTotalScore + group.baseScore * 0.3) * (settings.sensitivityLevel / 100);
+      
+      groupMatches.set(group.id, {
+        groupId: group.id,
+        groupName: group.name,
+        department: group.department,
+        priority: group.priority,
+        score: finalGroupScore,
+        matchedKeywords: groupMatchDetails.map(detail => 
+          detail.matchType === 'exact' ? detail.keyword : `${detail.keyword} (${detail.matchType})`
+        ),
+        matchStrength: groupMatchStrength / groupMatchDetails.length // Average confidence
+      });
+    }
+  });
+  
+  // Only proceed if we have matches from multiple groups (cross-group detection)
+  if (totalMatchingGroups < 2) {
+    return null; // Let the original algorithm handle single-group matches
+  }
+  
+  // Sort groups by combined score and priority
+  const sortedMatches = Array.from(groupMatches.values()).sort((a, b) => {
+    // Primary sort by priority level (Emergency > Urgent > Normal)
+    const priorityOrder = {
+      [PriorityLevel.EMERGENCY]: 3,
+      [PriorityLevel.URGENT]: 2,
+      [PriorityLevel.NORMAL]: 1
+    };
+    
+    const priorityDiff = priorityOrder[b.priority] - priorityOrder[a.priority];
+    if (priorityDiff !== 0) return priorityDiff;
+    
+    // Secondary sort by score
+    return b.score - a.score;
+  });
+  
+  const primaryGroup = sortedMatches[0];
+  const secondaryGroups = sortedMatches.slice(1);
+  
+  // Calculate combined score with cross-group bonus
+  const crossGroupBonus = Math.min(20, secondaryGroups.length * 8); // Max 20 point bonus
+  const combinedScore = Math.min(100, primaryGroup.score + crossGroupBonus);
+  
+  // Extract secondary departments and physicians
+  const secondaryDepartments = secondaryGroups
+    .map(group => group.department)
+    .filter(dept => dept !== primaryGroup.department);
+  
+  const secondaryPhysicians = secondaryGroups
+    .map(group => group.department) // Using department as physician for now
+    .filter(physician => physician !== primaryGroup.department);
+  
+  return {
+    primaryGroup,
+    secondaryGroups,
+    hasCrossGroupMatches: true,
+    combinedScore,
+    suggestedSecondaryDepartments: [...new Set(secondaryDepartments)], // Remove duplicates
+    suggestedSecondaryPhysicians: [...new Set(secondaryPhysicians)]
+  };
 };
 
 // Enhanced keyword matching with multiple algorithms
@@ -868,6 +1004,7 @@ const AppointmentPriorityAnalyzer: React.FC<AppointmentPriorityAnalyzerProps> = 
   onPriorityAssigned,
   doctors = [],
   className,
+  doctorLoadFactors = {}, // Add this line
 }) => {
   const [note, setNote] = useState(appointmentNote || '');
   const [analyzingPriority, setAnalyzingPriority] = useState(false);
@@ -887,6 +1024,7 @@ const AppointmentPriorityAnalyzer: React.FC<AppointmentPriorityAnalyzerProps> = 
   const [keywordGroups, setKeywordGroups] = useState<KeywordGroup[]>([]);
   const [loadingKeywords, setLoadingKeywords] = useState(true);
   const [lastAnalysisResult, setLastAnalysisResult] = useState<string>(''); // To prevent duplicate toasts
+  const [multiGroupResult, setMultiGroupResult] = useState<MultiGroupAnalysisResult | null>(null);
 
   // Available departments for manual selection
   const availableDepartments = [
@@ -931,31 +1069,31 @@ const AppointmentPriorityAnalyzer: React.FC<AppointmentPriorityAnalyzerProps> = 
     
     setPriorityResult(manualResult);
     
-    // Filter doctors based on the manually selected department
-    if (doctors.length > 0) {
-      const relevantDoctors = doctors.filter(doctor => 
-        doctor.department === department || 
-        doctor.specialization === department ||
-        doctor.specialization?.includes(department) ||
-        (department === "General Practice" && 
-          (doctor.specialization === "Internal Medicine" || 
-            doctor.specialization === "Family Medicine")
-        )
-      );
-      
-      // Sort by load factor and specialization match
-      const sortedDoctors = [...relevantDoctors].sort((a, b) => {
-        const aLoad = a.loadFactor !== undefined ? a.loadFactor : 999;
-        const bLoad = b.loadFactor !== undefined ? b.loadFactor : 999;
-        return aLoad - bLoad;
-      });
-      
-      setSuggestedDoctors(sortedDoctors.length > 0 ? sortedDoctors : doctors);
-      
-      if (sortedDoctors.length > 0) {
-        setSelectedDoctorId(sortedDoctors[0].id);
-      }
-    }
+ // Filter doctors based on the manually selected department
+if (doctors.length > 0) {
+  const relevantDoctors = doctors.filter(doctor => 
+    doctor.department === department || 
+    doctor.specialization === department ||
+    doctor.specialization?.includes(department) ||
+    (department === "General Practice" && 
+      (doctor.specialization === "Internal Medicine" || 
+        doctor.specialization === "Family Medicine")
+    )
+  );
+  
+  // Sort by load factor and specialization match
+  const sortedDoctors = [...relevantDoctors].sort((a, b) => {
+    const aLoad = doctorLoadFactors[a.id] || 0; // Use passed load factors
+    const bLoad = doctorLoadFactors[b.id] || 0;
+    return aLoad - bLoad;
+  });
+  
+  setSuggestedDoctors(sortedDoctors.length > 0 ? sortedDoctors : doctors);
+  
+  if (sortedDoctors.length > 0) {
+    setSelectedDoctorId(sortedDoctors[0].id);
+  }
+}
   };
 
   // Enhanced Dijkstra's algorithm implementation with a proper priority queue
@@ -1057,6 +1195,10 @@ const AppointmentPriorityAnalyzer: React.FC<AppointmentPriorityAnalyzerProps> = 
     suggestedPrimaryPhysician: string;
     matchedKeywords: string[];
     pathTrace: string[];
+    // Extended properties for cross-group analysis
+    multiGroupAnalysis?: MultiGroupAnalysisResult;
+    secondaryDepartments?: string[];
+    secondaryPhysicians?: string[];
   } {
     const sanitizedInput = inputText.replace(/<[^>]*>?/gm, '').trim();
     
@@ -1064,7 +1206,65 @@ const AppointmentPriorityAnalyzer: React.FC<AppointmentPriorityAnalyzerProps> = 
       return this.getDefaultResult("Input too short for analysis");
     }
     
-    // Enhanced NLP Analysis
+    // FIRST: Try cross-group analysis (new functionality)
+    const crossGroupResult = performCrossGroupAnalysis(sanitizedInput, keywordGroups, settings);
+    
+    if (crossGroupResult && crossGroupResult.hasCrossGroupMatches) {
+      // Cross-group matches detected - use this result
+      const primaryGroup = crossGroupResult.primaryGroup;
+      
+      // Determine final priority based on highest priority group
+      let finalPriority = primaryGroup.priority;
+      let finalScore = crossGroupResult.combinedScore;
+      
+      // Apply threshold-based priority escalation
+      if (finalScore >= settings.emergencyThreshold) {
+        finalPriority = PriorityLevel.EMERGENCY;
+      } else if (finalScore >= settings.urgentThreshold) {
+        finalPriority = PriorityLevel.URGENT;
+      }
+      
+      // Enhanced path trace for cross-group analysis
+      const pathTrace = [
+        `Cross-group analysis detected matches in ${crossGroupResult.secondaryGroups.length + 1} departments`,
+        `Primary: ${primaryGroup.groupName} (${primaryGroup.department}) - Score: ${primaryGroup.score.toFixed(1)}`,
+        ...crossGroupResult.secondaryGroups.map(group => 
+          `Secondary: ${group.groupName} (${group.department}) - Score: ${group.score.toFixed(1)}`
+        ),
+        `Combined score with cross-group bonus: ${finalScore}/100`,
+        `Final decision: ${finalPriority} priority`
+      ];
+      
+      return {
+        level: finalPriority,
+        score: Math.round(finalScore),
+        suggestedDepartment: primaryGroup.department,
+        suggestedPrimaryPhysician: primaryGroup.department,
+        matchedKeywords: primaryGroup.matchedKeywords,
+        pathTrace,
+        nlpConfidence: primaryGroup.matchStrength,
+        pathwayScore: finalScore,
+        contextFactors: {
+          negation: false,
+          severity: finalPriority === PriorityLevel.EMERGENCY ? 'severe' : 'moderate',
+          temporal: 'unknown',
+          urgencyMarkers: []
+        },
+        enhancedMatches: primaryGroup.matchedKeywords.map(keyword => ({
+          keyword,
+          matchType: keyword.includes('(') ? keyword.split('(')[1].replace(')', '') as any : 'exact',
+          confidence: 0.9,
+          contextModifier: 1.0
+        })),
+        // Extended properties for cross-group results
+        multiGroupAnalysis: crossGroupResult,
+        secondaryDepartments: crossGroupResult.suggestedSecondaryDepartments,
+        secondaryPhysicians: crossGroupResult.suggestedSecondaryPhysicians
+      };
+    }
+    
+    // FALLBACK: Use original single-group algorithm
+    // Enhanced NLP Analysis (original code continues here...)
     const nlpResults = new Map<number, {
       nlpScore: number;
       matches: Array<{
@@ -1085,13 +1285,6 @@ const AppointmentPriorityAnalyzer: React.FC<AppointmentPriorityAnalyzerProps> = 
     this.nodes.forEach((node, nodeIndex) => {
       let totalNlpScore = 0;
       const enhancedMatches: EnhancedAnalysisResult['enhancedMatches'] = [];
-
-          // ADD THIS CONSOLE GROUP FOR EACH NODE
-    console.group(`🏥 Analyzing Node: ${node.name} (${node.department})`);
-    console.log(`📊 Node Base Score: ${node.score}`);
-    console.log(`⚖️ Current Sensitivity Level: ${settings.sensitivityLevel}%`);
-
-
       let overallContext: {
         negation: boolean;
         severity: 'mild' | 'moderate' | 'severe';
@@ -1106,28 +1299,12 @@ const AppointmentPriorityAnalyzer: React.FC<AppointmentPriorityAnalyzerProps> = 
       
       node.keywords.forEach((keyword) => {
         if (!keyword.isActive) return;
-
-              
-      // ADD THIS CONSOLE LOG BEFORE MATCHING
-      console.log(`\n🔍 Testing Keyword: "${keyword.text}"`);
-      console.log(`   📏 Original Weight: ${keyword.weight}`);
-      console.log(`   🎯 Keyword Active: ${keyword.isActive}`);
-      console.log(`   🧩 Partial Match Allowed: ${keyword.isPartialMatch}`);
         
         const matchResult = enhancedKeywordMatch(sanitizedInput, keyword, settings);
         
         if (matchResult.isMatch) {
-                 // ADD THIS DETAILED CALCULATION LOG
-        console.log(`   ✅ MATCH FOUND!`);
-        console.log(`   📈 Match Confidence: ${matchResult.confidence.toFixed(3)}`);
-        console.log(`   🎭 Context Modifier: ${matchResult.contextModifier.toFixed(3)}`);
-        console.log(`   ⚖️ Keyword Weight: ${keyword.weight}`);
-
           const contextualScore = matchResult.confidence * matchResult.contextModifier * keyword.weight;
-          console.log(`   🧮 Calculation: ${matchResult.confidence.toFixed(3)} × ${matchResult.contextModifier.toFixed(3)} × ${keyword.weight} = ${contextualScore.toFixed(3)}`);
-
           totalNlpScore += contextualScore;
-          console.log(`   📊 Running Total NLP Score: ${totalNlpScore.toFixed(3)}`);
           
           enhancedMatches.push({
             keyword: keyword.text,
@@ -1135,8 +1312,6 @@ const AppointmentPriorityAnalyzer: React.FC<AppointmentPriorityAnalyzerProps> = 
             confidence: matchResult.confidence,
             contextModifier: matchResult.contextModifier
           });
-          
-          
           
           // Update overall context
           const keywordContext = analyzeContext(sanitizedInput, keyword.text, 0);
@@ -1151,55 +1326,25 @@ const AppointmentPriorityAnalyzer: React.FC<AppointmentPriorityAnalyzerProps> = 
           if (keywordContext.temporal !== 'unknown') overallContext.temporal = keywordContext.temporal;
           overallContext.urgencyMarkers.push(...keywordContext.urgencyMarkers);
         }
-        else {
-          // ADD THIS LOG FOR NO MATCH
-          console.log(`   ❌ NO MATCH for "${keyword.text}"`);
-        }
-        
       });
-
-      console.log(`\n📈 Pre-Sensitivity Total Score: ${totalNlpScore.toFixed(3)}`);
-
       
       // Apply sensitivity settings
       totalNlpScore *= (settings.sensitivityLevel / 100);
-      console.log(`🎛️ After Sensitivity (${settings.sensitivityLevel}%): ${totalNlpScore.toFixed(3)}`);
-
       
       // Combination bonus
       if (settings.enableSymptomCombinations && enhancedMatches.length > 1) {
-        const beforeCombo = totalNlpScore;
         totalNlpScore *= 1.4;
-        console.log(`🔗 Combination Bonus Applied: ${beforeCombo.toFixed(3)} × 1.4 = ${totalNlpScore.toFixed(3)}`);
       }
       
       // Temporal and severity modifiers
-      if (overallContext.temporal === 'acute') {
-        const beforeTemporal = totalNlpScore;
-        totalNlpScore *= 1.3;
-        console.log(`⏰ Acute Temporal Bonus: ${beforeTemporal.toFixed(3)} × 1.3 = ${totalNlpScore.toFixed(3)}`);
-      }
-
-      if (overallContext.severity === 'severe') {
-        const beforeSeverity = totalNlpScore;
-        totalNlpScore *= 1.5;      
-        console.log(`🚨 Severe Severity Bonus: ${beforeSeverity.toFixed(3)} × 1.5 = ${totalNlpScore.toFixed(3)}`);
-      } else if (overallContext.severity === 'mild') {
-        const beforeSeverity = totalNlpScore;
-        totalNlpScore *= 0.8;
-        console.log(`😌 Mild Severity Reduction: ${beforeSeverity.toFixed(3)} × 0.8 = ${totalNlpScore.toFixed(3)}`);
-      }
+      if (overallContext.temporal === 'acute') totalNlpScore *= 1.3;
+      if (overallContext.severity === 'severe') totalNlpScore *= 1.5;
+      else if (overallContext.severity === 'mild') totalNlpScore *= 0.8;
       
       // Urgency markers bonus
       if (overallContext.urgencyMarkers.length > 0) {
-        const beforeUrgency = totalNlpScore;
         totalNlpScore *= (1 + overallContext.urgencyMarkers.length * 0.3);
-        console.log(`🚑 Urgency Markers Bonus (${overallContext.urgencyMarkers.length}): ${beforeUrgency.toFixed(3)} × ${(1 + overallContext.urgencyMarkers.length * 0.3).toFixed(2)} = ${totalNlpScore.toFixed(3)}`);
       }
-
-      console.log(`\n🎯 FINAL NODE SCORE: ${totalNlpScore.toFixed(3)}`);
-      console.log(`📝 Matched Keywords: ${enhancedMatches.length}`);
-      console.groupEnd();
       
       if (totalNlpScore > 0) {
         nlpResults.set(nodeIndex, {
@@ -1210,14 +1355,11 @@ const AppointmentPriorityAnalyzer: React.FC<AppointmentPriorityAnalyzerProps> = 
       }
     });
     
-
-    
-    
     if (nlpResults.size === 0) {
       return this.getDefaultResult(`No symptoms recognized in: "${inputText.substring(0, 30)}..."`);
     }
     
-    // Dijkstra's algorithm for pathway optimization
+    // Dijkstra's algorithm for pathway optimization (original code continues...)
     const distances = Array(this.nodes.length).fill(Infinity);
     const visited = Array(this.nodes.length).fill(false);
     const previous = Array(this.nodes.length).fill(-1);
@@ -1261,8 +1403,6 @@ const AppointmentPriorityAnalyzer: React.FC<AppointmentPriorityAnalyzerProps> = 
         bestCombinedScore = combinedScore;
         bestNodeIndex = nodeIndex;
       }
-
-      
     });
     
     const selectedNlpData = nlpResults.get(bestNodeIndex)!;
@@ -1287,27 +1427,6 @@ const AppointmentPriorityAnalyzer: React.FC<AppointmentPriorityAnalyzerProps> = 
       finalPriority = PriorityLevel.EMERGENCY;
       finalScore = Math.max(finalScore, 92);
     }
-
-      // ADD FINAL SUMMARY LOG
-  console.group(`🏆 FINAL ANALYSIS SUMMARY`);
-  console.log(`📊 Settings Used:`);
-  console.log(`   🎛️ Sensitivity Level: ${settings.sensitivityLevel}%`);
-  console.log(`   🔗 Symptom Combinations: ${settings.enableSymptomCombinations ? 'Enabled' : 'Disabled'}`);
-  console.log(`   📄 Partial Matches: ${settings.showPartialMatches ? 'Enabled' : 'Disabled'}`);
-  console.log(`   🚨 Emergency Threshold: ${settings.emergencyThreshold}`);
-  console.log(`   ⚠️ Urgent Threshold: ${settings.urgentThreshold}`);
-  
-  console.log(`\n🎯 Results Found: ${nlpResults.size} nodes with matches`);
-  nlpResults.forEach((data, nodeIndex) => {
-    const node = this.nodes[nodeIndex];
-    console.log(`   ${node.name}: ${data.nlpScore.toFixed(2)} (${data.matches.length} keywords)`);
-  });
-  
-  console.log(`\n🥇 Best Match: ${this.nodes[bestNodeIndex]?.name || 'None'}`);
-  console.log(`📈 Final Combined Score: ${bestCombinedScore.toFixed(2)}`);
-  console.log(`🎯 Final Priority: ${finalPriority}`);
-  console.groupEnd();
-
     
     return {
       level: finalPriority,
@@ -1329,9 +1448,8 @@ const AppointmentPriorityAnalyzer: React.FC<AppointmentPriorityAnalyzerProps> = 
       contextFactors: selectedNlpData.contextFactors,
       enhancedMatches: selectedNlpData.matches
     };
-
-    
   }
+
   
   private getDefaultResult(reason: string) {
     return {
@@ -1353,8 +1471,6 @@ const AppointmentPriorityAnalyzer: React.FC<AppointmentPriorityAnalyzerProps> = 
     };
   }
 }
-
-  
 
 
   
@@ -1389,6 +1505,21 @@ const AppointmentPriorityAnalyzer: React.FC<AppointmentPriorityAnalyzerProps> = 
       try {
         const result = findOptimalPathWithDijkstra(text);
         setPriorityResult(result);
+
+        // Handle multi-group analysis results
+        if (result.multiGroupAnalysis) {
+          setMultiGroupResult(result.multiGroupAnalysis);
+          
+          // Enhanced toast for cross-group detection
+          const secondaryDepts = result.secondaryDepartments?.join(', ') || '';
+          const toastMessage = secondaryDepts 
+            ? `Priority: ${result.level} (${result.score}/100) - Primary: ${result.suggestedDepartment}, Secondary: ${secondaryDepts}`
+            : `Priority Analysis Complete: ${result.level} (${result.score}/100) - ${result.suggestedDepartment}`;
+          
+          toast.success(toastMessage, { duration: 4000 });
+        } else {
+          setMultiGroupResult(null);
+        }
         
         // Create a unique result signature to prevent duplicate toasts
         const resultSignature = `${result.level}-${result.score}-${result.suggestedDepartment}`;
@@ -1412,37 +1543,37 @@ const AppointmentPriorityAnalyzer: React.FC<AppointmentPriorityAnalyzerProps> = 
           );
         }
         
-        // Filter relevant doctors
-        if (doctors.length > 0) {
-          const relevantDoctors = doctors.filter(doctor => 
-            doctor.department === result.suggestedDepartment || 
-            doctor.specialization === result.suggestedDepartment ||
-            doctor.specialization?.includes(result.suggestedDepartment) ||
-            (result.suggestedDepartment === "General Practice" && 
-              (doctor.specialization === "Internal Medicine" || 
-                doctor.specialization === "Family Medicine")
-            )
-          );
-          
-          const sortedDoctors = [...relevantDoctors].sort((a, b) => {
-            const aLoad = a.loadFactor !== undefined ? a.loadFactor : 999;
-            const bLoad = b.loadFactor !== undefined ? b.loadFactor : 999;
-            return aLoad - bLoad;
-          });
-          
-          setSuggestedDoctors(sortedDoctors.length > 0 ? sortedDoctors : doctors);
-          
-          if (sortedDoctors.length > 0 && !selectedDoctorId) {
-            setSelectedDoctorId(sortedDoctors[0].id);
-          }
-        }
+ // Filter relevant doctors
+if (doctors.length > 0) {
+  const relevantDoctors = doctors.filter(doctor => 
+    doctor.department === result.suggestedDepartment || 
+    doctor.specialization === result.suggestedDepartment ||
+    doctor.specialization?.includes(result.suggestedDepartment) ||
+    (result.suggestedDepartment === "General Practice" && 
+      (doctor.specialization === "Internal Medicine" || 
+        doctor.specialization === "Family Medicine")
+    )
+  );
+  
+  const sortedDoctors = [...relevantDoctors].sort((a, b) => {
+    const aLoad = doctorLoadFactors[a.id] || 0; // Use passed load factors
+    const bLoad = doctorLoadFactors[b.id] || 0;
+    return aLoad - bLoad;
+  });
+  
+  setSuggestedDoctors(sortedDoctors.length > 0 ? sortedDoctors : doctors);
+  
+  if (sortedDoctors.length > 0 && !selectedDoctorId) {
+    setSelectedDoctorId(sortedDoctors[0].id);
+  }
+}
       } catch (error) {
         console.error("Error analyzing appointment priority:", error);
         toast.error("Error analyzing symptoms. Please try again.");
       } finally {
         setAnalyzingPriority(false);
       }
-    }, 7000); // Further reduced debounce time for better responsiveness
+    }, 300); // Further reduced debounce time for better responsiveness
     
     setDebounceTimeout(newTimeout);
   }, [
@@ -1454,6 +1585,8 @@ const AppointmentPriorityAnalyzer: React.FC<AppointmentPriorityAnalyzerProps> = 
     loadingKeywords,
     lastAnalysisResult
   ]);
+
+  
 
 // Effect to analyze symptoms when note changes
 useEffect(() => {
@@ -1477,10 +1610,6 @@ useEffect(() => {
       try {
         const groups = await fetchKeywordGroups();
         setKeywordGroups(groups);
-        
-        // ADD THIS LINE TO VERIFY WEIGHTS ARE LOADED
-        verifyKeywordWeights(groups);
-        
       } catch (error) {
         console.error('Failed to load keyword groups:', error);
         toast.error('Failed to load symptom database');
@@ -1488,27 +1617,9 @@ useEffect(() => {
         setLoadingKeywords(false);
       }
     };
-  
+
     loadKeywords();
   }, []);
-
-  const verifyKeywordWeights = (keywordGroups: KeywordGroup[]) => {
-    console.group('🔍 KEYWORD WEIGHTS VERIFICATION');
-    
-    keywordGroups.forEach(group => {
-      console.log(`\n📋 Group: ${group.name} (${group.department})`);
-      console.log(`   Base Score: ${group.baseScore}`);
-      console.log(`   Priority: ${group.priority}`);
-      console.log(`   Keywords:`);
-      
-      group.keywords.forEach(keyword => {
-        console.log(`      "${keyword.text}": weight=${keyword.weight}, active=${keyword.isActive}, partial=${keyword.isPartialMatch}`);
-      });
-    });
-    
-    console.groupEnd();
-  };
-  
 
 
 
@@ -1561,8 +1672,6 @@ const handlePriorityOverride = (priority: PriorityLevel) => {
       true
     );
   }
-
- 
   
   // Single toast for manual override
   toast.success(`Priority manually overridden to ${priority} (${updatedResult.score}/100)`);
@@ -1570,208 +1679,320 @@ const handlePriorityOverride = (priority: PriorityLevel) => {
 
 
 return (
-  <Card className={`p-6 bg-background/60 backdrop-blur-sm shadow-md rounded-lg border border-border/50 ${className}`}>
-    {/* Header */}
-    <div className="flex items-center justify-between mb-6">
-      <h3 className="text-lg font-semibold text-foreground">
-        Appointment Priority Analysis
-      </h3>
+  <div className={`space-y-6 p-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-xl border border-slate-700/50 ${className}`}>
+    {/* Header Section */}
+    <div className="flex items-center justify-between pb-4 border-b border-slate-700/50">
+      <div className="flex items-center gap-3">
+        <div className="p-2 bg-teal-500/20 rounded-lg border border-teal-500/30">
+          <HeartPulse className="h-6 w-6 text-teal-400" />
+        </div>
+        <div>
+          <h2 className="text-xl font-bold text-slate-200">Medical Priority Assessment</h2>
+          <p className="text-sm text-slate-400">Automated symptom analysis and department routing</p>
+        </div>
+      </div>
+      
       {loadingKeywords && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-          <span>Loading symptom database...</span>
-        </div>
+        <Alert className="w-auto bg-slate-800/50 border-slate-600/50">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-teal-400"></div>
+          <AlertDescription className="ml-2 text-slate-300">
+            Loading medical database...
+          </AlertDescription>
+        </Alert>
       )}
     </div>
 
-    <div className="space-y-4">
-      {/* Analysis Status */}
-      {analyzingPriority && (
-        <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
-          <div className="flex items-center justify-center gap-3">
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
-            <span className="text-primary font-medium">Analyzing symptoms and priority...</span>
-          </div>
-        </div>
-      )}
+    {/* Analysis Progress */}
+    {analyzingPriority && (
+      <Alert className="border-teal-500/30 bg-teal-900/20">
+        <Activity className="h-5 w-5 text-teal-400 animate-pulse" />
+        <AlertTitle className="text-teal-300">Analysis in Progress</AlertTitle>
+        <AlertDescription className="text-teal-400">
+          Our system is evaluating symptoms and determining appropriate care priority...
+        </AlertDescription>
+      </Alert>
+    )}
 
-      {/* Priority Result */}
-      {priorityResult && !analyzingPriority && (
-        <div className={`p-4 rounded-lg border ${PRIORITY_INDICATORS[priorityResult.level].bgColor} ${PRIORITY_INDICATORS[priorityResult.level].borderColor}`}>
-          <div className="flex justify-between items-center mb-3">
-            <div className="flex items-center gap-3">
-              {priorityResult.level === PriorityLevel.EMERGENCY && (
-                <AlertTriangle className={`h-5 w-5 ${PRIORITY_INDICATORS[priorityResult.level].textColor}`} />
-              )}
-              {priorityResult.level === PriorityLevel.URGENT && (
-                <Activity className={`h-5 w-5 ${PRIORITY_INDICATORS[priorityResult.level].textColor}`} />
-              )}
-              {priorityResult.level === PriorityLevel.NORMAL && (
-                <HeartPulse className={`h-5 w-5 ${PRIORITY_INDICATORS[priorityResult.level].textColor}`} />
-              )}
-              <h3 className={`font-semibold text-lg ${PRIORITY_INDICATORS[priorityResult.level].textColor}`}>
-                {priorityResult.level} Priority
-              </h3>
-              <span className={`font-medium ${PRIORITY_INDICATORS[priorityResult.level].textColor}`}>
-                ({priorityResult.score}/100)
-              </span>
-            </div>
-          </div>
-
-          {/* Department Selection */}
-          <div className="mb-3">
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-muted-foreground">Department:</span>
-              {isManualSelection ? (
-                <div className="flex items-center gap-2">
-                  <Select value={manualDepartment || priorityResult.suggestedDepartment} onValueChange={handleManualDepartmentChange}>
-                    <SelectTrigger className="h-7 py-0 px-2 text-sm w-auto min-w-[140px] bg-background/50">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-black-800">
-                      {availableDepartments.map((dept) => (
-                        <SelectItem key={dept} value={dept}>{dept}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <button
-                    onClick={() => {setIsManualSelection(false); setManualDepartment('');}}
-                    className="text-xs text-muted-foreground hover:text-foreground"
-                  >
-                    (Reset)
-                  </button>
+    {/* Priority Assessment Results */}
+    {priorityResult && !analyzingPriority && (
+      <div className="space-y-4">
+        {/* Priority Level Badge */}
+        <div className={`p-6 rounded-xl border ${PRIORITY_INDICATORS[priorityResult.level].bgColor} ${PRIORITY_INDICATORS[priorityResult.level].borderColor} backdrop-blur-sm`}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <div className={`p-3 rounded-full ${PRIORITY_INDICATORS[priorityResult.level].bgColor.replace('/20', '/30')} border ${PRIORITY_INDICATORS[priorityResult.level].borderColor}`}>
+                {priorityResult.level === PriorityLevel.EMERGENCY && (
+                  <AlertTriangle className={`h-8 w-8 ${PRIORITY_INDICATORS[priorityResult.level].textColor}`} />
+                )}
+                {priorityResult.level === PriorityLevel.URGENT && (
+                  <Activity className={`h-8 w-8 ${PRIORITY_INDICATORS[priorityResult.level].textColor}`} />
+                )}
+                {priorityResult.level === PriorityLevel.NORMAL && (
+                  <HeartPulse className={`h-8 w-8 ${PRIORITY_INDICATORS[priorityResult.level].textColor}`} />
+                )}
+              </div>
+              <div>
+                <div className="flex items-center gap-3">
+                  <h3 className={`text-2xl font-bold ${PRIORITY_INDICATORS[priorityResult.level].textColor}`}>
+                    {priorityResult.level.toUpperCase()} PRIORITY
+                  </h3>
+                  <Badge variant="outline" className={`text-lg px-3 py-1 ${PRIORITY_INDICATORS[priorityResult.level].textColor} ${PRIORITY_INDICATORS[priorityResult.level].borderColor} bg-slate-800/50`}>
+                    {priorityResult.score}/100
+                  </Badge>
                 </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-foreground">{priorityResult.suggestedDepartment}</span>
-                  <button 
-                    className="text-xs text-primary hover:underline" 
-                    onClick={() => {
-                      setManualDepartment(priorityResult.suggestedDepartment);
-                      setIsManualSelection(true);
-                    }}
-                  >
-                    (Change)
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Matched Keywords */}
-          {priorityResult.matchedKeywords.length > 0 && (
-            <div className="mb-3">
-              <span className="text-sm text-muted-foreground">Detected symptoms: </span>
-              <div className="flex flex-wrap gap-1 mt-1">
-                {priorityResult.matchedKeywords.map((keyword, index) => (
-                  <span
-                    key={index}
-                    className="inline-block px-2 py-1 text-xs bg-muted/50 text-muted-foreground rounded-md border"
-                  >
-                    {keyword}
-                  </span>
-                ))}
+                <p className="text-sm text-slate-400 mt-1">
+                  {priorityResult.level === PriorityLevel.EMERGENCY && "Immediate medical attention required"}
+                  {priorityResult.level === PriorityLevel.URGENT && "Prompt medical care recommended"}
+                  {priorityResult.level === PriorityLevel.NORMAL && "Standard appointment scheduling appropriate"}
+                </p>
               </div>
             </div>
-          )}
-
-          {/* Priority Override Buttons */}
-          <div className="mt-3 flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Override priority:</span>
-            <div className="flex gap-1">
-              <button
-                onClick={() => handlePriorityOverride(PriorityLevel.EMERGENCY)}
-                className={`px-2 py-1 text-xs rounded transition-colors
-                  ${priorityResult.level === PriorityLevel.EMERGENCY 
-                    ? 'bg-red-500 text-white border-red-500' 
-                    : 'bg-red-500/20 text-red-500 border border-red-500/30 hover:bg-red-500/30'}`}
-              >
-                Emergency
-              </button>
-              <button
-                onClick={() => handlePriorityOverride(PriorityLevel.URGENT)}
-                className={`px-2 py-1 text-xs rounded transition-colors
-                  ${priorityResult.level === PriorityLevel.URGENT 
-                    ? 'bg-amber-500 text-white border-amber-500' 
-                    : 'bg-amber-500/20 text-amber-500 border border-amber-500/30 hover:bg-amber-500/30'}`}
-              >
-                Urgent
-              </button>
-              <button
-                onClick={() => handlePriorityOverride(PriorityLevel.NORMAL)}
-                className={`px-2 py-1 text-xs rounded transition-colors
-                  ${priorityResult.level === PriorityLevel.NORMAL 
-                    ? 'bg-emerald-500 text-white border-emerald-500' 
-                    : 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/30 hover:bg-emerald-500/30'}`}
-              >
-                Normal
-              </button>
-            </div>
           </div>
 
-          {/* Analysis Path Trace (Collapsible) */}
-          {priorityResult.pathTrace && priorityResult.pathTrace.length > 0 && (
-            <details className="mt-4">
-              <summary className="text-sm font-medium text-muted-foreground cursor-pointer hover:text-foreground">
-                Analysis Details
-              </summary>
-              <div className="mt-2 pl-4 border-l-2 border-border/50">
-                {priorityResult.pathTrace.map((trace, index) => (
-                  <p key={index} className="text-xs text-muted-foreground mb-1">
-                    {index + 1}. {trace}
-                  </p>
-                ))}
+          {/* Department Assignment */}
+          <Separator className="my-4 bg-slate-600/50" />
+          <div className="space-y-3">
+            <Label className="text-base font-semibold text-slate-200">Recommended Department</Label>
+            {isManualSelection ? (
+              <div className="flex items-center gap-3">
+                <Select value={manualDepartment || priorityResult.suggestedDepartment} onValueChange={handleManualDepartmentChange}>
+                  <SelectTrigger className="max-w-xs bg-slate-800/50 border-slate-600/50 text-slate-200">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-600">
+                    {availableDepartments.map((dept) => (
+                      <SelectItem key={dept} value={dept} className="text-slate-200 focus:bg-slate-700">{dept}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => {setIsManualSelection(false); setManualDepartment('');}}
+                  className="text-slate-400 hover:text-slate-200 hover:bg-slate-700/50"
+                >
+                  Reset to Auto
+                </Button>
               </div>
-            </details>
-          )}
+            ) : (
+              <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-600/50">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-teal-500/20 rounded border border-teal-500/30">
+                    <Building className="h-4 w-4 text-teal-400" />
+                  </div>
+                  <span className="font-semibold text-slate-200">{priorityResult.suggestedDepartment}</span>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    setManualDepartment(priorityResult.suggestedDepartment);
+                    setIsManualSelection(true);
+                  }}
+                  className="border-slate-600/50 text-slate-300 hover:bg-slate-700/50"
+                >
+                  Change Department
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
-      )}
 
-      {/* Doctor Selection */}
-      {priorityResult && (suggestedDoctors.length > 0 || doctors.length > 0) && (
-        <div className="space-y-2">
-          <label htmlFor="doctor-select" className="block text-sm font-medium text-foreground">
-            Assign to Doctor
-          </label>
-          <Select value={selectedDoctorId} onValueChange={handleDoctorChange}>
-            <SelectTrigger className="bg-background/50">
-              <SelectValue placeholder="Select a doctor..." />
-            </SelectTrigger>
-            <SelectContent className="bg-black-800">
-              {(suggestedDoctors.length > 0 ? suggestedDoctors : doctors).map((doctor) => (
-                <SelectItem key={doctor.id} value={doctor.id}>
-                  Dr. {doctor.name} - {doctor.specialization || doctor.department || 'General'}
-                  {doctor.loadFactor !== undefined && ` (Load: ${doctor.loadFactor}%)`}
-                </SelectItem>
+        {/* Secondary Department Recommendations */}
+        {multiGroupResult && multiGroupResult.hasCrossGroupMatches && multiGroupResult.secondaryGroups.length > 0 && (
+          <Alert className="border-amber-500/30 bg-amber-900/20">
+            <AlertTriangle className="h-4 w-4 text-amber-400" />
+            <AlertTitle className="text-amber-300">Additional Consultations Recommended</AlertTitle>
+            <AlertDescription className="text-amber-400 mt-2">
+              <div className="space-y-3">
+                {multiGroupResult.secondaryGroups.map((group, index) => (
+                  <div key={group.groupId} className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-600/50">
+                    <div className="flex-1">
+                      <div className="font-medium text-slate-200">{group.department}</div>
+                      <div className="text-sm text-slate-400 mt-1">
+                        Symptoms: {group.matchedKeywords.slice(0, 3).join(', ')}
+                        {group.matchedKeywords.length > 3 && ` +${group.matchedKeywords.length - 3} more`}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className={`${PRIORITY_INDICATORS[group.priority].textColor} bg-slate-700/50`}>
+                        {group.priority}
+                      </Badge>
+                      <span className="text-sm text-slate-400">{Math.round(group.score)}/100</span>
+                    </div>
+                  </div>
+                ))}
+                <p className="text-sm text-amber-400 bg-amber-900/30 p-2 rounded border border-amber-500/30">
+                  💡 Consider scheduling follow-up appointments with these specialists for comprehensive care.
+                </p>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Detected Symptoms */}
+        {priorityResult.matchedKeywords.length > 0 && (
+          <div className="space-y-3">
+            <Label className="text-base font-semibold text-slate-200">Detected Medical Symptoms</Label>
+            <div className="flex flex-wrap gap-2">
+              {priorityResult.matchedKeywords.map((keyword, index) => (
+                <Badge key={index} variant="secondary" className="px-3 py-1 text-sm bg-teal-900/30 text-teal-300 border border-teal-500/30">
+                  {keyword}
+                </Badge>
               ))}
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-muted-foreground">
-            Doctors are sorted by availability and specialization match
-          </p>
-        </div>
-      )}
+            </div>
+          </div>
+        )}
 
-      {/* No Analysis Message */}
-      {!priorityResult && !analyzingPriority && note.length >= 2 && !loadingKeywords && (
-        <div className="p-4 rounded-lg bg-muted/20 border border-dashed">
-          <p className="text-sm text-muted-foreground text-center">
-            No symptoms recognized. Try using more specific medical terms or check spelling.
-          </p>
+        {/* Priority Override Controls */}
+        <div className="space-y-3">
+          <Label className="text-base font-semibold text-slate-200">Manual Priority Override</Label>
+          <div className="flex gap-3">
+            <Button
+              variant={priorityResult.level === PriorityLevel.EMERGENCY ? "default" : "outline"}
+              size="sm"
+              onClick={() => handlePriorityOverride(PriorityLevel.EMERGENCY)}
+              className={priorityResult.level === PriorityLevel.EMERGENCY 
+                ? 'bg-red-600 hover:bg-red-700 text-white border-red-500' 
+                : 'border-red-500/50 text-red-400 hover:bg-red-900/20 bg-slate-800/50'}
+            >
+              🚨 Emergency
+            </Button>
+            <Button
+              variant={priorityResult.level === PriorityLevel.URGENT ? "default" : "outline"}
+              size="sm"
+              onClick={() => handlePriorityOverride(PriorityLevel.URGENT)}
+              className={priorityResult.level === PriorityLevel.URGENT 
+                ? 'bg-amber-600 hover:bg-amber-700 text-white border-amber-500' 
+                : 'border-amber-500/50 text-amber-400 hover:bg-amber-900/20 bg-slate-800/50'}
+            >
+              ⚡ Urgent
+            </Button>
+            <Button
+              variant={priorityResult.level === PriorityLevel.NORMAL ? "default" : "outline"}
+              size="sm"
+              onClick={() => handlePriorityOverride(PriorityLevel.NORMAL)}
+              className={priorityResult.level === PriorityLevel.NORMAL 
+                ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-500' 
+                : 'border-emerald-500/50 text-emerald-400 hover:bg-emerald-900/20 bg-slate-800/50'}
+            >
+              ✅ Standard
+            </Button>
+          </div>
+          <p className="text-xs text-slate-400">Healthcare staff can manually adjust priority if clinical judgment differs from automated assessment.</p>
         </div>
-      )}
 
-      {/* Empty State */}
-      {!note.trim() && !loadingKeywords && (
-        <div className="p-4 rounded-lg bg-muted/20 border border-dashed">
-          <p className="text-sm text-muted-foreground text-center">
-            Enter appointment notes or symptoms above to begin priority analysis
-          </p>
-        </div>
-      )}
+        {/* Analysis Details */}
+        {priorityResult.pathTrace && priorityResult.pathTrace.length > 0 && (
+          <Collapsible>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" className="w-full justify-between p-3 h-auto text-slate-200 hover:bg-slate-700/50">
+                <span className="font-medium">View Detailed Analysis</span>
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-2 mt-2">
+              <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-600/50 backdrop-blur-sm">
+                <h4 className="font-medium text-slate-200 mb-2">System Analysis Steps:</h4>
+                <ol className="space-y-1">
+                  {priorityResult.pathTrace.map((trace, index) => (
+                    <li key={index} className="text-sm text-slate-400 flex gap-2">
+                      <span className="font-mono text-xs bg-slate-700/50 px-1 rounded text-slate-300 border border-slate-600/30">{index + 1}</span>
+                      {trace}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        )}
+      </div>
+    )}
+
+{/* Doctor Assignment */}
+{priorityResult && (suggestedDoctors.length > 0 || doctors.length > 0) && (
+  <div className="space-y-4 p-4 bg-slate-800/50 rounded-lg border border-slate-600/50 backdrop-blur-sm">
+    <div className="flex items-center gap-2">
+      <User className="h-5 w-5 text-teal-400" />
+      <Label className="text-base font-semibold text-slate-200">Doctor Assignment</Label>
     </div>
-  </Card>
-  );
+    
+    <Select value={selectedDoctorId} onValueChange={handleDoctorChange}>
+      <SelectTrigger className="bg-slate-700/50 border-slate-600/50 text-slate-200">
+        <SelectValue placeholder="Select an available doctor..." />
+      </SelectTrigger>
+      <SelectContent className="bg-slate-800 border-slate-600">
+        {(suggestedDoctors.length > 0 ? suggestedDoctors : doctors).map((doctor) => {
+          // Calculate percentage from pending appointments (assuming max capacity of 10 for percentage calculation)
+          const pendingCount = doctorLoadFactors[doctor.id] || 0;
+          const loadPercentage = Math.min(100, Math.round((pendingCount / 10) * 100));
+          
+          return (
+            <SelectItem key={doctor.id} value={doctor.id} className="text-slate-200 focus:bg-slate-700">
+              <div className="flex items-center gap-2">
+                <span className="font-medium">Dr. {doctor.name}</span>
+                <Badge variant="outline" className="text-xs border-slate-500/50 text-slate-300">
+                  {doctor.specialization || doctor.department || 'General Practice'}
+                </Badge>
+                {doctorLoadFactors[doctor.id] !== undefined && (
+                  <span className={`text-xs px-2 py-1 rounded ${
+                    loadPercentage > 80 ? 'bg-red-900/30 text-red-400 border border-red-500/30' : 
+                    loadPercentage > 60 ? 'bg-amber-900/30 text-amber-400 border border-amber-500/30' : 
+                    'bg-emerald-900/30 text-emerald-400 border border-emerald-500/30'
+                  }`}>
+                    {loadPercentage}% load ({pendingCount} pending)
+                  </span>
+                )}
+              </div>
+            </SelectItem>
+          );
+        })}
+      </SelectContent>
+    </Select>
+    
+    <Alert className="border-teal-500/30 bg-teal-900/20">
+      <Info className="h-4 w-4 text-teal-400" />
+      <AlertDescription className="text-teal-400">
+        Doctors are automatically sorted by availability and specialty match to ensure optimal care assignment.
+      </AlertDescription>
+    </Alert>
+  </div>
+)}
+
+    {/* No Analysis State */}
+    {!priorityResult && !analyzingPriority && note.length >= 2 && !loadingKeywords && (
+      <Alert className="border-orange-500/30 bg-orange-900/20">
+        <AlertTriangle className="h-4 w-4 text-orange-400" />
+        <AlertTitle className="text-orange-300">No Medical Symptoms Detected</AlertTitle>
+        <AlertDescription className="text-orange-400">
+          <p>The system couldn't identify specific medical symptoms in the provided text.</p>
+          <p className="mt-2 font-medium">Suggestions:</p>
+          <ul className="list-disc list-inside mt-1 space-y-1">
+            <li>Use specific medical terminology (e.g., "chest pain" instead of "hurt")</li>
+            <li>Check spelling of medical terms</li>
+            <li>Include symptom duration and severity</li>
+            <li>Describe physical sensations clearly</li>
+          </ul>
+        </AlertDescription>
+      </Alert>
+    )}
+
+    {/* Empty State */}
+    {!note.trim() && !loadingKeywords && (
+      <div className="text-center py-12">
+        <div className="p-4 bg-teal-500/20 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center border border-teal-500/30">
+          <FileText className="h-10 w-10 text-teal-400" />
+        </div>
+        <h3 className="text-lg font-semibold text-slate-200 mb-2">Ready for Medical Assessment</h3>
+        <p className="text-slate-400 max-w-md mx-auto">
+          Enter patient symptoms or appointment notes in the text field above. 
+          Our Algoritm will automatically analyze the content and suggest appropriate care priority and department routing.
+          Medix Self-Triage Processing
+        </p>
+      </div>
+    )}
+  </div>
+);
 }
 
 export default AppointmentPriorityAnalyzer;
