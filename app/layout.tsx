@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@/lib/utils";
 import { AutoLogoutWrapper } from "@/components/Auto-Logout-Wrapper";
+import SystemAnalytics, { DevAnalytics } from "@/components/System-Analytics-Sentry";
  
 const firaCode = Fira_Code({
   variable: "--font-sans",
@@ -38,9 +39,14 @@ export default function RootLayout({
             enableSystem={false}
             disableTransitionOnChange
           >
+
 <AutoLogoutWrapper>
+<SystemAnalytics>
   {children}
+  <DevAnalytics />
+</SystemAnalytics>
 </AutoLogoutWrapper>
+
             <Toaster richColors position='top-center' />
           </ThemeProvider>
         </body>
