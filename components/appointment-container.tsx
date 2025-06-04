@@ -10,6 +10,8 @@ export const AppointmentContainer = async({ id }: { id: string }) => {
     const { data: doctors } = await getDoctors();
     const isNurse = await checkRole("NURSE");
     const { userId } = await auth();
+    const isAdmin = await checkRole("ADMIN");
+    const isDoctor = await checkRole("DOCTOR");
     
     if (!patient || !doctors) return null;
 
@@ -19,6 +21,12 @@ export const AppointmentContainer = async({ id }: { id: string }) => {
             doctors={doctors}
             bookedBy={isNurse ? userId ?? undefined : undefined}
             isNurseBooking={isNurse}
+
+            isNurse={isNurse}
+            isAdmin={isAdmin}
+            isDoctor={isDoctor}
+            userId={userId}
+
         />
     );
 }

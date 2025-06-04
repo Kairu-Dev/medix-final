@@ -29,7 +29,7 @@
           key: "name",
         },
         {
-          header: "Date",
+          header: "Scheduled Date",
           key: "appointment_date",
           className: "hidden md:table-cell",
         },
@@ -49,7 +49,7 @@
           className: "hidden xl:table-cell",
         },
         {
-          header: "Priority",
+          header: "Priority Level",
           key: "priority",
           className: "hidden lg:table-cell",
         },
@@ -88,11 +88,11 @@
           colorCode: string | null;
           img: string | null;
         };
-        bookedByStaff?: { // Add this
+        bookedByStaff?: { // Allow null
           id: string;
           name: string;
           role: string;
-        };
+        } | null;
       }
     
     // Define the type for priority counts
