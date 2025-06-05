@@ -17,7 +17,7 @@ const AuthLayout = ({children}:{children: React.ReactNode}) => {
             height={1000}
             width={1000}
             alt="patient"
-            className="h-8 w-fit mb-3"
+            className="h-10 w-fit mb-3"
           />
           
           {children}

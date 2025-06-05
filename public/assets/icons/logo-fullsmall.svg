@@ -1,0 +1,8 @@
+<svg width="400" height="100" viewBox="0 0 400 100" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Medical Cross -->
+                        <rect x="30" y="20" width="12" height="60" fill="white" rx="2"/>
+                        <rect x="6" y="38" width="60" height="12" fill="white" rx="2"/>
+                        
+                        <!-- MEDIX Text -->
+                        <text x="90" y="70" font-family="Helvetica Neue, Arial, sans-serif" font-size="64" font-weight="300" fill="white" letter-spacing="-2px">MEDIX</text>
+                    </svg>
