@@ -103,7 +103,7 @@ export const sidebar = async() => {
           },
           {
             name: "Billing",
-            href: "/patient/self?cat=payments",
+            href: "/record/billing/patient", // Updated path
             access: ["patient"],
             icon: Receipt,
           },
