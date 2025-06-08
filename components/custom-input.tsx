@@ -19,6 +19,7 @@ interface CustomProps {
   inputType?: "text" | "email" | "password" | "date";
   selectList?: { label: string; value: string }[];
   defaultValue?: string;
+  disabled?: boolean; // Added disabled prop
 }
 
 const RenderInput = ({ field, props }: {field: any; props: CustomProps}) => {

@@ -1,4 +1,3 @@
-
 // AppointmentPriorityAnalyzer.tsx    --- Ver 3.1 
 // POSSIBLE IMPROVEMENTS:
 // IMPROVE LOAD FACTOR HANDLING: Add load factor to doctor selection logic WHEREIN DOCTOR WITH THE LOWEST PENDING APPOINTMENTS IS SELECTED FIRST
@@ -47,6 +46,7 @@ import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
 import { Label } from './ui/label';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
+import { useUser } from '@clerk/nextjs';
 
 
 //NEW CODE
@@ -1009,9 +1009,6 @@ const AppointmentPriorityAnalyzer: React.FC<AppointmentPriorityAnalyzerProps> = 
   doctors = [],
   className,
   doctorLoadFactors = {}, // Add this line
-  isNurse = false,
-  isAdmin = false,
-  isDoctor = false,
   userId,
 }) => {
   const [note, setNote] = useState(appointmentNote || '');
@@ -1033,6 +1030,19 @@ const AppointmentPriorityAnalyzer: React.FC<AppointmentPriorityAnalyzerProps> = 
   const [loadingKeywords, setLoadingKeywords] = useState(true);
   const [lastAnalysisResult, setLastAnalysisResult] = useState<string>(''); // To prevent duplicate toasts
   const [multiGroupResult, setMultiGroupResult] = useState<MultiGroupAnalysisResult | null>(null);
+
+  const { user } = useUser();
+
+const checkRole = (role: string): boolean => {
+  return user?.publicMetadata?.role === role || 
+         user?.organizationMemberships?.some(
+           membership => membership.role === role
+         ) || false;
+};
+
+const isNurse = checkRole('nurse');
+const isAdmin = checkRole('admin'); 
+const isDoctor = checkRole('doctor');
 
   // Available departments for manual selection
   const availableDepartments = [
@@ -1489,31 +1499,47 @@ if (doctors.length > 0) {
 
 
   const analyzeAppointmentPriority = useCallback((text: string) => {
+    console.log('🔍 analyzeAppointmentPriority called with:', text); // Debug log
+    
     // Reset priority result when text is empty or too short
     if (!text || text.trim().length === 0) {
+      console.log('❌ Text too short, resetting priority result');
       setPriorityResult(null);
       setLastAnalysisResult('');
+      setMultiGroupResult(null);
       if (onPriorityAssigned) {
         onPriorityAssigned(PriorityLevel.NORMAL, 0, "General Practice", selectedDoctorId || defaultDoctorId || '');
       }
       return;
     }
     
-    if (text.length < 2 || loadingKeywords) return; // Reduced from 3 to 2 characters
-    
-    setAnalyzingPriority(true);
-    
-    // Cancel previous timeout
-    if (debounceTimeout) {
-      clearTimeout(debounceTimeout);
+    if (text.length < 2) {
+      console.log('❌ Text length < 2 characters');
+      return;
     }
     
-    // Create new timeout for analysis
-    const newTimeout = setTimeout(() => {
+    if (loadingKeywords) {
+      console.log('⏳ Keywords still loading, skipping analysis');
+      return;
+    }
+    
+    if (keywordGroups.length === 0) {
+      console.log('❌ No keyword groups available');
+      return;
+    }
+    
+    console.log('✅ Starting analysis...');
+    setAnalyzingPriority(true);
+    
+    // Immediate analysis for better responsiveness
+    const performAnalysis = () => {
       try {
+        console.log('🧠 Performing findOptimalPathWithDijkstra analysis...');
         const result = findOptimalPathWithDijkstra(text);
+        console.log('📊 Analysis result:', result);
+        
         setPriorityResult(result);
-
+  
         // Handle multi-group analysis results
         if (result.multiGroupAnalysis) {
           setMultiGroupResult(result.multiGroupAnalysis);
@@ -1530,14 +1556,14 @@ if (doctors.length > 0) {
         }
         
         // Create a unique result signature to prevent duplicate toasts
-        const resultSignature = `${result.level}-${result.score}-${result.suggestedDepartment}`;
+        const resultSignature = `${result.level}-${result.score}-${result.suggestedDepartment}-${text.trim()}`;
         
         // Only show toast if result actually changed
         if (resultSignature !== lastAnalysisResult) {
           setLastAnalysisResult(resultSignature);
           toast.success(
             `Priority Analysis Complete: ${result.level} (${result.score}/100) - ${result.suggestedDepartment}`,
-            { duration: 300}
+            { duration: 3000 }
           );
         }
         
@@ -1551,39 +1577,53 @@ if (doctors.length > 0) {
           );
         }
         
- // Filter relevant doctors
-if (doctors.length > 0) {
-  const relevantDoctors = doctors.filter(doctor => 
-    doctor.department === result.suggestedDepartment || 
-    doctor.specialization === result.suggestedDepartment ||
-    doctor.specialization?.includes(result.suggestedDepartment) ||
-    (result.suggestedDepartment === "General Practice" && 
-      (doctor.specialization === "Internal Medicine" || 
-        doctor.specialization === "Family Medicine")
-    )
-  );
-  
-  const sortedDoctors = [...relevantDoctors].sort((a, b) => {
-    const aLoad = doctorLoadFactors[a.id] || 0; // Use passed load factors
-    const bLoad = doctorLoadFactors[b.id] || 0;
-    return aLoad - bLoad;
-  });
-  
-  setSuggestedDoctors(sortedDoctors.length > 0 ? sortedDoctors : doctors);
-  
-  if (sortedDoctors.length > 0 && !selectedDoctorId) {
-    setSelectedDoctorId(sortedDoctors[0].id);
-  }
-}
+        // Filter relevant doctors
+        if (doctors.length > 0) {
+          const relevantDoctors = doctors.filter(doctor => 
+            doctor.department === result.suggestedDepartment || 
+            doctor.specialization === result.suggestedDepartment ||
+            doctor.specialization?.includes(result.suggestedDepartment) ||
+            (result.suggestedDepartment === "General Practice" && 
+              (doctor.specialization === "Internal Medicine" || 
+                doctor.specialization === "Family Medicine")
+            )
+          );
+          
+          const sortedDoctors = [...relevantDoctors].sort((a, b) => {
+            const aLoad = doctorLoadFactors[a.id] || 0;
+            const bLoad = doctorLoadFactors[b.id] || 0;
+            return aLoad - bLoad;
+          });
+          
+          setSuggestedDoctors(sortedDoctors.length > 0 ? sortedDoctors : doctors);
+          
+          if (sortedDoctors.length > 0 && !selectedDoctorId) {
+            setSelectedDoctorId(sortedDoctors[0].id);
+          }
+        }
       } catch (error) {
-        console.error("Error analyzing appointment priority:", error);
+        console.error("❌ Error analyzing appointment priority:", error);
         toast.error("Error analyzing symptoms. Please try again.");
       } finally {
         setAnalyzingPriority(false);
       }
-    }, 300); // Further reduced debounce time for better responsiveness
+    };
     
-    setDebounceTimeout(newTimeout);
+    // For single words or short inputs, analyze immediately
+    // For longer inputs, use debouncing
+    if (text.trim().split(/\s+/).length <= 2 || text.length <= 10) {
+      console.log('🚀 Immediate analysis for short input');
+      performAnalysis();
+    } else {
+      console.log('⏱️ Debounced analysis for longer input');
+      // Cancel previous timeout
+      if (debounceTimeout) {
+        clearTimeout(debounceTimeout);
+      }
+      
+      const newTimeout = setTimeout(performAnalysis, 200); // Reduced to 200ms
+      setDebounceTimeout(newTimeout);
+    }
   }, [
     findOptimalPathWithDijkstra, 
     onPriorityAssigned, 
@@ -1591,25 +1631,53 @@ if (doctors.length > 0) {
     selectedDoctorId, 
     defaultDoctorId, 
     loadingKeywords,
-    lastAnalysisResult
+    keywordGroups.length,
+    lastAnalysisResult,
+    debounceTimeout,
+    doctorLoadFactors
   ]);
 
+  const forceAnalyze = useCallback(() => {
+    console.log('🔄 Force analyzing current note:', note);
+    if (note && note.trim().length > 0) {
+      analyzeAppointmentPriority(note);
+    }
+  }, [note, analyzeAppointmentPriority]);
+  
   
 
-// Effect to analyze symptoms when note changes
-useEffect(() => {
-  // Always call analyze function, even for empty text (to reset state)
-  analyzeAppointmentPriority(note || '');
-}, [note]);  // Remove analyzeAppointmentPriority from dependencies
+  useEffect(() => {
+    console.log('📝 Note changed to:', note);
+    console.log('🔢 Keyword groups length:', keywordGroups.length);
+    console.log('⏳ Loading keywords:', loadingKeywords);
+    
+    // Add a small delay to ensure state is fully updated
+    const analysisTimeout = setTimeout(() => {
+      analyzeAppointmentPriority(note || '');
+    }, 50); // Small delay to ensure state synchronization
+    
+    return () => {
+      clearTimeout(analysisTimeout);
+    };
+  }, [note, keywordGroups.length, loadingKeywords]); // Removed analyzeAppointmentPriority from dependencies
+  
 
 // Update note when appointmentNote prop changes
 useEffect(() => {
   if (appointmentNote !== undefined && appointmentNote !== note) {
+    console.log('🔄 Updating note from prop:', appointmentNote);
     setNote(appointmentNote);
   }
-}, [appointmentNote]); // Remove note from dependencies
+}, [appointmentNote]); // Kept minimal dependencies
 
-
+// Cleanup timeouts on unmount
+useEffect(() => {
+  return () => {
+    if (debounceTimeout) {
+      clearTimeout(debounceTimeout);
+    }
+  };
+}, [debounceTimeout]);
 
   // Load keyword groups on component mount
   useEffect(() => {
@@ -1628,8 +1696,6 @@ useEffect(() => {
 
     loadKeywords();
   }, []);
-
-
 
 
   // Handle doctor selection
@@ -2347,13 +2413,3 @@ export default AppointmentPriorityAnalyzer;
   
   */}
 
-{/* 
-
-
-
-  
-  
-  
-  
-  
-  */}

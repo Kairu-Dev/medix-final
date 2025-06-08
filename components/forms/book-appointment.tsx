@@ -1,5 +1,5 @@
 "use client";
-    /* eslint-disable */
+/* eslint-disable */
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -8,6 +8,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 import { AppointmentSchema } from "@/lib/validation";
 import { generateTimes } from "@/utils";
@@ -38,16 +43,18 @@ import {
 } from "../ui/select";
 import { toast } from "sonner";
 import { createNewAppointment } from "@/app/actions/appointment";
-import { DraggableDialogContent } from '../Draggable-Content';
+// import { DraggableDialogContent } from '../Draggable-Content'; // Commented out draggable
 import AppointmentPriorityAnalyzer from '../AppointmentPriorityAnalyzer';
 import { getDoctorLoadFactors } from '@/app/actions/doctor-load';
+import { getDoctorWorkingDays } from '@/app/actions/doctor-schedule';
 
-// Enhanced appointment schema with priority fields
 const EnhancedAppointmentSchema = AppointmentSchema.extend({
   priority_level: z.enum(['NORMAL', 'URGENT', 'EMERGENCY']).default('NORMAL'),
   priority_score: z.number().default(0),
   department: z.string().optional(),
   priority_override: z.boolean().default(false),
+  // Better date handling
+  appointment_date: z.string().min(1, "Select appointment date"),
 });
 
 // Appointment types
@@ -62,15 +69,228 @@ const TYPES = [
 interface EnhancedBookAppointmentProps {
   data: Patient;
   doctors: Doctor[];
-  bookedBy?: string; // Staff ID who is booking (for nurses)
+  bookedBy?: string;
   isNurseBooking?: boolean;
-  isNurse?: boolean; // Added this property
+  isNurse?: boolean;
   isAdmin?: boolean;
   isDoctor?: boolean;
   userId?: string | null;
 }
 
+// Dynamic timezone date formatting helper
+const formatDateWithUserTimezone = (date: Date | undefined) => {
+  if (!date) return "";
+  
+  // Simple local date formatting that preserves the selected date
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}`;
+};
 
+// Get user's timezone info for display/debugging
+const getUserTimezoneInfo = () => {
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const offsetMinutes = new Date().getTimezoneOffset();
+  const offsetHours = Math.abs(offsetMinutes / 60);
+  const offsetSign = offsetMinutes <= 0 ? '+' : '-';
+  
+  return {
+    timezone,
+    offset: `UTC${offsetSign}${offsetHours}`,
+    isPhilippines: timezone === 'Asia/Manila'
+  };
+};
+
+const generateDynamicTimes = (startTime: string, endTime: string, intervalMinutes: number = 30) => {
+  const times = [];
+  
+  // Parse start time (format: "07:00" or "7:00")
+  const [startHour, startMin] = startTime.split(':').map(Number);
+  const [endHour, endMin] = endTime.split(':').map(Number);
+  
+  // Convert to minutes for easier calculation
+  const startMinutes = startHour * 60 + startMin;
+  const endMinutes = endHour * 60 + endMin;
+  
+  // Generate times every intervalMinutes
+  for (let minutes = startMinutes; minutes < endMinutes; minutes += intervalMinutes) {
+    const hour = Math.floor(minutes / 60);
+    const min = minutes % 60;
+    
+    // Format to 12-hour time
+    const period = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+    const timeString = `${displayHour}:${min.toString().padStart(2, '0')} ${period}`;
+    
+    times.push({
+      label: timeString,
+      value: timeString
+    });
+  }
+  
+  return times;
+};
+
+// Custom Calendar Date Picker Component with Dynamic Timezone
+const CalendarDatePicker = ({ 
+  value, 
+  onChange, 
+  placeholder = "Select date",
+  disabled = false,
+  className = "",
+  selectedDoctorId,
+  doctorWorkingDays
+}: {
+  value?: Date;
+  onChange: (date: Date | undefined) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  className?: string;
+  selectedDoctorId?: string;
+  doctorWorkingDays?: { day: string; start_time: string; close_time: string; }[];
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const timezoneInfo = getUserTimezoneInfo();
+
+  const isDateDisabled = (date: Date) => {
+    const now = new Date();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const checkDate = new Date(date);
+    checkDate.setHours(0, 0, 0, 0);
+    
+    // Disable dates beyond 3 months
+    const maxDate = new Date();
+    maxDate.setMonth(maxDate.getMonth() + 3);
+    maxDate.setHours(23, 59, 59, 999);
+    
+    if (checkDate > maxDate) return true;
+    
+    // If no doctor selected, allow all future dates
+    if (!selectedDoctorId || !doctorWorkingDays || doctorWorkingDays.length === 0) {
+      // Still disable past dates
+      return checkDate < today;
+    }
+    
+    // Get day name for the selected date
+    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const dayOfWeek = dayNames[checkDate.getDay()].toLowerCase();
+    
+    // Check if the day of the week is in doctor's working days
+    const doctorWorkingDay = doctorWorkingDays.find(
+      workingDay => workingDay.day.toLowerCase() === dayOfWeek
+    );
+    
+    // If doctor doesn't work on this day, disable it
+    if (!doctorWorkingDay) return true;
+    
+    // If it's a past date (not today), disable it
+    if (checkDate < today) return true;
+    
+    // If it's today, check if current time is past doctor's closing time
+    if (checkDate.getTime() === today.getTime()) {
+      // Parse doctor's closing time
+      const [closeHour, closeMinute] = doctorWorkingDay.close_time.split(':').map(Number);
+      
+      // Create a Date object for today's closing time
+      const closingTime = new Date();
+      closingTime.setHours(closeHour, closeMinute, 0, 0);
+      
+      // If current time is past closing time, disable today
+      if (now >= closingTime) {
+        return true;
+      }
+    }
+    
+    // Date is valid (future date or today before closing time, and doctor works on this day)
+    return false;
+  };
+
+  return (
+    <>
+      <Button
+        variant="outline"
+        className={cn(
+          "w-full justify-start text-left font-normal bg-slate-800/80 border-emerald-600/40 text-slate-200 hover:bg-slate-700/80 hover:border-emerald-500/60 transition-all duration-200",
+          !value && "text-slate-400",
+          className
+        )}
+        disabled={disabled}
+        type="button"
+        onClick={() => setIsOpen(true)}
+      >
+        <CalendarIcon className="mr-2 h-4 w-4 text-emerald-400" />
+        {value ? format(value, "PPP") : <span>{placeholder}</span>}
+      </Button>
+
+      {isOpen && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => setIsOpen(false)}
+        >
+          <div 
+            className="bg-slate-900/95 border border-emerald-500/40 shadow-2xl rounded-lg p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h3 className="text-emerald-400 font-medium">Select Date</h3>
+                <p className="text-xs text-slate-400 mt-1">
+                  {timezoneInfo.timezone} ({timezoneInfo.offset})
+                  {timezoneInfo.isPhilippines && " 🇵🇭"}
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsOpen(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                ✕
+              </Button>
+            </div>
+            
+            <Calendar
+              mode="single"
+              selected={value}
+              onSelect={(date) => {
+                onChange(date);
+                setIsOpen(false);
+              }}
+              disabled={isDateDisabled}
+              initialFocus
+              className="rounded-md border-0"
+              classNames={{
+                months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+                month: "space-y-4",
+                caption: "flex justify-center pt-1 relative items-center text-emerald-400",
+                caption_label: "text-sm font-medium text-emerald-400",
+                nav: "space-x-1 flex items-center",
+                nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 text-emerald-400 hover:bg-emerald-800/50 rounded-md transition-colors",
+                nav_button_previous: "absolute left-1",
+                nav_button_next: "absolute right-1",
+                table: "w-full border-collapse space-y-1",
+                head_row: "flex",
+                head_cell: "text-emerald-300 rounded-md w-9 font-normal text-[0.8rem]",
+                row: "flex w-full mt-2",
+                cell: "h-9 w-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
+                day: "h-9 w-9 p-0 font-normal text-slate-200 hover:bg-emerald-700/60 hover:text-emerald-100 rounded-md cursor-pointer transition-colors aria-selected:opacity-100",
+                day_selected: "bg-emerald-600 text-white hover:bg-emerald-600 hover:text-white focus:bg-emerald-600 focus:text-white",
+                day_today: "bg-slate-700/80 text-emerald-400 font-semibold",
+                day_outside: "text-slate-500 opacity-50 aria-selected:bg-emerald-600/50 aria-selected:text-white aria-selected:opacity-30",
+                day_disabled: "text-slate-600 opacity-30 cursor-not-allowed hover:bg-transparent",
+                day_hidden: "invisible",
+              }}
+            />
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
 
 export const EnhancedBookAppointment = ({
   data,
@@ -89,9 +309,20 @@ export const EnhancedBookAppointment = ({
   } | null>(null);
   const router = useRouter();
   const [physicians, setPhysicians] = useState<Doctor[] | undefined>(doctors);
+  const [doctorWorkingDays, setDoctorWorkingDays] = useState<{
+    day: string;
+    start_time: string;
+    close_time: string;
+  }[]>([]);
+  const [availableTimes, setAvailableTimes] = useState<{label: string, value: string}[]>([]);
+  const [loadingWorkingDays, setLoadingWorkingDays] = useState(false);
 
-  const appointmentTimes = generateTimes(8, 17, 30);
 
+
+  const [isFormReady, setIsFormReady] = useState(false);
+
+
+  //const appointmentTimes = generateTimes(8, 17, 30);
   const patientName = `${data?.first_name} ${data?.last_name}`;
 
   const form = useForm<z.infer<typeof EnhancedAppointmentSchema>>({
@@ -112,24 +343,24 @@ export const EnhancedBookAppointment = ({
     switch(level) {
       case PriorityLevel.EMERGENCY:
         return {
-          bg: "bg-red-900/20",
-          border: "border-red-500/40",
-          text: "text-red-500",
-          icon: <AlertTriangle className="h-5 w-5 text-red-500" />
+          bg: "bg-red-900/30",
+          border: "border-red-500/50",
+          text: "text-red-400",
+          icon: <AlertTriangle className="h-5 w-5 text-red-400" />
         };
       case PriorityLevel.URGENT:
         return {
-          bg: "bg-amber-900/20",
-          border: "border-amber-500/40",
-          text: "text-amber-500",
-          icon: <Activity className="h-5 w-5 text-amber-500" />
+          bg: "bg-amber-900/30",
+          border: "border-amber-500/50",
+          text: "text-amber-400",
+          icon: <Activity className="h-5 w-5 text-amber-400" />
         };
       default:
         return {
-          bg: "bg-emerald-900/20",
-          border: "border-emerald-500/40",
-          text: "text-emerald-500",
-          icon: <HeartPulse className="h-5 w-5 text-emerald-500" />
+          bg: "bg-emerald-900/30",
+          border: "border-emerald-500/50",
+          text: "text-emerald-400",
+          icon: <HeartPulse className="h-5 w-5 text-emerald-400" />
         };
     }
   };
@@ -146,7 +377,6 @@ export const EnhancedBookAppointment = ({
       fetchLoadFactors();
     }
   }, [doctors]);
-  
 
   // Watch for note changes to enable analyzer automatically
   const note = form.watch("note");
@@ -156,30 +386,149 @@ export const EnhancedBookAppointment = ({
     }
   }, [note]);
 
-  // Handle priority assignment from analyzer
-  const handlePriorityAssigned = (
-    level: PriorityLevel,
-    score: number,
-    suggestedDepartment: string,
-    suggestedDoctorId: string,
-    isOverride: boolean = false // Optional override flag
-  ) => {
-    // Update form values
-    form.setValue("priority_level", level);
-    form.setValue("priority_score", score);
-    form.setValue("doctor_id", suggestedDoctorId);
-    form.setValue("priority_override", isOverride);
+// Watch form values properly
+const selectedDoctorId = form.watch("doctor_id");
+const selectedDate = form.watch("appointment_date");
 
-    
-    // Store priority info for display
-    setPriorityInfo({
-      level,
-      score,
-      department: suggestedDepartment
-    });
-
-    toast.success(`Priority set to ${level} (Score: ${score})`);
+// Effect for fetching doctor working days
+useEffect(() => {
+  const fetchDoctorWorkingDays = async () => {
+    if (selectedDoctorId) {
+      setLoadingWorkingDays(true);
+      setAvailableTimes([]); // Clear times immediately
+      // Clear the time selection when doctor changes
+      form.setValue("time", "");
+      
+      try {
+        const result = await getDoctorWorkingDays(selectedDoctorId);
+        if (result.success && result.workingDays) {
+          setDoctorWorkingDays(result.workingDays);
+        } else {
+          setDoctorWorkingDays([]);
+        }
+      } catch (error) {
+        console.error('Error fetching doctor working days:', error);
+        setDoctorWorkingDays([]);
+      } finally {
+        setLoadingWorkingDays(false);
+      }
+    } else {
+      setDoctorWorkingDays([]);
+      setAvailableTimes([]);
+      setLoadingWorkingDays(false);
+    }
   };
+
+  // Add a small delay to ensure form values are properly set
+  const timeoutId = setTimeout(() => {
+    fetchDoctorWorkingDays();
+  }, 100);
+
+  return () => clearTimeout(timeoutId);
+}, [selectedDoctorId, form]);
+
+// Effect for generating available times
+useEffect(() => {
+  if (selectedDate && selectedDoctorId && doctorWorkingDays.length > 0) {
+    try {
+      const date = new Date(selectedDate);
+      const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const dayOfWeek = dayNames[date.getDay()].toLowerCase();
+      
+      const workingDay = doctorWorkingDays.find(
+        wd => wd.day.toLowerCase() === dayOfWeek
+      );
+      
+      if (workingDay) {
+        const times = generateDynamicTimes(workingDay.start_time, workingDay.close_time, 30);
+        setAvailableTimes(times);
+      } else {
+        setAvailableTimes([]);
+      }
+    } catch (error) {
+      console.error('Error generating available times:', error);
+      setAvailableTimes([]);
+    }
+  } else {
+    setAvailableTimes([]);
+  }
+  
+  // Reset time selection if it's no longer valid
+  const currentTime = form.getValues("time");
+  if (currentTime) {
+    setTimeout(() => {
+      const isTimeStillValid = availableTimes.some(time => time.value === currentTime);
+      if (!isTimeStillValid) {
+        form.setValue("time", "");
+      }
+    }, 50);
+  }
+}, [selectedDate, selectedDoctorId, doctorWorkingDays, form]); // Added availableTimes.length to dependencies
+
+// Effect to set form ready state
+useEffect(() => {
+  setIsFormReady(!!selectedDoctorId);
+}, [selectedDoctorId]);
+
+const handlePriorityAssigned = (
+  level: PriorityLevel,
+  score: number,
+  suggestedDepartment: string,
+  suggestedDoctorId: string,
+  isOverride: boolean = false
+) => {
+  // Clear existing date/time selections
+  form.setValue("appointment_date", "");
+  form.setValue("time", "");
+  
+  // Set priority and doctor
+  form.setValue("priority_level", level);
+  form.setValue("priority_score", score);
+  form.setValue("doctor_id", suggestedDoctorId);
+  form.setValue("priority_override", isOverride);
+
+  setPriorityInfo({
+    level,
+    score,
+    department: suggestedDepartment
+  });
+
+  // Reset states to trigger fresh data fetch
+  setDoctorWorkingDays([]);
+  setAvailableTimes([]);
+  setLoadingWorkingDays(true);
+  
+  // Force form to recognize the change and trigger effects
+  setIsFormReady(true);
+
+  toast.success(`Priority set to ${level} (Score: ${score})`);
+};
+
+// Effect to handle doctor selection from priority analyzer
+useEffect(() => {
+  const priorityLevel = form.watch("priority_level");
+  const doctorId = form.watch("doctor_id");
+  
+  // If priority is set and doctor is selected (likely from analyzer)
+  if (priorityLevel && priorityLevel !== PriorityLevel.NORMAL && doctorId && priorityInfo) {
+    // Ensure working days are fetched for the selected doctor
+    const fetchWorkingDaysForPriorityDoctor = async () => {
+      setLoadingWorkingDays(true);
+      try {
+        const result = await getDoctorWorkingDays(doctorId);
+        if (result.success && result.workingDays) {
+          setDoctorWorkingDays(result.workingDays);
+        }
+      } catch (error) {
+        console.error('Error fetching priority doctor working days:', error);
+      } finally {
+        setLoadingWorkingDays(false);
+      }
+    };
+    
+    fetchWorkingDaysForPriorityDoctor();
+  }
+}, [form.watch("priority_level"), form.watch("doctor_id"), priorityInfo]);
 
   const onSubmit: SubmitHandler<z.infer<typeof EnhancedAppointmentSchema>> = async (
     values
@@ -187,11 +536,10 @@ export const EnhancedBookAppointment = ({
     try {
       setIsSubmitting(true);
       
-      // Prepare data with priority information and booked_by field
       const newData = { 
         ...values, 
         patient_id: data?.id!,
-        booked_by: bookedBy || null, // Include who booked the appointment
+        booked_by: bookedBy || null,
         priority_level: values.priority_level,
         priority_score: values.priority_score,
         priorityAssessment: {
@@ -227,941 +575,369 @@ export const EnhancedBookAppointment = ({
     }
   };
 
-
   return (
     <Dialog>
       <DialogTrigger asChild>
         <Button
           variant="ghost"
-          className="w-full flex items-center gap-2 justify-start text-sm font-light bg-emerald-600 text-white hover:bg-emerald-700"
+          className="w-full flex items-center gap-2 justify-start text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg hover:shadow-emerald-500/25 transition-all duration-200 rounded-lg px-4 py-2"
         >
           <UserPen size={16} /> 
           {isNurseBooking ? `Book for ${patientName}` : 'Book Appointment'}
         </Button>
       </DialogTrigger>
 
-      <DraggableDialogContent className="shad-dialog max-h-[90vh] overflow-hidden">
-      {!loading && (
-          <div className="h-full overflow-y-auto p-4 max-h-[85vh]">
-            <DialogHeader className="dialog-header border-b pb-2 mb-2 border-emerald-500/20">
-              <DialogTitle className="text-emerald-400">
+      {/* Updated DialogContent with proper scrolling */}
+      <DialogContent className="
+        bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 
+        border-emerald-600/30 
+        text-slate-100 
+        max-w-2xl 
+        w-[95vw] 
+        max-h-[95vh] 
+        shadow-2xl 
+        shadow-emerald-900/20
+        sm:max-w-lg 
+        md:max-w-xl 
+        lg:max-w-2xl
+        rounded-2xl
+        flex
+        flex-col
+      ">
+        {!loading && (
+          <>
+            {/* Header - Fixed */}
+            <DialogHeader className="
+              flex-shrink-0 
+              border-b 
+              border-emerald-600/20 
+              pb-4 
+              mb-4
+            ">
+              <DialogTitle className="
+                text-emerald-400 
+                text-xl 
+                font-semibold 
+                tracking-wide
+                sm:text-2xl
+              ">
                 {isNurseBooking ? `Book Appointment for ${patientName}` : 'Book Appointment'}
               </DialogTitle>
-              <div className="text-xs text-emerald-300/70">
-                {isNurseBooking && "Booking as nurse"}
-                <br />Drag anywhere on the background to move
-              </div>
+              {isNurseBooking && (
+                <div className="text-sm text-emerald-300/70 mt-1">
+                  Booking as nurse
+                </div>
+              )}
             </DialogHeader>
 
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-6 mt-5 xl:mt-8 non-draggable"
-              >
-                {/* Patient Info Section */}
-                <div className="w-full rounded-md border border-emerald-500/30 bg-emerald-950/20 px-3 py-1 flex items-center gap-4">
-                  <ProfileImage
-                    url={data?.img!}
-                    name={patientName}
-                    bgColor={data?.colorCode!}
-                    className="size-16 border border-emerald-500/30"
-                  />
-
-                  <div>
-                    <p className="font-semibold text-lg text-emerald-50">{patientName}</p>
-                    <span className="text-sm text-emerald-300 capitalize">
-                      {data?.gender}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Appointment Type */}
-                <CustomInput
-                  type="select"
-                  selectList={TYPES}
-                  control={form.control}
-                  name="type"
-                  label="Appointment Type"
-                  placeholder="Select an appointment type"
-                 // className="bg-emerald-950/30 border-emerald-500/30 text-emerald-50"
-             //     labelClassName="text-emerald-400"
-                />
-                
-                {/* Reason for Visit / Symptoms */}
-                <CustomInput
-                  type="textarea"
-                  control={form.control}
-                  name="note"
-                  placeholder="Describe symptoms or reason for appointment..."
-                  label="Reason for Visit / Symptoms"
-                 // className="bg-emerald-950/30 border-emerald-500/30 text-emerald-50"
-             //     labelClassName="text-emerald-400"
-                />
-
-                {/* Priority Analyzer */}
-                {showPriorityAnalyzer && (
-                  <div className="border rounded-md p-3 bg-emerald-950/30 border-emerald-500/30">
-                    <h3 className="text-sm font-medium text-emerald-400 mb-2">Priority Analysis</h3>
-                    <AppointmentPriorityAnalyzer
-                      patientId={data.id}
-                      appointmentNote={note || ""}
-                      doctors={physicians || []}
-                      onPriorityAssigned={handlePriorityAssigned}
-                      doctorLoadFactors={doctorLoadFactors}
+            {/* Scrollable Content */}
+            <div className="
+              flex-1 
+              overflow-y-auto 
+              pr-2
+              min-h-0
+              scrollbar-thin 
+              scrollbar-track-slate-800/50 
+              scrollbar-thumb-emerald-600/50 
+              hover:scrollbar-thumb-emerald-500/70
+            ">
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-6"
+                >
+                  {/* Patient Info Section */}
+                  <div className="
+                    w-full 
+                    rounded-xl 
+                    border 
+                    border-emerald-600/30 
+                    bg-gradient-to-r from-emerald-950/30 to-slate-800/30 
+                    p-4 
+                    flex 
+                    items-center 
+                    gap-4
+                    shadow-lg
+                  ">
+                    <ProfileImage
+                      url={data?.img!}
+                      name={patientName}
+                      bgColor={data?.colorCode!}
+                      className="size-16 border-2 border-emerald-500/40 shadow-lg"
                     />
+                    <div className="flex-1">
+                      <p className="font-semibold text-lg text-slate-100 mb-1">
+                        {patientName}
+                      </p>
+                      <span className="text-sm text-emerald-300/80 capitalize bg-emerald-950/30 px-2 py-1 rounded-md">
+                        {data?.gender}
+                      </span>
+                    </div>
                   </div>
-                )}
 
-                {/* Date and Time - Only show if priority has been analyzed */}
-                {priorityInfo && (
-                  <div className="flex items-center gap-2">
-                    <CustomInput
-                      type="input"
-                      control={form.control}
-                      name="appointment_date"
-                      placeholder=""
-                      label="Date"
-                      inputType="date"
-                 //     className="bg-emerald-950/30 border-emerald-500/30 text-emerald-50"
-                //      labelClassName="text-emerald-400"
-                    />
+                  {/* Appointment Type */}
+                  <div className="space-y-2">
                     <CustomInput
                       type="select"
+                      selectList={TYPES}
                       control={form.control}
-                      name="time"
-                      placeholder="Select time"
-                      label="Time"
-                      selectList={appointmentTimes}
-                     // className="bg-emerald-950/30 border-emerald-500/30 text-emerald-50"
-                  //    labelClassName="text-emerald-400"
+                      name="type"
+                      label="Appointment Type"
+                      placeholder="Select an appointment type"
                     />
                   </div>
-                )}
+                  
+                  {/* Reason for Visit / Symptoms */}
+                  <div className="space-y-2">
+                    <CustomInput
+                      type="textarea"
+                      control={form.control}
+                      name="note"
+                      placeholder="Describe symptoms or reason for appointment..."
+                      label="Reason for Visit / Symptoms"
+                    />
+                  </div>
 
-                {/* Submit Button */}
-                <Button
-                  disabled={isSubmitting || !form.formState.isValid || !priorityInfo}
-                  type="submit"
-                  className={`w-full ${
-                    priorityInfo?.level === PriorityLevel.EMERGENCY ? 'bg-red-600 hover:bg-red-700' :
-                    priorityInfo?.level === PriorityLevel.URGENT ? 'bg-amber-600 hover:bg-amber-700' :
-                    'bg-emerald-600 hover:bg-emerald-700'
-                  }`}
+                  {/* Priority Analyzer */}
+                  {showPriorityAnalyzer && (
+                    <div className="
+                      border 
+                      rounded-xl 
+                      p-4 
+                      bg-gradient-to-br from-slate-800/60 to-emerald-950/20 
+                      border-emerald-600/30
+                      shadow-lg
+                    ">
+                      <h3 className="text-sm font-medium text-emerald-400 mb-3 flex items-center gap-2">
+                        <Activity className="h-4 w-4" />
+                        Priority Analysis
+                      </h3>
+                      <AppointmentPriorityAnalyzer
+                        patientId={data.id}
+                        appointmentNote={note || ""}
+                        doctors={physicians || []}
+                        onPriorityAssigned={handlePriorityAssigned}
+                        doctorLoadFactors={doctorLoadFactors}
+                      />
+                    </div>
+                  )}
+
+                  {/* Enhanced Date and Time Selection */}
+                  {priorityInfo && (
+                    <div className="space-y-4">
+                      {/* Priority Display */}
+                      <div className={`
+                        p-3 
+                        rounded-xl 
+                        border 
+                        ${getPriorityClasses(priorityInfo.level).bg}
+                        ${getPriorityClasses(priorityInfo.level).border}
+                        flex items-center gap-3
+                      `}>
+                        {getPriorityClasses(priorityInfo.level).icon}
+                        <div>
+                          <p className={`font-medium ${getPriorityClasses(priorityInfo.level).text}`}>
+                            Priority: {priorityInfo.level}
+                          </p>
+                          <p className="text-xs text-slate-400">
+                            Score: {priorityInfo.score} | Department: {priorityInfo.department}
+                          </p>
+                        </div>
+                      </div>
+
+                      {selectedDoctorId && (
+  <div className="space-y-2">
+    {loadingWorkingDays ? (
+      <div className="text-xs text-blue-300/70 bg-blue-950/30 p-2 rounded-lg flex items-center gap-2">
+        <div className="w-3 h-3 border border-blue-400/50 border-t-blue-400 rounded-full animate-spin"></div>
+        Loading doctor availability...
+      </div>
+    ) : doctorWorkingDays.length > 0 ? (
+      <div className="text-xs text-emerald-300/70 bg-emerald-950/30 p-2 rounded-lg">
+        Available days: {doctorWorkingDays.map(wd => wd.day).join(', ')}
+      </div>
+    ) : (
+      <div className="text-xs text-amber-300/70 bg-amber-950/30 p-2 rounded-lg">
+        No working days set for this doctor. Please contact admin.
+      </div>
+    )}
+  </div>
+)}
+
+                      {/* Calendar Date Picker with Dynamic Timezone */}
+                      <FormField
+                        control={form.control}
+                        name="appointment_date"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-emerald-400 font-medium">
+                              Appointment Date
+                            </FormLabel>
+                            <FormControl>
+<CalendarDatePicker
+  value={field.value ? new Date(field.value) : undefined}
+  onChange={(date) => {
+    field.onChange(formatDateWithUserTimezone(date));
+  }}
+  placeholder={
+    loadingWorkingDays 
+      ? "Loading doctor availability..." 
+      : selectedDoctorId 
+        ? "Select appointment date" 
+        : "Select doctor first"
+  }
+  className="w-full"
+  selectedDoctorId={selectedDoctorId}
+  doctorWorkingDays={doctorWorkingDays}
+  disabled={loadingWorkingDays}
+/>
+                            </FormControl>
+                            <FormMessage className="text-red-400" />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      {/* Enhanced Time Selection Grid */}
+<FormField
+  control={form.control}
+  name="time"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel className="text-emerald-400 font-medium text-base mb-3 block">
+        Select Time Slot
+      </FormLabel>
+      <FormControl>
+        <div className="space-y-4">
+          {availableTimes.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {availableTimes.map((timeSlot) => (
+                <button
+                  key={timeSlot.value}
+                  type="button"
+                  onClick={() => field.onChange(timeSlot.value)}
+                  className={`
+                    relative
+                    px-4 py-3
+                    rounded-lg
+                    border-2
+                    font-medium
+                    text-sm
+                    transition-all duration-200
+                    hover:scale-105
+                    focus:outline-none
+                    focus:ring-2
+                    focus:ring-emerald-400/50
+                    ${field.value === timeSlot.value
+                      ? 'bg-emerald-600 border-emerald-500 text-white shadow-lg shadow-emerald-500/25'
+                      : 'bg-slate-800/60 border-slate-600/50 text-slate-200 hover:bg-slate-700/80 hover:border-emerald-500/40 hover:text-emerald-100'
+                    }
+                  `}
                 >
-                  {isSubmitting ? 'Submitting...' : 'Book Appointment'}
-                </Button>
-              </form>
-            </Form>
-          </div>
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="font-semibold">
+                      {timeSlot.label}
+                    </span>
+                    {field.value === timeSlot.value && (
+                      <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 px-4">
+              <div className="bg-slate-800/60 border border-slate-600/50 rounded-lg p-6">
+                <div className="text-slate-400 mb-2">
+                  <svg className="w-8 h-8 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {!selectedDoctorId ? (
+                    <p className="text-sm">Please select a doctor first</p>
+                  ) : !form.watch("appointment_date") ? (
+                    <p className="text-sm">Please select a date first</p>
+                  ) : (
+                    <p className="text-sm">No available time slots for this day</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Working Hours Info */}
+          {selectedDoctorId && form.watch("appointment_date") && doctorWorkingDays.length > 0 && (
+            <div className="bg-emerald-950/30 border border-emerald-600/30 rounded-lg p-3">
+              <div className="flex items-center gap-2 text-emerald-300/80">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-xs font-medium">
+                  {(() => {
+                    const selectedDate = form.watch("appointment_date");
+                    const date = new Date(selectedDate);
+                    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                    const dayOfWeek = dayNames[date.getDay()].toLowerCase();
+                    const workingDay = doctorWorkingDays.find(wd => wd.day.toLowerCase() === dayOfWeek);
+                    
+                    return workingDay 
+                      ? `Working hours: ${workingDay.start_time} - ${workingDay.close_time}`
+                      : "Doctor not available on this day";
+                  })()}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      </FormControl>
+      <FormMessage className="text-red-400 text-sm mt-2" />
+    </FormItem>
+  )}
+/>
+
+                    </div>
+                  )}
+                </form>
+              </Form>
+            </div>
+
+            {/* Footer - Fixed */}
+            <div className="flex-shrink-0 pt-4 border-t border-emerald-600/20">
+              <Button
+                disabled={isSubmitting || !form.formState.isValid || !priorityInfo}
+                onClick={form.handleSubmit(onSubmit)}
+                className={`
+                  w-full 
+                  py-3 
+                  font-medium 
+                  text-white 
+                  rounded-xl 
+                  shadow-lg 
+                  transition-all 
+                  duration-200
+                  disabled:opacity-50 
+                  disabled:cursor-not-allowed
+                  ${priorityInfo?.level === PriorityLevel.EMERGENCY 
+                    ? 'bg-red-600 hover:bg-red-700 shadow-red-500/25' :
+                    priorityInfo?.level === PriorityLevel.URGENT 
+                    ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-500/25' :
+                    'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/25'
+                  }
+                `}
+              >
+                {isSubmitting ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    Submitting...
+                  </div>
+                ) : (
+                  'Book Appointment'
+                )}
+              </Button>
+            </div>
+          </>
         )}
-      </DraggableDialogContent>
+      </DialogContent>
     </Dialog>
   );
 };
 
 export default EnhancedBookAppointment;
-
-
-{/* 
-  
-  "use client";
-
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-
-import { AppointmentSchema } from "@/lib/validation";
-import { generateTimes } from "@/utils";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Doctor, Patient } from "@prisma/client";
-import { useRouter } from "next/navigation";
-import React, { useState, useRef, useEffect } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
-
-import { Button } from "../ui/button";
-import { UserPen } from "lucide-react";
-import { z } from "zod";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "../ui/form";
-import { ProfileImage } from "../profile-image";
-import { CustomInput } from "../custom-input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
-import { toast } from "sonner";
-import { createNewAppointment } from "@/app/actions/appointment";
- /* eslint-disable 
-
-// Dummy Types
-const TYPES = [
-  { label: "General Consultation", value: "General Consultation " },
-  { label: "General Check up", value: "General Check Up " },
-  { label: "Antenatal", value: "Antenatal" },
-  { label: "Maternity", value: "Maternity" },
-  { label: "Lab test", value: "Lab Test" },
-  { label: "ANT", value: "ANT" },
-];
-
-// Custom DraggableDialog component
-const DraggableDialogContent = ({
-    children,
-    className,
-    ...props
-  }: React.ComponentPropsWithoutRef<typeof DialogContent>) => {
-    const dialogRef = useRef<HTMLDivElement>(null);
-    const [isDragging, setIsDragging] = useState(false);
-    const [position, setPosition] = useState({ x: 0, y: 0 });
-    const [offset, setOffset] = useState({ x: 0, y: 0 });
-    const animationRef = useRef<number | undefined>(undefined);
-    const lastPosition = useRef({ x: 0, y: 0 });
-    const velocity = useRef({ x: 0, y: 0 });
-  
-    // Initialize dialog position to center of screen on mount
-    useEffect(() => {
-      if (dialogRef.current && typeof window !== "undefined") {
-        const rect = dialogRef.current.getBoundingClientRect();
-        const newPosition = {
-          x: (window.innerWidth - rect.width) / 2,
-          y: (window.innerHeight - rect.height) / 4,
-        };
-        setPosition(newPosition);
-        lastPosition.current = newPosition;
-      }
-    }, []);
-  
-    const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-      // Only prevent dragging if clicking on interactive elements
-      if (
-        !(e.target as HTMLElement).closest('input, select, button, textarea, .form-item, .non-draggable')
-      ) {
-        setIsDragging(true);
-        const rect = dialogRef.current?.getBoundingClientRect();
-        if (rect) {
-          setOffset({
-            x: e.clientX - rect.left,
-            y: e.clientY - rect.top,
-          });
-        }
-        // Cancel any ongoing animation
-        if (animationRef.current) {
-          cancelAnimationFrame(animationRef.current);
-        }
-      }
-    };
-  
-    const updatePosition = (clientX: number, clientY: number) => {
-      const newPosition = {
-        x: clientX - offset.x,
-        y: clientY - offset.y,
-      };
-      
-      // Calculate velocity for momentum
-      velocity.current = {
-        x: newPosition.x - lastPosition.current.x,
-        y: newPosition.y - lastPosition.current.y,
-      };
-      
-      // Update position
-      setPosition(newPosition);
-      lastPosition.current = newPosition;
-    };
-  
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return;
-      
-      // Use requestAnimationFrame for smoother updates
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-      
-      animationRef.current = requestAnimationFrame(() => {
-        updatePosition(e.clientX, e.clientY);
-      });
-    };
-  
-    const handleMouseUp = () => {
-      if (!isDragging) return;
-      
-      setIsDragging(false);
-      
-      // Optional: Add momentum effect when releasing
-      const applyMomentum = () => {
-        // Reduce velocity gradually
-        velocity.current.x *= 0.95;
-        velocity.current.y *= 0.95;
-        
-        // Apply velocity to position
-        const newPosition = {
-          x: lastPosition.current.x + velocity.current.x,
-          y: lastPosition.current.y + velocity.current.y,
-        };
-        
-        setPosition(newPosition);
-        lastPosition.current = newPosition;
-        
-        // Continue animation until velocity becomes very small
-        if (Math.abs(velocity.current.x) > 0.1 || Math.abs(velocity.current.y) > 0.1) {
-          animationRef.current = requestAnimationFrame(applyMomentum);
-        }
-      };
-      
-      // Uncomment the next line if you want the momentum effect
-      animationRef.current = requestAnimationFrame(applyMomentum);
-    };
-  
-    useEffect(() => {
-      if (isDragging) {
-        window.addEventListener("mousemove", handleMouseMove, { passive: true });
-        window.addEventListener("mouseup", handleMouseUp);
-        
-        // Prevent text selection during drag
-        document.body.style.userSelect = "none";
-      } else {
-        window.removeEventListener("mousemove", handleMouseMove);
-        window.removeEventListener("mouseup", handleMouseUp);
-        
-        // Re-enable text selection
-        document.body.style.userSelect = "";
-      }
-      return () => {
-        window.removeEventListener("mousemove", handleMouseMove);
-        window.removeEventListener("mouseup", handleMouseUp);
-        document.body.style.userSelect = "";
-        if (animationRef.current) {
-          cancelAnimationFrame(animationRef.current);
-        }
-      };
-    }, [isDragging]);
-  
-    return (
-      <DialogContent
-        ref={dialogRef}
-        className={`bg-black-800 rounded-xl rounded-r-2xl md:h-p-[95%] lg:h-p-[90%] w-full absolute shadow-lg ${
-          isDragging ? "cursor-grabbing" : "cursor-grab"
-        } ${className || ""}`}
-        style={{
-          position: "fixed",
-          top: `${position.y}px`,
-          left: `${position.x}px`,
-          transform: "none",
-          maxWidth: "90vw",
-          width: "500px",
-          margin: 0,
-          transition: isDragging ? "none" : "transform 0.05s ease-out",
-        }}
-        onMouseDown={handleMouseDown}
-        {...props}
-      >
-        {children}
-      </DialogContent>
-    );
-  };
-
-export const BookAppointment = ({
-  data,
-  doctors,
-}: {
-  data: Patient;
-  doctors: Doctor[];
-}) => {
-  const [loading, setLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const router = useRouter();
-  const [physicians, setPhysicians] = useState<Doctor[] | undefined>(doctors);
-
-  const appointmentTimes = generateTimes(8, 17, 30);
-
-  const patientName = `${data?.first_name} ${data?.last_name}`;
-
-  const form = useForm<z.infer<typeof AppointmentSchema>>({
-    resolver: zodResolver(AppointmentSchema),
-    defaultValues: {
-      doctor_id: "",
-      appointment_date: "",
-      time: "",
-      type: "",
-      note: "",
-    },
-  });
-
-  const onSubmit: SubmitHandler<z.infer<typeof AppointmentSchema>> = async (
-    values
-  ) => {
-    try {
-      setIsSubmitting(true);
-      const newData = { ...values, patient_id: data?.id! };
-
-      const res = await createNewAppointment(newData);
-
-      if (res.success) {
-        form.reset({});
-        router.refresh();
-        toast.success("Appointment created successfully");
-      }
-    } catch (error) {
-      console.log(error);
-      toast.error("Something went wrong. Try again later.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button
-          variant="ghost"
-          className="w-full flex items-center gap-2 justify-start text-sm font-light bg-blue-600 text-white"
-        >
-          <UserPen size={16} /> Book Appointment
-        </Button>
-      </DialogTrigger>
-
-      <DraggableDialogContent className="shad-dialog">
-        {loading ? (
-          <div className="flex items-center justify-center h-full">
-            <span>Loading...</span>
-          </div>
-        ) : (
-          <div className="h-full overflow-y-auto p-4 remove-scrollbar">
-            <DialogHeader className="dialog-header border-b pb-2 mb-2">
-              <DialogTitle>Book Appointments</DialogTitle>
-              <div className="text-xs text-gray-500">Drag anywhere on the background to move</div>
-            </DialogHeader>
-
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-8 mt-5 xl:mt-10 non-draggable"
-              >
-                <div className="w-full rounded-md border border-input bg-background px-3 py-1 flex items-center gap-4">
-                  <ProfileImage
-                    url={data?.img!}
-                    name={patientName}
-                    bgColor={data?.colorCode!}
-                    className="size-16 border border-input"
-                  />
-
-                  <div>
-                    <p className="font-semibold text-lg">{patientName}</p>
-                    <span className="text-sm text-gray-500 capitalize">
-                      {data?.gender}
-                    </span>
-                  </div>
-                </div>
-
-                <CustomInput
-                  type="select"
-                  selectList={TYPES}
-                  control={form.control}
-                  name="type"
-                  label="Appointment Type"
-                  placeholder="Select a appointment type"
-                />
-                <FormField
-                  control={form.control}
-                  name="doctor_id"
-                  render={({ field }) => (
-                    <FormItem className="form-item">
-                      <FormLabel className="text-gray-400">Physician</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        disabled={isSubmitting}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a physician"/>
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent className="bg-dark-400">
-                          {physicians?.map((i, id) => (
-                            <SelectItem key={id} value={i.id} className="p-2">
-                              <div className="flex flex-row gap-2 p-2">
-                                <ProfileImage
-                                  url={i?.img!}
-                                  name={i?.name}
-                                  bgColor={i?.colorCode!}
-                                  textClassName="text-black"
-                                />
-                                <div>
-                                  <p className="font-medium text-start ">
-                                    {i.name}
-                                  </p>
-                                  <span className="text-sm text-gray-600">
-                                    {i?.specialization}
-                                  </span>
-                                </div>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage className="text-red-500" />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="flex items-center gap-2">
-                  <CustomInput
-                    type="input"
-                    control={form.control}
-                    name="appointment_date"
-                    placeholder=""
-                    label="Date"
-                    inputType="date"
-                  />
-                  <CustomInput
-                    type="select"
-                    control={form.control}
-                    name="time"
-                    placeholder="Select time"
-                    label="Time"
-                    selectList={appointmentTimes}
-                  />
-                </div>
-
-                <CustomInput
-                  type="textarea"
-                  control={form.control}
-                  name="note"
-                  placeholder="Additional note"
-                  label="Additional Note"
-                  
-                />
-
-                <Button
-                  disabled={isSubmitting}
-                  type="submit"
-                  className="bg-blue-600 w-full"
-                >
-                  Submit
-                </Button>
-              </form>
-            </Form>
-          </div>
-        )}
-      </DraggableDialogContent>
-    </Dialog>
-  );
-};
-
-export default BookAppointment;
-
-
-
-{/* 
-  
-  "use client";
-
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-
-import { AppointmentSchema } from "@/lib/validation";
-import { generateTimes } from "@/utils";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Doctor, Patient } from "@prisma/client";
-import { useRouter } from "next/navigation";
-import React, { useState, useRef, useEffect } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
-
-import { Button } from "../ui/button";
-import { UserPen } from "lucide-react";
-import { z } from "zod";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "../ui/form";
-import { ProfileImage } from "../profile-image";
-import { CustomInput } from "../custom-input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
-import { toast } from "sonner";
-import { createNewAppointment } from "@/app/actions/appointment";
- /* eslint-disable 
-
-// Dummy Types
-const TYPES = [
-  { label: "General Consultation", value: "General Consultation " },
-  { label: "General Check up", value: "General Check Up " },
-  { label: "Antenatal", value: "Antenatal" },
-  { label: "Maternity", value: "Maternity" },
-  { label: "Lab test", value: "Lab Test" },
-  { label: "ANT", value: "ANT" },
-];
-
-// Custom DraggableDialog component
-const DraggableDialogContent = ({
-    children,
-    className,
-    ...props
-  }: React.ComponentPropsWithoutRef<typeof DialogContent>) => {
-    const dialogRef = useRef<HTMLDivElement>(null);
-    const [isDragging, setIsDragging] = useState(false);
-    const [position, setPosition] = useState({ x: 0, y: 0 });
-    const [offset, setOffset] = useState({ x: 0, y: 0 });
-    const animationRef = useRef<number | undefined>(undefined);
-    const lastPosition = useRef({ x: 0, y: 0 });
-    const velocity = useRef({ x: 0, y: 0 });
-  
-    // Initialize dialog position to center of screen on mount
-    useEffect(() => {
-      if (dialogRef.current && typeof window !== "undefined") {
-        const rect = dialogRef.current.getBoundingClientRect();
-        const newPosition = {
-          x: (window.innerWidth - rect.width) / 2,
-          y: (window.innerHeight - rect.height) / 4,
-        };
-        setPosition(newPosition);
-        lastPosition.current = newPosition;
-      }
-    }, []);
-  
-    const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-      // Only prevent dragging if clicking on interactive elements
-      if (
-        !(e.target as HTMLElement).closest('input, select, button, textarea, .form-item, .non-draggable')
-      ) {
-        setIsDragging(true);
-        const rect = dialogRef.current?.getBoundingClientRect();
-        if (rect) {
-          setOffset({
-            x: e.clientX - rect.left,
-            y: e.clientY - rect.top,
-          });
-        }
-        // Cancel any ongoing animation
-        if (animationRef.current) {
-          cancelAnimationFrame(animationRef.current);
-        }
-      }
-    };
-  
-    const updatePosition = (clientX: number, clientY: number) => {
-      const newPosition = {
-        x: clientX - offset.x,
-        y: clientY - offset.y,
-      };
-      
-      // Calculate velocity for momentum
-      velocity.current = {
-        x: newPosition.x - lastPosition.current.x,
-        y: newPosition.y - lastPosition.current.y,
-      };
-      
-      // Update position
-      setPosition(newPosition);
-      lastPosition.current = newPosition;
-    };
-  
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return;
-      
-      // Use requestAnimationFrame for smoother updates
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-      
-      animationRef.current = requestAnimationFrame(() => {
-        updatePosition(e.clientX, e.clientY);
-      });
-    };
-  
-    const handleMouseUp = () => {
-      if (!isDragging) return;
-      
-      setIsDragging(false);
-      
-      // Optional: Add momentum effect when releasing
-      const applyMomentum = () => {
-        // Reduce velocity gradually
-        velocity.current.x *= 0.95;
-        velocity.current.y *= 0.95;
-        
-        // Apply velocity to position
-        const newPosition = {
-          x: lastPosition.current.x + velocity.current.x,
-          y: lastPosition.current.y + velocity.current.y,
-        };
-        
-        setPosition(newPosition);
-        lastPosition.current = newPosition;
-        
-        // Continue animation until velocity becomes very small
-        if (Math.abs(velocity.current.x) > 0.1 || Math.abs(velocity.current.y) > 0.1) {
-          animationRef.current = requestAnimationFrame(applyMomentum);
-        }
-      };
-      
-      // Uncomment the next line if you want the momentum effect
-      animationRef.current = requestAnimationFrame(applyMomentum);
-    };
-  
-    useEffect(() => {
-      if (isDragging) {
-        window.addEventListener("mousemove", handleMouseMove, { passive: true });
-        window.addEventListener("mouseup", handleMouseUp);
-        
-        // Prevent text selection during drag
-        document.body.style.userSelect = "none";
-      } else {
-        window.removeEventListener("mousemove", handleMouseMove);
-        window.removeEventListener("mouseup", handleMouseUp);
-        
-        // Re-enable text selection
-        document.body.style.userSelect = "";
-      }
-      return () => {
-        window.removeEventListener("mousemove", handleMouseMove);
-        window.removeEventListener("mouseup", handleMouseUp);
-        document.body.style.userSelect = "";
-        if (animationRef.current) {
-          cancelAnimationFrame(animationRef.current);
-        }
-      };
-    }, [isDragging]);
-  
-    return (
-      <DialogContent
-        ref={dialogRef}
-        className={`bg-black-800 rounded-xl rounded-r-2xl md:h-p-[95%] lg:h-p-[90%] w-full absolute shadow-lg ${
-          isDragging ? "cursor-grabbing" : "cursor-grab"
-        } ${className || ""}`}
-        style={{
-          position: "fixed",
-          top: `${position.y}px`,
-          left: `${position.x}px`,
-          transform: "none",
-          maxWidth: "90vw",
-          width: "500px",
-          margin: 0,
-          transition: isDragging ? "none" : "transform 0.05s ease-out",
-        }}
-        onMouseDown={handleMouseDown}
-        {...props}
-      >
-        {children}
-      </DialogContent>
-    );
-  };
-
-export const BookAppointment = ({
-  data,
-  doctors,
-}: {
-  data: Patient;
-  doctors: Doctor[];
-}) => {
-  const [loading, setLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const router = useRouter();
-  const [physicians, setPhysicians] = useState<Doctor[] | undefined>(doctors);
-
-  const appointmentTimes = generateTimes(8, 17, 30);
-
-  const patientName = `${data?.first_name} ${data?.last_name}`;
-
-  const form = useForm<z.infer<typeof AppointmentSchema>>({
-    resolver: zodResolver(AppointmentSchema),
-    defaultValues: {
-      doctor_id: "",
-      appointment_date: "",
-      time: "",
-      type: "",
-      note: "",
-    },
-  });
-
-  const onSubmit: SubmitHandler<z.infer<typeof AppointmentSchema>> = async (
-    values
-  ) => {
-    try {
-      setIsSubmitting(true);
-      const newData = { ...values, patient_id: data?.id! };
-
-      const res = await createNewAppointment(newData);
-
-      if (res.success) {
-        form.reset({});
-        router.refresh();
-        toast.success("Appointment created successfully");
-      }
-    } catch (error) {
-      console.log(error);
-      toast.error("Something went wrong. Try again later.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button
-          variant="ghost"
-          className="w-full flex items-center gap-2 justify-start text-sm font-light bg-blue-600 text-white"
-        >
-          <UserPen size={16} /> Book Appointment
-        </Button>
-      </DialogTrigger>
-
-      <DraggableDialogContent className="shad-dialog">
-        {loading ? (
-          <div className="flex items-center justify-center h-full">
-            <span>Loading...</span>
-          </div>
-        ) : (
-          <div className="h-full overflow-y-auto p-4 remove-scrollbar">
-            <DialogHeader className="dialog-header border-b pb-2 mb-2">
-              <DialogTitle>Book Appointments</DialogTitle>
-              <div className="text-xs text-gray-500">Drag anywhere on the background to move</div>
-            </DialogHeader>
-
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-8 mt-5 xl:mt-10 non-draggable"
-              >
-                <div className="w-full rounded-md border border-input bg-background px-3 py-1 flex items-center gap-4">
-                  <ProfileImage
-                    url={data?.img!}
-                    name={patientName}
-                    bgColor={data?.colorCode!}
-                    className="size-16 border border-input"
-                  />
-
-                  <div>
-                    <p className="font-semibold text-lg">{patientName}</p>
-                    <span className="text-sm text-gray-500 capitalize">
-                      {data?.gender}
-                    </span>
-                  </div>
-                </div>
-
-                <CustomInput
-                  type="select"
-                  selectList={TYPES}
-                  control={form.control}
-                  name="type"
-                  label="Appointment Type"
-                  placeholder="Select a appointment type"
-                />
-                <FormField
-                  control={form.control}
-                  name="doctor_id"
-                  render={({ field }) => (
-                    <FormItem className="form-item">
-                      <FormLabel className="text-gray-400">Physician</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        disabled={isSubmitting}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a physician"/>
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent className="bg-dark-400">
-                          {physicians?.map((i, id) => (
-                            <SelectItem key={id} value={i.id} className="p-2">
-                              <div className="flex flex-row gap-2 p-2">
-                                <ProfileImage
-                                  url={i?.img!}
-                                  name={i?.name}
-                                  bgColor={i?.colorCode!}
-                                  textClassName="text-black"
-                                />
-                                <div>
-                                  <p className="font-medium text-start ">
-                                    {i.name}
-                                  </p>
-                                  <span className="text-sm text-gray-600">
-                                    {i?.specialization}
-                                  </span>
-                                </div>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage className="text-red-500" />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="flex items-center gap-2">
-                  <CustomInput
-                    type="input"
-                    control={form.control}
-                    name="appointment_date"
-                    placeholder=""
-                    label="Date"
-                    inputType="date"
-                  />
-                  <CustomInput
-                    type="select"
-                    control={form.control}
-                    name="time"
-                    placeholder="Select time"
-                    label="Time"
-                    selectList={appointmentTimes}
-                  />
-                </div>
-
-                <CustomInput
-                  type="textarea"
-                  control={form.control}
-                  name="note"
-                  placeholder="Additional note"
-                  label="Additional Note"
-                  
-                />
-
-                <Button
-                  disabled={isSubmitting}
-                  type="submit"
-                  className="bg-blue-600 w-full"
-                >
-                  Submit
-                </Button>
-              </form>
-            </Form>
-          </div>
-        )}
-      </DraggableDialogContent>
-    </Dialog>
-  );
-};
-
-export default BookAppointment;
-  
-  */}

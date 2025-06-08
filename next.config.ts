@@ -1,11 +1,43 @@
 import {withSentryConfig} from "@sentry/nextjs";
 
 
+
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
 
-};
+    experimental: {
+        webpackMemoryOptimizations: true,
+        webpackBuildWorker: false,
+      },
+      
+    webpack: (config, { dev }) => {
+      if (dev) {
+        config.infrastructureLogging = { level: 'error' };
+        
+        // Keep file cache but make it more reliable
+        config.cache = {
+          type: 'filesystem',
+          buildDependencies: {
+            config: [__filename]
+          }
+        };
+        
+        config.watchOptions = {
+          ...config.watchOptions,
+          ignored: [
+            '**/node_modules/**',
+            '**/.git/**',
+            '**/C:/DumpStack.log.tmp',
+            '**/C:/pagefile.sys',
+            '**/C:/hiberfil.sys', 
+            '**/C:/swapfile.sys'
+          ]
+        };
+      }
+      return config;
+    }
+  };
 
 export default withSentryConfig(nextConfig, {
 // For all available options, see:
@@ -38,3 +70,4 @@ disableLogger: true,
 // https://vercel.com/docs/cron-jobs
 automaticVercelMonitors: true,
 });
+
