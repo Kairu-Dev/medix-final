@@ -62,6 +62,7 @@ const TYPES = [
   { label: "Antenatal", value: "Antenatal" },
   { label: "Maternity", value: "Maternity" },
   { label: "Emergency", value: "Emergency" },
+  { label: "Follow-Up", value: "Follow Up" },
 ];
 
 interface NurseBookAppointmentProps {

@@ -84,75 +84,215 @@ export async function getAppointmentById(id: number) {
   }
 }
 
+
+// Updated interface to include filters
+// Updated appointment service function with enhanced filtering
+
 interface AllAppointmentsProps {
-  page: number | string;
-  limit?: number | string;
+  page: string;
+  limit?: number;
   search?: string;
   id?: string;
+  filters?: {
+    status?: string;
+    priority?: string;
+    date?: string;
+    time?: string;
+    type?: string;
+    from?: string;
+    doctor?: string;
+  };
 }
 
-const buildQuery = (id?: string, search?: string) => {
-  // Base conditions for search if it exists
-  const searchConditions: Prisma.AppointmentWhereInput = search
-    ? {
+const buildQuery = (id?: string, search?: string, filters?: AllAppointmentsProps['filters']) => {
+  const conditions: Prisma.AppointmentWhereInput[] = [];
+
+  // Base search conditions (general search across patient/doctor names)
+  if (search) {
+    conditions.push({
+      OR: [
+        {
+          patient: {
+            first_name: { contains: search, mode: "insensitive" },
+          },
+        },
+        {
+          patient: {
+            last_name: { contains: search, mode: "insensitive" },
+          },
+        },
+        {
+          doctor: {
+            name: { contains: search, mode: "insensitive" },
+          },
+        },
+      ],
+    });
+  }
+
+  // ID filtering conditions
+  if (id) {
+    conditions.push({
+      OR: [{ patient_id: id }, { doctor_id: id }],
+    });
+  }
+
+  // Advanced filter conditions
+  if (filters) {
+    // Status filter
+    if (filters.status) {
+      conditions.push({
+        status: filters.status as any, // Cast to your status enum type
+      });
+    }
+
+    // Priority filter
+    if (filters.priority) {
+      conditions.push({
+        priority_level: filters.priority as any, // Cast to PriorityLevel enum
+      });
+    }
+
+    // Date filter
+    if (filters.date) {
+      const filterDate = new Date(filters.date);
+      const startOfDay = new Date(filterDate.setHours(0, 0, 0, 0));
+      const endOfDay = new Date(filterDate.setHours(23, 59, 59, 999));
+      
+      conditions.push({
+        appointment_date: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+      });
+    }
+
+    // Time filter
+// Time filter - Enhanced to handle different time formats
+if (filters.time) {
+  // Handle both 12-hour and 24-hour formats
+  const timeQuery = filters.time.toLowerCase();
+  
+  // Create multiple search patterns for better matching
+  const timePatterns = [];
+  
+  // If it's a 12-hour format (contains AM/PM)
+  if (timeQuery.includes('am') || timeQuery.includes('pm')) {
+    timePatterns.push(timeQuery);
+    // Also try without spaces
+    timePatterns.push(timeQuery.replace(/\s+/g, ''));
+  } else {
+    // If it's 24-hour format, try to convert to 12-hour
+    const time24Match = timeQuery.match(/^(\d{1,2}):(\d{2})$/);
+    if (time24Match) {
+      const hour = parseInt(time24Match[1]);
+      const minute = time24Match[2];
+      
+      if (hour === 0) {
+        timePatterns.push(`12:${minute} am`);
+        timePatterns.push(`12:${minute}am`);
+      } else if (hour === 12) {
+        timePatterns.push(`12:${minute} pm`);
+        timePatterns.push(`12:${minute}pm`);
+      } else if (hour < 12) {
+        timePatterns.push(`${hour}:${minute} am`);
+        timePatterns.push(`${hour}:${minute}am`);
+      } else {
+        const hour12 = hour - 12;
+        timePatterns.push(`${hour12}:${minute} pm`);
+        timePatterns.push(`${hour12}:${minute}pm`);
+      }
+    }
+    
+    // Also add the original query
+    timePatterns.push(timeQuery);
+  }
+  
+  conditions.push({
+    OR: timePatterns.map(pattern => ({
+      time: { contains: pattern, mode: "insensitive" }
+    }))
+  });
+}
+
+    // Type filter
+    if (filters.type) {
+      conditions.push({
+        type: { contains: filters.type, mode: "insensitive" },
+      });
+    }
+
+    // Specific patient name filter (from advanced search)
+    if (filters.from) {
+      conditions.push({
         OR: [
           {
             patient: {
-              first_name: { contains: search, mode: "insensitive" },
+              first_name: { contains: filters.from, mode: "insensitive" },
             },
           },
           {
             patient: {
-              last_name: { contains: search, mode: "insensitive" },
+              last_name: { contains: filters.from, mode: "insensitive" },
             },
           },
           {
-            doctor: {
-              name: { contains: search, mode: "insensitive" },
+            patient: {
+              OR: [
+                {
+                  first_name: { 
+                    contains: filters.from.split(' ')[0] || '', 
+                    mode: "insensitive" 
+                  },
+                },
+                {
+                  last_name: { 
+                    contains: filters.from.split(' ')[1] || filters.from.split(' ')[0] || '', 
+                    mode: "insensitive" 
+                  },
+                },
+              ],
             },
           },
         ],
-      }
-    : {};
+      });
+    }
 
-  // ID filtering conditions if ID exists
-  const idConditions: Prisma.AppointmentWhereInput = id
-    ? {
-        OR: [{ patient_id: id }, { doctor_id: id }],
-      }
-    : {};
+    // Specific doctor name filter (from advanced search)
+    if (filters.doctor) {
+      conditions.push({
+        doctor: {
+          name: { contains: filters.doctor, mode: "insensitive" },
+        },
+      });
+    }
+  }
 
-  // Combine both conditions with AND if both exist
-  const combinedQuery: Prisma.AppointmentWhereInput =
-    id || search
-      ? {
-          AND: [
-            ...(Object.keys(searchConditions).length > 0
-              ? [searchConditions]
-              : []),
-            ...(Object.keys(idConditions).length > 0 ? [idConditions] : []),
-          ],
-        }
-      : {};
-
-  return combinedQuery;
+  // Return combined query or empty object if no conditions
+  return conditions.length > 0 ? { AND: conditions } : {};
 };
 
-// Updated getPatientAppointments function with optimal hospital ordering
+// Updated getPatientAppointments function with enhanced filtering
 export async function getPatientAppointments({
   page,
   limit,
   search,
   id,
+  filters,
 }: AllAppointmentsProps) {
   try {
     const PAGE_NUMBER = Number(page) <= 0 ? 1 : Number(page);
     const LIMIT = Number(limit) || 10;
     const SKIP = (PAGE_NUMBER - 1) * LIMIT;
 
+    // Build the where clause with all filters
+    const whereClause = buildQuery(id, search, filters);
+
+    console.log('Database Query Where Clause:', JSON.stringify(whereClause, null, 2));
+
     const [data, totalRecord] = await Promise.all([
       db.appointment.findMany({
-        where: buildQuery(id, search),
+        where: whereClause,
         skip: SKIP,
         take: LIMIT,
         select: {
@@ -167,6 +307,7 @@ export async function getPatientAppointments({
           priority_score: true,
           priority_override: true,
           booked_by: true,
+          created_at: true,
           patient: {
             select: {
               id: true,
@@ -196,9 +337,8 @@ export async function getPatientAppointments({
             },
           },
         },
-        // OPTIMAL HOSPITAL ORDERING:
+        // OPTIMAL HOSPITAL ORDERING (keeping your existing priority system)
         orderBy: [
-
           {
             priority_override: "asc",
           },
@@ -210,24 +350,22 @@ export async function getPatientAppointments({
           {
             priority_score: "desc",
           },
-          // 3. Manual overrides get priority (staff clinical judgment)
-         
-          // 4. Status priority: SCHEDULED > PENDING > others
+          // 3. Status priority: SCHEDULED > PENDING > others
           {
             status: "asc", // Depends on enum order, may need custom logic
           },
-          // 5. Earliest appointments first (time sensitivity)
+          // 4. Earliest appointments first (time sensitivity)
           {
             appointment_date: "asc",
           },
-          // 6. Final tie-breaker: newest bookings first
+          // 5. Final tie-breaker: newest bookings first
           {
             created_at: "desc",
           },
         ],
       }),
       db.appointment.count({
-        where: buildQuery(id, search),
+        where: whereClause,
       }),
     ]);
 
@@ -251,7 +389,7 @@ export async function getPatientAppointments({
       status: 200,
     };
   } catch (error) {
-    console.log(error);
+    console.error('Error in getPatientAppointments:', error);
     return { success: false, message: "Internal Server Error", status: 500 };
   }
 }
