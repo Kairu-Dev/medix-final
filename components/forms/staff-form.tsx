@@ -24,8 +24,8 @@ import { createNewStaff } from "@/app/actions/admin-action";
 
 const TYPES = [
   { label: "Nurse", value: "NURSE" },
-  { label: "Laboratory", value: "LAB_TECHNICIAN" },
-  { label: "Physical Therapist", value: "PHYSICAL_THERAPIST" },
+  { label: "Laboratory (COMING SOON)", value: "LAB_TECHNICIAN" },
+  { label: "Physical Therapist (COMING SOON)", value: "PHYSICAL_THERAPIS" },
 
 ];
 
