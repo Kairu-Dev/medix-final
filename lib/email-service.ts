@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-import { CancelledAppointmentEmail, ScheduledAppointmentEmail, AppointmentEmailProps, DoctorWelcomeEmailProps, DoctorWelcomeEmail } from '@/components/email-template';
+import { CancelledAppointmentEmail, ScheduledAppointmentEmail, AppointmentEmailProps, DoctorWelcomeEmailProps, DoctorWelcomeEmail, StaffWelcomeEmailProps, StaffWelcomeEmail } from '@/components/email-template';
 import { renderAsync } from '@react-email/components';
 import React from 'react';
 import { ReferralEmail, ReferralEmailProps } from '@/components/email-template';
@@ -131,6 +131,42 @@ export async function sendDoctorWelcomeEmail(
   }
 }
 
+export async function sendStaffWelcomeEmail(
+  to: string,
+  staffData: StaffWelcomeEmailProps
+) {
+  try {
+    // Create the email component with React.createElement
+    const emailComponent = React.createElement(StaffWelcomeEmail, staffData);
+
+    // Render the React component to HTML
+    const html = await renderAsync(emailComponent);
+
+    // Send the email using Nodemailer
+    const info = await transporter.sendMail({
+      from: '"MEDIX IHMS - Admin" <' + process.env.GMAIL_USER + '>',
+      to: [to],
+      subject: 'Welcome to MEDIX IHMS - Your Staff Account Credentials',
+      html,
+      headers: {
+        'X-Priority': '1', // High priority
+        'Importance': 'high',
+        'X-MSMail-Priority': 'High'
+      }
+    });
+
+    // Enhanced logging
+    console.log('Staff welcome email sent successfully:');
+    console.log('- Message ID:', info.messageId);
+    console.log('- Accepted recipients:', info.accepted);
+    console.log('- Response:', info.response);
+
+    return { success: true, data: info };
+  } catch (error) {
+    console.error('Staff welcome email service error:', error);
+    return { success: false, error };
+  }
+}
 
 {/*// lib/email-service.ts
 import { Resend } from 'resend';
