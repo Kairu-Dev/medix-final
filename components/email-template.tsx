@@ -410,3 +410,105 @@ export const DoctorWelcomeEmail: React.FC<DoctorWelcomeEmailProps> = ({
     </Html>
   );
 };
+
+export interface StaffWelcomeEmailProps {
+  staffName: string;
+  staffEmail: string;
+  password: string;
+  adminName: string;
+  role: string;
+  department?: string;
+  licenseNumber?: string;
+  phone: string;
+  address: string;
+}
+
+export const StaffWelcomeEmail: React.FC<StaffWelcomeEmailProps> = ({
+  staffName,
+  staffEmail,
+  password,
+  adminName,
+  role,
+  department,
+  licenseNumber,
+  phone,
+  address,
+}) => {
+  const formatRole = (role: string) => {
+    switch (role) {
+      case 'NURSE':
+        return 'Nurse';
+      case 'LAB_TECHNICIAN':
+        return 'Laboratory Technician';
+      case 'PHYSICAL_THERAPIST':
+        return 'Physical Therapist';
+      default:
+        return role;
+    }
+  };
+
+  return (
+    <Html>
+      <Head />
+      <Preview>Welcome to MEDIX IHMS - Your staff account has been created</Preview>
+      <Body style={styles.body}>
+        <Container style={styles.container}>
+          <Heading style={{...styles.header, color: '#059669'}}>Welcome to MEDIX IHMS</Heading>
+          <Section style={styles.section}>
+            <Text style={styles.text}>Dear {staffName},</Text>
+            <Text style={styles.text}>
+              Welcome to the MEDIX Integrated Hospital Management System! Your staff account has been successfully created by <strong>{adminName}</strong>.
+            </Text>
+            
+            <Section style={styles.detailsSection}>
+              <Text style={styles.detailsHeading}>Your Account Details:</Text>
+              <Text style={styles.detailsText}>• <strong>Email:</strong> {staffEmail}</Text>
+              <Text style={styles.detailsText}>• <strong>Password:</strong> {password}</Text>
+              <Text style={styles.detailsText}>• <strong>Role:</strong> {formatRole(role)}</Text>
+              {department && <Text style={styles.detailsText}>• <strong>Department:</strong> {department}</Text>}
+              {licenseNumber && <Text style={styles.detailsText}>• <strong>License Number:</strong> {licenseNumber}</Text>}
+              <Text style={styles.detailsText}>• <strong>Phone:</strong> {phone}</Text>
+              <Text style={styles.detailsText}>• <strong>Address:</strong> {address}</Text>
+            </Section>
+            
+            <Text style={styles.text}>
+            <strong>Login Details:</strong> Please ensure your email account remains secure, as password changes must be requested through your administrator.
+            </Text>
+            
+            <Button style={{...styles.button, backgroundColor: '#059669'}} href="https://medix-final.vercel.app/">
+              Access MEDIX System
+            </Button>
+            
+            <Text style={styles.text}>
+              <strong>Getting Started:</strong>
+            </Text>
+            <Text style={styles.text}>
+              1. Click the button above to access the system<br />
+              2. Log in using your credentials<br />
+              3. Familiarize yourself with the dashboard and your role-specific features
+            </Text>
+            
+            <Text style={styles.text}>
+              As a <strong>{formatRole(role)}</strong>, you will have access to the features and modules relevant to your role within the hospital management system. Please take some time to explore your dashboard and available functionalities.
+            </Text>
+            
+            <Text style={styles.text}>
+              If you have any questions or need assistance getting started, please don&apos;t hesitate to contact the system administrator or IT support team.
+            </Text>
+            
+            <Text style={styles.text}>
+              Best regards,<br />
+              The MEDIX IHMS Team<br />
+              Administrator: {adminName}
+            </Text>
+          </Section>
+          <Hr style={styles.hr} />
+          <Text style={styles.footer}>
+            © {new Date().getFullYear()} MEDIX IHMS. All rights reserved.<br />
+            This is an automated message. Please do not reply to this email.
+          </Text>
+        </Container>
+      </Body>
+    </Html>
+  );
+};

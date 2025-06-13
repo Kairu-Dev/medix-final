@@ -1,7 +1,7 @@
 "use server";
 
 import db from "@/lib/db";
-import { sendDoctorWelcomeEmail } from "@/lib/email-service";
+import { sendDoctorWelcomeEmail, sendStaffWelcomeEmail } from "@/lib/email-service";
 import { DoctorSchema, ServicesSchema, StaffSchema, WorkingDaysSchema } from "@/lib/validation";
 import { generateRandomColor } from "@/utils";
 import { checkRole } from "@/utils/roles";
@@ -101,6 +101,9 @@ export async function createNewStaff(data: any) {
     const validatedValues = values.data;
     console.log("Validated values:", JSON.stringify(validatedValues, null, 2));
 
+    // Store the plain password for email before we delete it
+    const plainPassword = validatedValues.password;
+
     try {
       const client = await clerkClient();
       console.log("About to create Clerk user");
@@ -115,9 +118,10 @@ export async function createNewStaff(data: any) {
       
       console.log("Clerk user created successfully:", user.id);
       
+      // Remove password from validated values for database storage
       delete validatedValues["password"];
       
-      const doctor = await db.staff.create({
+      const staff = await db.staff.create({
         data: {
           name: validatedValues.name,
           phone: validatedValues.phone,
@@ -133,6 +137,50 @@ export async function createNewStaff(data: any) {
       });
       
       console.log("Staff created in database");
+
+      // Get admin information for the email
+      const currentUser = await client.users.getUser(userId);
+      let adminName = "System Administrator";
+      
+      if (currentUser.firstName || currentUser.lastName) {
+        // If we have at least one name component
+        const firstName = currentUser.firstName || "";
+        const lastName = currentUser.lastName || "";
+        adminName = `${firstName} ${lastName}`.trim();
+      } else if (currentUser.fullName) {
+        // Try fullName as fallback
+        adminName = currentUser.fullName;
+      }
+      // If no names are available, keep "System Administrator" as default
+
+      // Send welcome email to the new staff member
+      console.log("Sending welcome email to staff...");
+      try {
+        const emailResult = await sendWelcomeStaffEmailAction(
+          validatedValues.email,
+          {
+            staffName: validatedValues.name,
+            staffEmail: validatedValues.email,
+            password: plainPassword || "", // Ensure password is always a string
+            adminName: adminName,
+            role: validatedValues.role,
+            department: validatedValues.department || '',
+            licenseNumber: validatedValues.license_number || '',
+            phone: validatedValues.phone,
+            address: validatedValues.address,
+          }
+        );
+
+        if (emailResult.success) {
+          console.log("Welcome email sent successfully to staff");
+        } else {
+          console.warn("Failed to send welcome email to staff:", emailResult.error);
+          // Don't fail the entire operation if email fails
+        }
+      } catch (emailError) {
+        console.error("Error sending welcome email to staff:", emailError);
+        // Continue with success even if email fails
+      }
       
       return {
         success: true,
@@ -145,7 +193,7 @@ export async function createNewStaff(data: any) {
       if (error && typeof error === 'object' && 'errors' in error) {
         console.error("Clerk error details:", JSON.stringify(error.errors, null, 2));
       }
-      return { error: true, success: false, message: "Failed to create user in authentication system" };
+      return { error: true, success: false, message: "Failed to create user in authentication system. Check if User is Already Registed as a Staff in Clerk. No Duplicate Emails Allowed" };
     }
   } catch (error) {
     console.error("Unexpected error:", error);
@@ -197,6 +245,29 @@ export async function sendWelcomeDoctorEmailAction(
     return result;
   } catch (error) {
     console.error("Failed to send doctor welcome email:", error);
+    return { success: false, error: "Failed to send welcome email" };
+  }
+}
+
+export async function sendWelcomeStaffEmailAction(
+  email: string,
+  staffData: {
+    staffName: string;
+    staffEmail: string;
+    password: string;
+    adminName: string;
+    role: string;
+    department?: string;
+    licenseNumber?: string;
+    phone: string;
+    address: string;
+  }
+) {
+  try {
+    const result = await sendStaffWelcomeEmail(email, staffData);
+    return result;
+  } catch (error) {
+    console.error("Failed to send staff welcome email:", error);
     return { success: false, error: "Failed to send welcome email" };
   }
 }
