@@ -299,7 +299,7 @@ const SignInPage = () => {
             </svg>
           </div>
           <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">
-            MedCare System
+            Medix System
           </h1>
         </div>
       </div>
