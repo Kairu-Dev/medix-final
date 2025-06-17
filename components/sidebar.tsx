@@ -1,4 +1,3 @@
-
 import { getRole } from '@/utils/roles';
 import { LayoutDashboard, List, ListOrdered, LucideIcon, Receipt, Settings, SquareActivity, User, UserRound, Users, UsersRound } from 'lucide-react';
 import Link from 'next/link';
@@ -20,7 +19,7 @@ const ACCESS_LEVELS_ALL = [
 ];
 
 const SidebarIcon = ({ icon: Icon }: { icon: LucideIcon }) => {
-  return <Icon className="size-5 text-gray-300 group-hover:text-white transition-colors" />;
+  return <Icon className="size-5 text-gray-300 group-hover:text-white transition-colors flex-shrink-0" />;
 };
 
 export const sidebar = async() => {
@@ -103,7 +102,7 @@ export const sidebar = async() => {
           },
           {
             name: "Billing",
-            href: "/record/billing/patient", // Updated path
+            href: "/record/billing/patient",
             access: ["patient"],
             icon: Receipt,
           },
@@ -131,9 +130,9 @@ export const sidebar = async() => {
     return (
       <div className="sidebar w-full flex flex-col justify-between bg-gray-950 border-r border-gray-800 min-h-full shadow-xl">
         {/* Logo and Title */}
-        <div className="px-4 py-5 border-b border-gray-800">
-          <Link href="/" className="flex items-center justify-center lg:justify-start gap-2.5">
-            <div className="relative flex items-center justify-center w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-700 rounded-lg shadow-lg overflow-hidden">
+        <div className="px-3 lg:px-4 py-4 lg:py-5 border-b border-gray-800">
+          <Link href="/" className="flex items-center justify-center lg:justify-start gap-2.5 group">
+            <div className="relative flex items-center justify-center w-8 h-8 lg:w-9 lg:h-9 bg-gradient-to-br from-green-500 to-emerald-700 rounded-lg shadow-lg overflow-hidden group-hover:scale-105 transition-transform duration-200">
               <SquareActivity size={20} className="text-white z-10" />
               <div className="absolute inset-0 bg-black opacity-20 rounded-lg"></div>
             </div>
@@ -145,7 +144,7 @@ export const sidebar = async() => {
 
         {/* Menu Items */}
         <ScrollArea className="flex-1 py-2">
-          <div className="px-3 text-sm space-y-4">
+          <div className="px-2 lg:px-3 text-sm space-y-4">
             {SIDEBAR_LINKS.map((el) => {
               // Check if this section has any links the current user can access
               const hasAccessibleLinks = el.links.some(link => 
@@ -173,10 +172,10 @@ export const sidebar = async() => {
                               <TooltipTrigger asChild>
                                 <Link
                                   href={link.href} 
-                                  className="group flex items-center justify-center lg:justify-start gap-3 px-3 py-2.5 text-gray-300 rounded-md hover:bg-green-900/20 hover:text-white transition-all duration-200 ease-in-out relative"
+                                  className="group flex items-center justify-center lg:justify-start gap-3 px-3 py-2.5 text-gray-300 rounded-md hover:bg-green-900/20 hover:text-white transition-all duration-200 ease-in-out relative min-h-[44px] touch-manipulation"
                                 >
                                   <SidebarIcon icon={link.icon}/>
-                                  <span className="hidden lg:block font-medium">{link.name}</span>
+                                  <span className="hidden lg:block font-medium truncate">{link.name}</span>
                                   
                                   {/* Active indicator */}
                                   <div className="absolute left-0 w-1 h-0 group-hover:h-4/5 bg-green-500 rounded-r-full transition-all duration-300 ease-out"></div>
@@ -203,15 +202,17 @@ export const sidebar = async() => {
           {/* Role indicator */}
           <div className="hidden lg:flex items-center px-4 py-3">
             <div className="flex items-center text-xs text-gray-400">
-              <div className="flex items-center justify-center w-5 h-5 rounded-full bg-green-900/30 mr-2">
+              <div className="flex items-center justify-center w-5 h-5 rounded-full bg-green-900/30 mr-2 flex-shrink-0">
                 <User size={12} className="text-green-500" />
               </div>
-              <span>Logged in as <span className="text-green-500 font-medium capitalize">{role.toLowerCase()}</span></span>
+              <span className="truncate">
+                Logged in as <span className="text-green-500 font-medium capitalize">{role.toLowerCase()}</span>
+              </span>
             </div>
           </div>
           
           {/* Logout button */}
-          <div className="p-4 pt-0">
+          <div className="p-3 lg:p-4 pt-0">
             <LogoutButton />
           </div>
         </div>
@@ -219,229 +220,4 @@ export const sidebar = async() => {
     );
 };
 
-export default sidebar
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-{/* import { getRole } from '@/utils/roles';
-import { LayoutDashboard, List, ListOrdered, LucideIcon, Receipt, Settings, SquareActivity, User, UserRound, Users, UsersRound } from 'lucide-react';
-import Link from 'next/link';
-import React from 'react'
-import LogoutButton from './logout-button';
-
-const ACCESS_LEVELS_ALL = [
-  "admin",
-  "doctor",
-  "nurse",
-  "lab technician",
-  "physical therapist",
-  "patient",
-];
-
-const SidebarIcon = ({ icon: Icon }: { icon: LucideIcon }) => {
-  return <Icon className="size-6 lg:size-5" />;
-};
-
-
-export const sidebar = async() => {
- 
-    const role = await getRole();
-
-    const SIDEBAR_LINKS = [
-      {
-        label: "MENU",
-        links: [
-          {
-            name: "Dashboard",
-            href: "/",
-            access: ACCESS_LEVELS_ALL,
-            icon: LayoutDashboard,
-          },
-          {
-            name: "Profile",
-            href: "/patient/self",
-            access: ["patient"],
-            icon: User,
-          },
-        ],
-      },
-      {
-        label: "Manage",
-        links: [
-          {
-            name: "Users",
-            href: "/record/users",
-            access: ["admin"],
-            icon: Users,
-          },
-          {
-            name: "Doctors",
-            href: "/record/doctors",
-            access: ["admin"],
-            icon: User,
-          },
-          {
-            name: "Staffs",
-            href: "/record/staffs",
-            access: ["admin", "doctor"],
-            icon: UserRound,
-          },
-          {
-            name: "Patients",
-            href: "/record/patients",
-            access: ["admin", "doctor", "nurse"],
-            icon: UsersRound,
-          },
-          {
-            name: "Appointments",
-            href: "/record/appointments",
-            access: ["admin", "doctor", "nurse"],
-            icon: ListOrdered,
-          },
-          {
-            name: "Medical Records",
-            href: "/record/medical-records",
-            access: ["admin", "doctor", "nurse"],
-            icon: SquareActivity,
-          },
-          {
-            name: "Billing Overview",
-            href: "/record/billing",
-            access: ["admin", "doctor"],
-            icon: Receipt,
-          },
-          {
-            name: "Appointments",
-            href: "/record/appointments",
-            access: ["patient"],
-            icon: ListOrdered,
-          },
-          {
-            name: "Records",
-            href: "/patient/self",
-            access: ["patient"],
-            icon: List,
-          },
-          {
-            name: "Billing",
-            href: "/patient/self?cat=payments",
-            access: ["patient"],
-            icon: Receipt,
-          },
-
-          {
-            name: "Referrals",
-            href: "/doctor/referral-management",
-            access: ["doctor"],
-            icon: Receipt,
-          },
-          
-        ],
-      },
-      {
-        label: "System",
-        links: [
-          {
-            name: "Settings",
-            href: "/admin/system-settings",
-            access: ["admin"],
-            icon: Settings,
-          },
-        ],
-      },
-  
-    ];
-    
-    return (
-
-    <div className="sidebar w-full p-4 flex flex-col justify-between gap-4 bg-black-600 min-h-full overflow-auto "> {/* removed overflow-y-scroll added sidebar template remove if something weird happens 
-      
-      <div className="">
-
-        <div className="flex items-center justify-center lg:justify-start gap-2">
-          
-          {/* ICON TOP LEFT 
-          <div className="p-1.5 rounded-md bg-green-800 text-white">
-          <SquareActivity size={22} />
-          </div>
-
-          <Link 
-          href={"/"} 
-          className="hidden lg:flex 2xl:text-xl font-sans font-bold whitespace-nowrap"
-          >
-            
-            MEDIX IHMS
-
-          </Link> {/*Design This Later*
-
-          </div>
-
-          <div className="mt-4 text-sm">
-
-            {
-              SIDEBAR_LINKS.map((el) => {
-                // Check if this section has any links the current user can access
-                const hasAccessibleLinks = el.links.some(link => 
-                  link.access.includes(role.toLowerCase())
-                );
-                
-                // Only render this section if it has at least one accessible link
-                if (!hasAccessibleLinks) return null;
-
-                return (
-                  <div key={el.label} className="flex flex-col gap-2">
-                    <span className="hidden uppercase lg:block text-green-500 font-bold my-4">
-                      {el.label}
-                    </span>
-
-                    {
-                      el.links.map((link) => {
-                        if (link.access.includes(role.toLowerCase())) {
-
-                          return (
-
-                            <Link href={link.href} 
-                            className="flex items-center justify-center lg:justify-start gap-4 text-white md:px-2 rounded-md hover:bg-green-900" 
-                            key={link.name}
-                            >
-                              <SidebarIcon icon={link.icon}/>
-                              <span className="hidden lg:block">{link.name}</span>
-                            </Link>
-
-                          );
-
-                        }
-                        return null;
-                      })
-                    }
-
-                  </div>
-                );
-              })
-            }
-
-          </div>
-
-      </div>
-
-      <LogoutButton />
-    </div>
-    
-    );
-};
-
-export default sidebar */}
+export default sidebar;
