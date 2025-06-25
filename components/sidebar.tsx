@@ -119,8 +119,8 @@ export const sidebar = async() => {
         links: [
           {
             name: "Settings",
-            href: "/admin/system-settings",
-            access: ["admin"],
+            href: "/system-settings",
+            access: ["admin", "doctor"],
             icon: Settings,
           },
         ],
