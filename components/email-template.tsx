@@ -1,5 +1,6 @@
 // components/email-template.tsx
 import React from 'react';
+
 import {
   Html,
   Body,
@@ -506,6 +507,73 @@ export const StaffWelcomeEmail: React.FC<StaffWelcomeEmailProps> = ({
           <Text style={styles.footer}>
             © {new Date().getFullYear()} MEDIX IHMS. All rights reserved.<br />
             This is an automated message. Please do not reply to this email.
+          </Text>
+        </Container>
+      </Body>
+    </Html>
+  );
+};
+
+export const CompletedAppointmentEmail: React.FC<AppointmentEmailProps> = ({
+  patientName,
+  doctorName,
+  appointmentDate,
+  appointmentTime,
+  appointmentType,
+}) => {
+  const formattedDate = new Date(appointmentDate).toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  return (
+    <Html>
+      <Head />
+      <Preview>Your appointment has been completed</Preview>
+      <Body style={styles.body}>
+        <Container style={styles.container}>
+          <Heading style={styles.header}>Appointment Completed</Heading>
+          <Section style={styles.section}>
+            <Text style={styles.text}>Dear {patientName},</Text>
+            <Text style={styles.text}>
+              We hope you had a positive experience during your recent visit. Your appointment with Dr. {doctorName} has been marked as <strong>completed</strong>.
+            </Text>
+            
+            <Section style={styles.detailsSection}>
+              <Text style={styles.detailsHeading}>Appointment Summary:</Text>
+              <Text style={styles.detailsText}>• <strong>Date:</strong> {formattedDate}</Text>
+              <Text style={styles.detailsText}>• <strong>Time:</strong> {appointmentTime}</Text>
+              <Text style={styles.detailsText}>• <strong>Type:</strong> {appointmentType}</Text>
+              <Text style={styles.detailsText}>• <strong>Doctor:</strong> Dr. {doctorName}</Text>
+            </Section>
+            
+            <Text style={styles.text}>
+              <strong>Next Steps:</strong><br />
+              Please proceed to payment/billing to complete your visit. You can settle your bill at the front desk or through our online payment portal.
+            </Text>
+            
+            <Button style={styles.button} href="https://medix-final.vercel.app/">
+              Proceed to Payment/Billing
+            </Button>
+            
+            <Text style={styles.text}>
+              If you have any questions about your visit or billing, please don&apos;t hesitate to contact our billing department or front desk staff.
+            </Text>
+            
+            <Text style={styles.text}>
+              Thank you for choosing our medical services. We look forward to serving you again.
+            </Text>
+            
+            <Text style={styles.text}>
+              Best regards,<br />
+              Dr. {doctorName} & The Medical Team
+            </Text>
+          </Section>
+          <Hr style={styles.hr} />
+          <Text style={styles.footer}>
+            © {new Date().getFullYear()} MEDIX IHMS. All rights reserved.
           </Text>
         </Container>
       </Body>

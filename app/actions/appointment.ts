@@ -2,7 +2,6 @@
 
 import { VitalSignsFormData } from "@/components/dialogs/add-vital-signs";
 import db from "@/lib/db";
-import { sendAppointmentEmail } from "@/lib/email-service";
 import { AppointmentSchema, ReferralSchema, VitalSignsSchema } from "@/lib/validation";
 import { auth } from "@clerk/nextjs/server";
 import { AppointmentStatus, ReferralStatus, ReferralUrgency } from "@prisma/client";
@@ -10,11 +9,44 @@ import { revalidatePath } from "next/cache";
 
 /* eslint-disable */
 
+type AppointmentWithRelations = {
+  id: string | number;
+  status: AppointmentStatus;
+  appointment_date: Date;
+  time: string;
+  type: string;
+  patient: {
+    email: string;
+    first_name: string;
+    last_name: string;
+  };
+  doctor: {
+    name: string;
+  };
+  // Add other properties as needed
+};
+
+// Define the return type for your appointment action
+type AppointmentActionResponse = 
+  | { 
+      success: true; 
+      msg: string; 
+      appointment: AppointmentWithRelations;
+    }
+  | {
+      error: any; 
+      success: false; 
+      msg: string; 
+    };
+
+// Updated appointment action that handles ALL email sending on the server
+import { sendAppointmentEmail } from "@/lib/email-service";
+
 export async function appointmentAction(
   id: string | number,
   status: AppointmentStatus,
   reason: string
-) {
+): Promise<AppointmentActionResponse> {
   try {
     // Update the appointment status in the database
     const updatedAppointment = await db.appointment.update({
@@ -31,39 +63,48 @@ export async function appointmentAction(
       },
     });
 
-    // Check if the status is either SCHEDULED or CANCELLED to send email
-    if (status === 'SCHEDULED' || status === 'CANCELLED') {
-      // Get patient email
-      const patientEmail = updatedAppointment.patient.email;
-      
-      // Prepare data for the email
-      const emailData = {
-        patientName: `${updatedAppointment.patient.first_name} ${updatedAppointment.patient.last_name}`,
-        doctorName: updatedAppointment.doctor.name,
-        appointmentDate: updatedAppointment.appointment_date,
-        appointmentTime: updatedAppointment.time,
-        appointmentType: updatedAppointment.type,
-        reason: updatedAppointment.reason || undefined,
-      };
+    // Send emails for all status changes (SCHEDULED, CANCELLED, COMPLETED)
+    if (status === 'SCHEDULED' || status === 'CANCELLED' || status === 'COMPLETED') {
+      try {
+        // Get patient email
+        const patientEmail = updatedAppointment.patient.email;
+        
+        // Prepare data for the email
+        const emailData = {
+          patientName: `${updatedAppointment.patient.first_name} ${updatedAppointment.patient.last_name}`,
+          doctorName: updatedAppointment.doctor.name,
+          appointmentDate: updatedAppointment.appointment_date,
+          appointmentTime: updatedAppointment.time,
+          appointmentType: updatedAppointment.type,
+          reason: updatedAppointment.reason || undefined,
+        };
 
-      // Send the appropriate email based on the status
-      await sendAppointmentEmail(
-        patientEmail,
-        status === 'SCHEDULED' ? 'SCHEDULED' : 'CANCELLED',
-        emailData
-      );
+        // Send the appropriate email based on the status
+        await sendAppointmentEmail(
+          patientEmail,
+          status, // This will be 'SCHEDULED', 'CANCELLED', or 'COMPLETED'
+          emailData
+        );
+        
+        console.log(`${status} email sent successfully to ${patientEmail}`);
+      } catch (emailError) {
+        console.error(`Failed to send ${status} email:`, emailError);
+        // Don't fail the entire operation if email fails
+      }
     }
 
     return {
       success: true,
       msg: `Appointment ${status.toLowerCase()} successfully.`,
+      appointment: updatedAppointment
     };
+    
   } catch (error) {
     console.error("Error updating appointment:", error);
     return {
       success: false,
-      error: true,
       msg: "Failed to update appointment status.",
+      error: error
     };
   }
 }
