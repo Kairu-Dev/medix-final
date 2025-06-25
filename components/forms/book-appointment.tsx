@@ -34,19 +34,13 @@ import {
 } from "../ui/form";
 import { ProfileImage } from "../profile-image";
 import { CustomInput } from "../custom-input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
 import { toast } from "sonner";
 import { createNewAppointment } from "@/app/actions/appointment";
 // import { DraggableDialogContent } from '../Draggable-Content'; // Commented out draggable
 import AppointmentPriorityAnalyzer from '../AppointmentPriorityAnalyzer';
 import { getDoctorLoadFactors } from '@/app/actions/doctor-load';
 import { getDoctorWorkingDays } from '@/app/actions/doctor-schedule';
+import TimeSlotSelector from '../TimeSlotSelector';
 
 const EnhancedAppointmentSchema = AppointmentSchema.extend({
   priority_level: z.enum(['NORMAL', 'URGENT', 'EMERGENCY']).default('NORMAL'),
@@ -798,95 +792,56 @@ useEffect(() => {
                       />
                       
                       {/* Enhanced Time Selection Grid */}
+{/* Enhanced Time Selection with Real-time Availability */}
 <FormField
   control={form.control}
   name="time"
   render={({ field }) => (
     <FormItem>
-      <FormLabel className="text-emerald-400 font-medium text-base mb-3 block">
-        Select Time Slot
-      </FormLabel>
       <FormControl>
-        <div className="space-y-4">
-          {availableTimes.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {availableTimes.map((timeSlot) => (
-                <button
-                  key={timeSlot.value}
-                  type="button"
-                  onClick={() => field.onChange(timeSlot.value)}
-                  className={`
-                    relative
-                    px-4 py-3
-                    rounded-lg
-                    border-2
-                    font-medium
-                    text-sm
-                    transition-all duration-200
-                    hover:scale-105
-                    focus:outline-none
-                    focus:ring-2
-                    focus:ring-emerald-400/50
-                    ${field.value === timeSlot.value
-                      ? 'bg-emerald-600 border-emerald-500 text-white shadow-lg shadow-emerald-500/25'
-                      : 'bg-slate-800/60 border-slate-600/50 text-slate-200 hover:bg-slate-700/80 hover:border-emerald-500/40 hover:text-emerald-100'
-                    }
-                  `}
-                >
-                  <div className="flex flex-col items-center gap-1">
-                    <span className="font-semibold">
-                      {timeSlot.label}
-                    </span>
-                    {field.value === timeSlot.value && (
-                      <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8 px-4">
-              <div className="bg-slate-800/60 border border-slate-600/50 rounded-lg p-6">
-                <div className="text-slate-400 mb-2">
-                  <svg className="w-8 h-8 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  {!selectedDoctorId ? (
-                    <p className="text-sm">Please select a doctor first</p>
-                  ) : !form.watch("appointment_date") ? (
-                    <p className="text-sm">Please select a date first</p>
-                  ) : (
-                    <p className="text-sm">No available time slots for this day</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* Working Hours Info */}
-          {selectedDoctorId && form.watch("appointment_date") && doctorWorkingDays.length > 0 && (
-            <div className="bg-emerald-950/30 border border-emerald-600/30 rounded-lg p-3">
-              <div className="flex items-center gap-2 text-emerald-300/80">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="text-xs font-medium">
-                  {(() => {
-                    const selectedDate = form.watch("appointment_date");
-                    const date = new Date(selectedDate);
-                    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-                    const dayOfWeek = dayNames[date.getDay()].toLowerCase();
-                    const workingDay = doctorWorkingDays.find(wd => wd.day.toLowerCase() === dayOfWeek);
-                    
-                    return workingDay 
-                      ? `Working hours: ${workingDay.start_time} - ${workingDay.close_time}`
-                      : "Doctor not available on this day";
-                  })()}
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
+        <TimeSlotSelector
+          selectedDoctorId={selectedDoctorId}
+          selectedDate={selectedDate}
+          availableTimes={doctorWorkingDays.length > 0 && selectedDate ? (() => {
+            try {
+              const date = new Date(selectedDate);
+              const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+              const dayOfWeek = dayNames[date.getDay()].toLowerCase();
+              const workingDay = doctorWorkingDays.find(wd => wd.day.toLowerCase() === dayOfWeek);
+              
+              if (workingDay) {
+                // Generate times using the same logic as before
+                const times = [];
+                const [startHour, startMin] = workingDay.start_time.split(':').map(Number);
+                const [endHour, endMin] = workingDay.close_time.split(':').map(Number);
+                const startMinutes = startHour * 60 + startMin;
+                const endMinutes = endHour * 60 + endMin;
+                
+                for (let minutes = startMinutes; minutes < endMinutes; minutes += 30) {
+                  const hour = Math.floor(minutes / 60);
+                  const min = minutes % 60;
+                  const period = hour >= 12 ? 'PM' : 'AM';
+                  const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+                  const timeString = `${displayHour}:${min.toString().padStart(2, '0')} ${period}`;
+                  
+                  times.push({
+                    label: timeString,
+                    value: timeString
+                  });
+                }
+                return times;
+              }
+              return [];
+            } catch (error) {
+              console.error('Error generating times:', error);
+              return [];
+            }
+          })() : []}
+          selectedTime={field.value}
+          onTimeSelect={field.onChange}
+          disabled={isSubmitting || loadingWorkingDays}
+          patientId={data.id}
+        />
       </FormControl>
       <FormMessage className="text-red-400 text-sm mt-2" />
     </FormItem>
