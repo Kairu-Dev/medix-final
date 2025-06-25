@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-import { CancelledAppointmentEmail, ScheduledAppointmentEmail, AppointmentEmailProps, DoctorWelcomeEmailProps, DoctorWelcomeEmail, StaffWelcomeEmailProps, StaffWelcomeEmail } from '@/components/email-template';
+import { CancelledAppointmentEmail, ScheduledAppointmentEmail, AppointmentEmailProps, DoctorWelcomeEmailProps, DoctorWelcomeEmail, StaffWelcomeEmailProps, StaffWelcomeEmail, CompletedAppointmentEmail } from '@/components/email-template';
 import { renderAsync } from '@react-email/components';
 import React from 'react';
 import { ReferralEmail, ReferralEmailProps } from '@/components/email-template';
@@ -15,34 +15,45 @@ const transporter = nodemailer.createTransport({
 
 export async function sendAppointmentEmail(
   to: string,
-  emailType: 'SCHEDULED' | 'CANCELLED',
+  emailType: 'SCHEDULED' | 'CANCELLED' | 'COMPLETED',
   appointmentData: AppointmentEmailProps
 ) {
   try {
     // Create the email component with React.createElement to avoid TypeScript errors
-    const emailComponent = emailType === 'SCHEDULED'
-      ? React.createElement(ScheduledAppointmentEmail, appointmentData)
-      : React.createElement(CancelledAppointmentEmail, appointmentData);
+    let emailComponent;
+    let subject;
+
+    switch (emailType) {
+      case 'SCHEDULED':
+        emailComponent = React.createElement(ScheduledAppointmentEmail, appointmentData);
+        subject = 'Your Appointment Has Been Scheduled';
+        break;
+      case 'CANCELLED':
+        emailComponent = React.createElement(CancelledAppointmentEmail, appointmentData);
+        subject = 'Your Appointment Has Been Cancelled';
+        break;
+      case 'COMPLETED':
+        emailComponent = React.createElement(CompletedAppointmentEmail, appointmentData);
+        subject = 'Appointment Completed - Please Proceed to Payment';
+        break;
+      default:
+        throw new Error('Invalid email type');
+    }
 
     // Render the React component to HTML
     const html = await renderAsync(emailComponent);
 
-    // Set the subject based on the email type
-    const subject = emailType === 'SCHEDULED' 
-      ? 'Your Appointment Has Been Scheduled' 
-      : 'Your Appointment Has Been Cancelled';
-
     // Send the email using Nodemailer with to as an array like in Resend
     const info = await transporter.sendMail({
-      from: '"Medix - Centro Medico" <' + process.env.GMAIL_USER + '>', // Use the same email from env
+      from: '"Medix - Centre Médical" <' + process.env.GMAIL_USER + '>', // Use the same email from env
       to: [to], // Use array format like in the Resend implementation
       subject,
       html,
       headers: {
-    'X-Priority': '1', // High priority
-    'Importance': 'high',
-    'X-MSMail-Priority': 'High'
-  }
+        'X-Priority': '1', // High priority
+        'Importance': 'high',
+        'X-MSMail-Priority': 'High'
+      }
     });
 
     // Enhanced logging to see more details about the email delivery
@@ -71,7 +82,7 @@ export async function sendReferralEmail(
 
     // Send the email using Nodemailer
     const info = await transporter.sendMail({
-      from: '"Medix - Centro Medico" <' + process.env.GMAIL_USER + '>',
+      from: '"Medix - Centre Médical" <' + process.env.GMAIL_USER + '>',
       to: [patientEmail],
       subject: `Medical Referral - ${referralData.referralNumber}`,
       html,
