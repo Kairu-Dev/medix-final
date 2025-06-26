@@ -150,7 +150,7 @@ export const NewPatient = ({ data, type }: DataProps) => {
                                 type="input"
                                 control={form.control}
                                 name="first_name"
-                                placeholder="Jose"
+                                placeholder="Rose"
                                 label="First Name"
                                 
                                 
@@ -161,7 +161,7 @@ export const NewPatient = ({ data, type }: DataProps) => {
                                 type="input"
                                 control={form.control}
                                 name="last_name"
-                                placeholder="Rizal"
+                                placeholder="Flova"
                                 label="Last Name"
                                 
                                 
@@ -189,7 +189,7 @@ export const NewPatient = ({ data, type }: DataProps) => {
 
                             <CustomInput 
                                 
-                                type="input"
+                                type="phone_input"
                                 control={form.control}
                                 name="phone"
                                 placeholder="09458762312"
@@ -270,7 +270,7 @@ export const NewPatient = ({ data, type }: DataProps) => {
                             label="Emergency contact name"
                                 />
                         <CustomInput
-                            type="input"
+                            type="phone_input"
                             control={form.control}
                             name="emergency_contact_number"
                             placeholder="675444467"

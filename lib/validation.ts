@@ -19,21 +19,15 @@ export const PatientFormSchema = z.object({
     email: z.string().email("Invalid email address"),
     phone: z
     .string()
-    .refine(
-      (phone) => {
-        // Remove all non-digit characters
-        const digitsOnly = phone.replace(/\D/g, '');
-        // Check if the resulting string has 10-15 digits
-        return /^\d{10,15}$/.test(digitsOnly);
-      },
-      "Please enter a valid phone number"
-    )
-    .transform((phone) => {
-      // Normalize format by removing non-digits for storage
+    .min(1, "Phone number is required")
+    .refine((phone) => {
+      // Allow only digits, spaces, hyphens, parentheses, and plus sign
+      const validChars = /^[\d\s\-\(\)\+]+$/.test(phone);
+      if (!validChars) return false;
+      
       const digitsOnly = phone.replace(/\D/g, '');
-      // Format with + prefix if not already present
-      return phone.startsWith('+') ? phone : `+${digitsOnly}`;
-    }),
+      return digitsOnly.length >= 7 && digitsOnly.length <= 15;
+    }, "Please enter a valid phone number"),
     address: z
     .string()
     .min(5, "Address must be at least 5 characters")
@@ -107,7 +101,9 @@ export const PatientFormSchema = z.object({
         .trim()
         .min(2, "Name must be at least 2 characters")
         .max(50, "Name must be at most 50 characters"),
-      phone: z.string().min(10, "Enter phone number").max(10, "Enter phone number"),
+        phone: z
+    .string()
+    .refine((phone) => /^\+\d{10,15}$/.test(phone), "Invalid phone number"),
       email: z.string().email("Invalid email address."),
       address: z
         .string()
@@ -120,11 +116,46 @@ export const PatientFormSchema = z.object({
       img: z.string().optional(),
       password: z
         .string()
-        .min(8, { message: "Password must be at least 8 characters long!" })
+        .min(8, "Password must be at least 8 characters long")
+        .refine(
+          (password) => {
+            if (!password) return true; // Allow empty for optional field
+            return (
+              /[a-z]/.test(password) && // lowercase
+              /[A-Z]/.test(password) && // uppercase
+              /[0-9]/.test(password) && // number
+              /[^a-zA-Z0-9]/.test(password) // special character
+            );
+          },
+          {
+            message: "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
+          }
+        )
         .optional()
         .or(z.literal("")),
     });
     
+    // Helper function to check password strength in real-time (for UI feedback)
+    export const checkPasswordStrength = (password: string) => {
+      const checks = {
+        length: password.length >= 8,
+        lowercase: /[a-z]/.test(password),
+        uppercase: /[A-Z]/.test(password),
+        number: /[0-9]/.test(password),
+        special: /[^a-zA-Z0-9]/.test(password),
+      };
+      
+      const passed = Object.values(checks).filter(Boolean).length;
+      const strength = passed < 3 ? 'weak' : passed < 5 ? 'medium' : 'strong';
+      
+      return {
+        checks,
+        strength,
+        isValid: passed === 5,
+        score: passed
+      };
+    };
+
     export const workingDaySchema = z.object({
       day: z.enum([
         "monday",
@@ -148,9 +179,8 @@ export const PatientFormSchema = z.object({
         .max(50, "Name must be at most 50 characters"),
       role: z.enum(["NURSE", "LAB_TECHNICIAN"], { message: "Role is required." }),
       phone: z
-        .string()
-        .min(10, "Contact must be 10-digits")
-        .max(10, "Contact must be 10-digits"),
+      .string()
+      .refine((phone) => /^\+\d{10,15}$/.test(phone), "Invalid phone number"),
       email: z.string().email("Invalid email address."),
       address: z
         .string()
@@ -161,7 +191,21 @@ export const PatientFormSchema = z.object({
       img: z.string().optional(),
       password: z
         .string()
-        .min(8, { message: "Password must be at least 8 characters long!" })
+        .min(8, "Password must be at least 8 characters long")
+        .refine(
+          (password) => {
+            if (!password) return true; // Allow empty for optional field
+            return (
+              /[a-z]/.test(password) && // lowercase
+              /[A-Z]/.test(password) && // uppercase
+              /[0-9]/.test(password) && // number
+              /[^a-zA-Z0-9]/.test(password) // special character
+            );
+          },
+          {
+            message: "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
+          }
+        )
         .optional()
         .or(z.literal("")),
     });
