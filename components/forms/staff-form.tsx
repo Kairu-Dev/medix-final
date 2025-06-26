@@ -241,7 +241,7 @@ export const StaffForm = () => {
                           </div>
                           <div className="relative">
                             <CustomInput
-                              type="input"
+                              type="phone_input"
                               control={form.control}
                               name="phone"
                               placeholder="(555) 123-4567"

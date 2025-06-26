@@ -231,11 +231,12 @@ export const DoctorForm = () => {
                 </div>
                 <div className="w-full md:w-1/2 bg-gradient-to-b from-emerald-50/10 to-emerald-900/20 p-4 rounded-lg border border-emerald-500/30 shadow-sm">
                   <CustomInput
-                    type="input"
+                    type="phone_input"
                     control={form.control}
                     name="phone"
                     placeholder="9225600735"
                     label="Contact Number"
+                    
                   />
                 </div>
               </div>

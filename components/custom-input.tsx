@@ -7,11 +7,18 @@ import { Checkbox } from './ui/checkbox';
 import { Textarea } from './ui/textarea';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Label } from './ui/label';
+import PhoneInput from 'react-phone-number-input'
+import { E164Number } from 'libphonenumber-js'
+import 'react-phone-number-input/style.css';
+
+
+
 import { Switch } from './ui/switch';
+
 /* eslint-disable */
 
 interface CustomProps {
-  type: "input" | "select" | "checkbox" | "switch" | "radio" | "textarea";
+  type: "input" | "select" | "checkbox" | "switch" | "radio" | "textarea" | "phone_input";
   control: Control<any>;
   name: string;
   label?: string;
@@ -19,7 +26,7 @@ interface CustomProps {
   inputType?: "text" | "email" | "password" | "date";
   selectList?: { label: string; value: string }[];
   defaultValue?: string;
-  disabled?: boolean; // Added disabled prop
+  disabled?: boolean;
 }
 
 const RenderInput = ({ field, props }: {field: any; props: CustomProps}) => {
@@ -27,16 +34,29 @@ const RenderInput = ({ field, props }: {field: any; props: CustomProps}) => {
     case "input":
         return (
             <FormControl>
-
                 <Input 
-                className="shad-input" //Remove border-0 need to fix auto highlight when field is selected
+                className="shad-input"
                 type={props.inputType}
                 placeholder={props.placeholder}
                 {...field}
-                
                 />
             </FormControl>
         );
+
+    case "phone_input":
+      return (
+        <FormControl>
+          <PhoneInput
+            defaultCountry="US"
+            placeholder={props.placeholder}
+            international
+            withCountryCallingCode
+            value={field.value as E164Number | undefined}
+            onChange={field.onChange}
+            className="input-phone"
+          />
+        </FormControl>
+      );
 
     case "select":
       return (
@@ -118,14 +138,10 @@ const RenderInput = ({ field, props }: {field: any; props: CustomProps}) => {
       </FormControl>
     );
 }
-
-
 };
 
 export const CustomInput = ( props: CustomProps ) => {
   const { name, label, control, type } = props;
-
-  
   
   return (
     <FormField
@@ -139,13 +155,9 @@ export const CustomInput = ( props: CustomProps ) => {
                 <RenderInput field={field} props={props} />
                 <FormMessage className="shad-error"/>
             </FormItem>
-
-
         )}
     />
-
   );
-  
 };
 
 type Day = {

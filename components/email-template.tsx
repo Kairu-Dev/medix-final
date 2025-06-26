@@ -1,6 +1,6 @@
 // components/email-template.tsx
 import React from 'react';
-
+/* eslint-disable */
 import {
   Html,
   Body,
@@ -332,13 +332,120 @@ export const DoctorWelcomeEmail: React.FC<DoctorWelcomeEmailProps> = ({
   licenseNumber,
   workSchedule,
 }) => {
+  // Function to convert 24-hour time to 12-hour format with AM/PM
+  const convertTo12Hour = (time24: string): string => {
+    if (!time24) return 'Not specified';
+    
+    const [hoursStr, minutesStr] = time24.split(':');
+    const hours = parseInt(hoursStr, 10);
+    const minutes = parseInt(minutesStr, 10);
+    
+    // Handle special cases
+    if (hours === 0) {
+      // 00:00 becomes 12:00 AM (midnight)
+      return `12:${minutesStr} AM`;
+    } else if (hours === 12) {
+      // 12:xx becomes 12:xx PM (noon hour)
+      return `12:${minutesStr} PM`;
+    } else if (hours < 12) {
+      // 1:00 - 11:59 becomes 1:00 AM - 11:59 AM
+      return `${hours}:${minutesStr} AM`;
+    } else {
+      // 13:00 - 23:59 becomes 1:00 PM - 11:59 PM
+      return `${hours - 12}:${minutesStr} PM`;
+    }
+  };
+
   const formatWorkSchedule = () => {
     return workSchedule.map(schedule => {
-      const timeRange = schedule.start_time && schedule.close_time 
-        ? `${schedule.start_time} - ${schedule.close_time}`
-        : 'Full Day';
-      return `${schedule.day.charAt(0).toUpperCase() + schedule.day.slice(1)}: ${timeRange}`;
+      const dayName = schedule.day.charAt(0).toUpperCase() + schedule.day.slice(1);
+      
+      if (!schedule.start_time || !schedule.close_time) {
+        return `${dayName}: Full Day`;
+      }
+      
+      const startTime12 = convertTo12Hour(schedule.start_time);
+      const endTime12 = convertTo12Hour(schedule.close_time);
+      
+      // Special handling for midnight end time
+      const endTimeDisplay = schedule.close_time === '00:00' 
+        ? '12:00 AM (Next Day)' 
+        : endTime12;
+      
+      return `${dayName}: ${startTime12} - ${endTimeDisplay}`;
     }).join('\n');
+  };
+
+  // Styles object (you may need to adjust based on your existing styles)
+  const styles = {
+    body: {
+      backgroundColor: '#f6f9fc',
+      fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
+    },
+    container: {
+      backgroundColor: '#ffffff',
+      border: '1px solid #f0f0f0',
+      padding: '45px',
+      margin: '40px auto',
+      borderRadius: '8px',
+      maxWidth: '600px',
+    },
+    header: {
+      fontSize: '28px',
+      fontWeight: 'bold',
+      textAlign: 'center' as const,
+      margin: '30px 0',
+      color: '#059669',
+    },
+    section: {
+      padding: '24px 0',
+    },
+    text: {
+      color: '#333',
+      fontSize: '16px',
+      lineHeight: '1.6',
+      margin: '16px 0',
+    },
+    detailsSection: {
+      backgroundColor: '#f8f9fa',
+      padding: '20px',
+      borderRadius: '6px',
+      margin: '20px 0',
+      border: '1px solid #e1e5e9',
+    },
+    detailsHeading: {
+      fontSize: '18px',
+      fontWeight: 'bold',
+      color: '#059669',
+      margin: '0 0 12px 0',
+    },
+    detailsText: {
+      color: '#333',
+      fontSize: '14px',
+      lineHeight: '1.5',
+      margin: '8px 0',
+    },
+    button: {
+      backgroundColor: '#059669',
+      borderRadius: '6px',
+      color: '#fff',
+      fontSize: '16px',
+      textDecoration: 'none',
+      textAlign: 'center' as const,
+      display: 'block',
+      padding: '12px 24px',
+      margin: '24px 0',
+    },
+    hr: {
+      borderColor: '#e1e5e9',
+      margin: '30px 0',
+    },
+    footer: {
+      color: '#898989',
+      fontSize: '12px',
+      textAlign: 'center' as const,
+      lineHeight: '1.4',
+    },
   };
 
   return (
@@ -347,7 +454,7 @@ export const DoctorWelcomeEmail: React.FC<DoctorWelcomeEmailProps> = ({
       <Preview>Welcome to MEDIX IHMS - Your account has been created</Preview>
       <Body style={styles.body}>
         <Container style={styles.container}>
-          <Heading style={{...styles.header, color: '#059669'}}>Welcome to MEDIX IHMS</Heading>
+          <Heading style={styles.header}>Welcome to MEDIX IHMS</Heading>
           <Section style={styles.section}>
             <Text style={styles.text}>Dear Dr. {doctorName},</Text>
             <Text style={styles.text}>
@@ -366,7 +473,16 @@ export const DoctorWelcomeEmail: React.FC<DoctorWelcomeEmailProps> = ({
             {workSchedule.length > 0 && (
               <Section style={styles.detailsSection}>
                 <Text style={styles.detailsHeading}>Your Work Schedule:</Text>
-                <Text style={{...styles.detailsText, whiteSpace: 'pre-line', fontFamily: 'monospace'}}>
+                <Text style={{
+                  ...styles.detailsText, 
+                  whiteSpace: 'pre-line' as const, 
+                  fontFamily: 'monospace',
+                  fontSize: '14px',
+                  backgroundColor: '#ffffff',
+                  padding: '12px',
+                  borderRadius: '4px',
+                  border: '1px solid #e1e5e9'
+                }}>
                   {formatWorkSchedule()}
                 </Text>
               </Section>
@@ -376,7 +492,7 @@ export const DoctorWelcomeEmail: React.FC<DoctorWelcomeEmailProps> = ({
               <strong>Important Security Notice:</strong> For your security, please change your password after your first login. You can do this by accessing your profile settings.
             </Text>
             
-            <Button style={{...styles.button, backgroundColor: '#059669'}} href="https://medix-final.vercel.app/">
+            <Button style={styles.button} href="https://medix-final.vercel.app/">
               Access MEDIX System
             </Button>
             
@@ -392,7 +508,7 @@ export const DoctorWelcomeEmail: React.FC<DoctorWelcomeEmailProps> = ({
             </Text>
             
             <Text style={styles.text}>
-            If you have any questions or need assistance getting started, please don&apos;t hesitate to contact the system administrator or IT support team.
+              If you have any questions or need assistance getting started, please don&apos;t hesitate to contact the system administrator or IT support team.
             </Text>
             
             <Text style={styles.text}>
