@@ -58,6 +58,33 @@ export async function createNewPatient(data: any, pid: string) {
     const patientData = validateData.data;
     let patient_id = pid;
 
+    // Check if patient with this email already exists
+    const existingPatient = await db.patient.findUnique({
+      where: { email: patientData.email }
+    });
+
+    if (existingPatient) {
+      // If patient exists, update instead of create
+      await db.patient.update({
+        where: { email: patientData.email },
+        data: {
+          ...patientData,
+          id: patient_id, // Update the id to current user's id if needed
+        },
+      });
+
+      const client = await clerkClient();
+      await client.users.updateUser(pid, {
+        publicMetadata: { role: "patient" },
+      });
+
+      return { 
+        success: true, 
+        error: false, 
+        msg: "Patient information updated successfully" 
+      };
+    }
+
     const client = await clerkClient();
     if (pid === "new-patient") {
       const user = await client.users.createUser({
@@ -75,6 +102,7 @@ export async function createNewPatient(data: any, pid: string) {
       });
     }
 
+    // Create new patient since none exists with this email
     await db.patient.create({
       data: {
         ...patientData,
