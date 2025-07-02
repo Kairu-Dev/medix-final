@@ -538,37 +538,58 @@ export const NurseBookAppointment = ({
       </DialogTrigger>
   
       <DialogContent className="
-        bg-slate-900 
-        border-slate-700 
-        text-slate-100 
-        max-w-2xl 
-        w-[95vw] 
-        max-h-[95vh] 
-        shadow-xl
-        sm:max-w-lg 
-        md:max-w-xl 
-        lg:max-w-2xl
-        rounded-lg
-        flex
-        flex-col
-      ">
+  bg-slate-900 
+  border-slate-700 
+  text-slate-100 
+  max-w-2xl 
+  w-[100vw] 
+  h-[100vh]
+  sm:w-[95vw]
+  sm:h-auto
+  sm:max-h-[85vh]
+  md:max-h-[80vh]
+  shadow-xl
+  sm:max-w-lg 
+  md:max-w-xl 
+  lg:max-w-2xl
+  rounded-none
+  sm:rounded-lg
+  flex
+  flex-col
+  p-1
+  sm:p-4
+  md:p-6
+  m-0
+  sm:m-auto
+  overflow-hidden
+">
+
+
+
         {!loading && (
           <>
             {/* Header - Fixed */}
             <DialogHeader className="
-              flex-shrink-0 
-              border-b 
-              border-slate-700 
-              pb-4 
-              mb-4
-            ">
-              <DialogTitle className="
-                text-slate-100 
-                text-xl 
-                font-semibold
-                sm:text-2xl
-                flex items-center gap-2
-              ">
+  flex-shrink-0 
+  border-b 
+  border-slate-700 
+  pb-1
+  sm:pb-4 
+  mb-1
+  sm:mb-4
+  px-1
+  sm:px-0
+">
+
+<DialogTitle className="
+  text-slate-100 
+  text-lg
+  sm:text-xl
+  md:text-2xl
+  font-semibold
+  flex items-center gap-2
+">
+
                 <UserCheck className="h-6 w-6 text-blue-400" />
                 Book Appointment for {patientName}
               </DialogTitle>
@@ -580,42 +601,51 @@ export const NurseBookAppointment = ({
   
             {/* Scrollable Content */}
             <div className="
-              flex-1 
-              overflow-y-auto 
-              pr-2
-              min-h-0
-              scrollbar-thin 
-              scrollbar-track-slate-800 
-              scrollbar-thumb-slate-600 
-              hover:scrollbar-thumb-slate-500
-            ">
+  flex-1 
+  overflow-y-auto 
+  px-1
+  sm:px-0
+  min-h-0
+  scrollbar-thin 
+  scrollbar-track-slate-800 
+  scrollbar-thumb-slate-600 
+  hover:scrollbar-thumb-slate-500
+">
+
               <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit(onSubmit)}
-                  className="space-y-6"
-                >
+<form
+  onSubmit={form.handleSubmit(onSubmit)}
+  className="space-y-3 sm:space-y-6"
+>
+
                   {/* Patient Info Section */}
                   <div className="
-                    w-full 
-                    rounded-lg 
-                    border 
-                    border-slate-700 
-                    bg-slate-800 
-                    p-4 
-                    flex 
-                    items-center 
-                    gap-4
-                  ">
-                    <ProfileImage
-                      url={patient?.img!}
-                      name={patientName}
-                      bgColor={patient?.colorCode!}
-                      className="size-16 border-2 border-slate-600"
-                    />
+  w-full 
+  rounded-md
+  sm:rounded-lg 
+  border 
+  border-slate-700 
+  bg-slate-800 
+  p-2
+  sm:p-4 
+  flex 
+  items-center 
+  gap-2
+  sm:gap-4
+">
+
+
+<ProfileImage
+  url={patient?.img!}
+  name={patientName}
+  bgColor={patient?.colorCode!}
+  className="size-12 sm:size-16 border-2 border-slate-600"
+/>
+
                     <div className="flex-1">
-                      <p className="font-semibold text-lg text-slate-100 mb-1">
-                        {patientName}
-                      </p>
+                    <p className="font-semibold text-base sm:text-lg text-slate-100 mb-1">
+  {patientName}
+</p>
                       <div className="flex items-center gap-3">
                         <span className="text-sm text-slate-300 capitalize bg-slate-700 px-2 py-1 rounded">
                           {patient?.gender}
@@ -629,8 +659,8 @@ export const NurseBookAppointment = ({
                   </div>
   
                   {/* Appointment Type */}
-                  <div className="space-y-2">
-                    <CustomInput
+                  <div className="space-y-1.5 sm:space-y-2">
+                  <CustomInput
                       type="select"
                       selectList={TYPES}
                       control={form.control}
@@ -641,8 +671,8 @@ export const NurseBookAppointment = ({
                   </div>
                   
                   {/* Reason for Visit / Symptoms */}
-                  <div className="space-y-2">
-                    <CustomInput
+                  <div className="space-y-1.5 sm:space-y-2">
+                  <CustomInput
                       type="textarea"
                       control={form.control}
                       name="note"
@@ -653,13 +683,14 @@ export const NurseBookAppointment = ({
   
                   {/* Priority Analyzer */}
                   {showPriorityAnalyzer && (
-                    <div className="
-                      border 
-                      rounded-lg 
-                      p-4 
-                      bg-slate-800 
-                      border-slate-700
-                    ">
+ <div className="
+ border 
+ rounded-lg 
+ p-3
+ sm:p-4 
+ bg-slate-800 
+ border-slate-700
+">
                       <h3 className="text-sm font-medium text-slate-200 mb-3 flex items-center gap-2">
                         <Activity className="h-4 w-4" />
                         Priority Analysis
@@ -679,13 +710,13 @@ export const NurseBookAppointment = ({
                     <div className="space-y-4">
                       {/* Priority Display */}
                       <div className={`
-                        p-3 
-                        rounded-lg 
-                        border 
-                        ${getPriorityClasses(priorityInfo.level).bg}
-                        ${getPriorityClasses(priorityInfo.level).border}
-                        flex items-center gap-3
-                      `}>
+  p-3 
+  rounded-lg 
+  border 
+  ${getPriorityClasses(priorityInfo.level).bg}
+  ${getPriorityClasses(priorityInfo.level).border}
+  flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3
+`}>
                         {getPriorityClasses(priorityInfo.level).icon}
                         <div>
                           <p className={`font-medium ${getPriorityClasses(priorityInfo.level).text}`}>
@@ -811,44 +842,56 @@ export const NurseBookAppointment = ({
   
             {/* Footer - Fixed */}
             <div className="
-              flex-shrink-0 
-              border-t 
-              border-slate-700 
-              pt-4 
-              mt-4
-            ">
-              <Button
-                disabled={
-                  isSubmitting || 
-                  !form.formState.isValid || 
-                  !priorityInfo ||
-                  !form.watch("appointment_date") ||
-                  !form.watch("time")
-                }
-                type="submit"
-                onClick={form.handleSubmit(onSubmit)}
-                className={`
-                  w-full 
-                  font-semibold 
-                  py-3 
-                  rounded-lg 
-                  transition-all 
-                  duration-200
-                  ${
-                    priorityInfo?.level === PriorityLevel.EMERGENCY 
-                      ? 'bg-red-600 hover:bg-red-700 text-slate-100' :
-                    priorityInfo?.level === PriorityLevel.URGENT 
-                      ? 'bg-amber-600 hover:bg-amber-700 text-slate-100' :
-                    'bg-blue-600 hover:bg-blue-700 text-slate-100'
-                  }
-                  disabled:opacity-50 
-                  disabled:cursor-not-allowed 
-                  flex 
-                  items-center 
-                  justify-center 
-                  gap-2
-                `}
-              >
+  flex-shrink-0 
+  border-t 
+  border-slate-700 
+  pt-1
+  sm:pt-4 
+  mt-1
+  sm:mt-4
+  px-1
+  sm:px-0
+  bg-slate-900
+  sticky
+  bottom-0
+">
+  
+  <Button
+  disabled={
+    isSubmitting || 
+    !form.formState.isValid || 
+    !priorityInfo ||
+    !form.watch("appointment_date") ||
+    !form.watch("time")
+  }
+  type="submit"
+  onClick={form.handleSubmit(onSubmit)}
+  className={`
+    w-full 
+    font-semibold 
+    py-2.5
+    sm:py-3 
+    text-sm
+    sm:text-base
+    rounded-lg 
+    transition-all 
+    duration-200
+    ${
+      priorityInfo?.level === PriorityLevel.EMERGENCY 
+        ? 'bg-red-600 hover:bg-red-700 text-slate-100' :
+      priorityInfo?.level === PriorityLevel.URGENT 
+        ? 'bg-amber-600 hover:bg-amber-700 text-slate-100' :
+      'bg-blue-600 hover:bg-blue-700 text-slate-100'
+    }
+    disabled:opacity-50 
+    disabled:cursor-not-allowed 
+    flex 
+    items-center 
+    justify-center 
+    gap-2
+  `}
+>
+
                 {isSubmitting ? (
                   <>
                     <div className="w-4 h-4 border-2 border-slate-300 border-t-slate-100 rounded-full animate-spin"></div>
@@ -863,8 +906,8 @@ export const NurseBookAppointment = ({
               </Button>
               
               {/* Form Status Indicators */}
-              <div className="mt-3 text-xs text-slate-400 space-y-1">
-                {!priorityInfo && (
+              <div className="mt-2 sm:mt-3 text-xs text-slate-400 space-y-1">
+              {!priorityInfo && (
                   <p className="flex items-center gap-1">
                     <Activity className="h-3 w-3" />
                     Complete symptom description to analyze priority
