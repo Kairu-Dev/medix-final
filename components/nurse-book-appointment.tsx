@@ -439,31 +439,50 @@ export const NurseBookAppointment = ({
     setIsFormReady(!!selectedDoctorId);
   }, [selectedDoctorId]);
 
-  const handlePriorityAssigned = (
+  const handlePriorityAssigned = async (
     level: PriorityLevel,
     score: number,
     suggestedDepartment: string,
     suggestedDoctorId: string,
     isOverride: boolean = false
   ) => {
+    // Clear existing selections
     form.setValue("appointment_date", "");
     form.setValue("time", "");
+    
+    // Set priority and doctor
     form.setValue("priority_level", level);
     form.setValue("priority_score", score);
     form.setValue("doctor_id", suggestedDoctorId);
     form.setValue("priority_override", isOverride);
-
+  
     setPriorityInfo({
       level,
       score,
       department: suggestedDepartment
     });
-
+  
+    // Reset states
     setDoctorWorkingDays([]);
     setAvailableTimes([]);
     setLoadingWorkingDays(true);
+  
+    // Immediately fetch working days for the selected doctor
+    try {
+      const result = await getDoctorWorkingDays(suggestedDoctorId);
+      if (result.success && result.workingDays) {
+        setDoctorWorkingDays(result.workingDays);
+      } else {
+        setDoctorWorkingDays([]);
+      }
+    } catch (error) {
+      console.error('Error fetching priority doctor working days:', error);
+      setDoctorWorkingDays([]);
+    } finally {
+      setLoadingWorkingDays(false);
+    }
+  
     setIsFormReady(true);
-
     toast.success(`Priority set to ${level} (Score: ${score})`);
   };
 
@@ -738,11 +757,45 @@ export const NurseBookAppointment = ({
       <FormControl>
         <TimeSlotSelector
           selectedDoctorId={selectedDoctorId}
-          selectedDate={form.watch("appointment_date")}
-          availableTimes={availableTimes}
+          selectedDate={selectedDate}
+          availableTimes={doctorWorkingDays.length > 0 && selectedDate ? (() => {
+            try {
+              const date = new Date(selectedDate);
+              const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+              const dayOfWeek = dayNames[date.getDay()].toLowerCase();
+              const workingDay = doctorWorkingDays.find(wd => wd.day.toLowerCase() === dayOfWeek);
+              
+              if (workingDay) {
+                // Generate times using the same logic as your fixed version
+                const times = [];
+                const [startHour, startMin] = workingDay.start_time.split(':').map(Number);
+                const [endHour, endMin] = workingDay.close_time.split(':').map(Number);
+                const startMinutes = startHour * 60 + startMin;
+                const endMinutes = endHour * 60 + endMin;
+                
+                for (let minutes = startMinutes; minutes < endMinutes; minutes += 30) {
+                  const hour = Math.floor(minutes / 60);
+                  const min = minutes % 60;
+                  const period = hour >= 12 ? 'PM' : 'AM';
+                  const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+                  const timeString = `${displayHour}:${min.toString().padStart(2, '0')} ${period}`;
+                  
+                  times.push({
+                    label: timeString,
+                    value: timeString
+                  });
+                }
+                return times;
+              }
+              return [];
+            } catch (error) {
+              console.error('Error generating times:', error);
+              return [];
+            }
+          })() : []}
           selectedTime={field.value}
           onTimeSelect={field.onChange}
-          disabled={loadingWorkingDays || !selectedDoctorId || !form.watch("appointment_date")}
+          disabled={isSubmitting || loadingWorkingDays}
           patientId={patient.id}
         />
       </FormControl>
