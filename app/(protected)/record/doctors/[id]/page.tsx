@@ -36,17 +36,17 @@ const DoctorProfile = async(props: {params: Promise <{id: string}>}) => {
           
           <div className="p-4 sm:p-6 flex flex-col xl:flex-row gap-6 relative z-10">
             {/* Left Section */}
-            <div className="w-full xl:w-[70%]">
+            <div className="w-full xl:w-[70%] min-w-0">
               {/* Doctor Info Section */}
               <div className="flex flex-col lg:flex-row gap-4 mb-6">
                 {/* Main Info Card */}
-                <div className="bg-gradient-to-b from-amber-50/20 to-amber-100/10 py-4 sm:py-6 px-3 sm:px-4 rounded-xl flex-1 border border-amber-200/40 shadow-md backdrop-blur-sm relative">
+                <div className="bg-gradient-to-b from-amber-50/20 to-amber-100/10 py-4 sm:py-6 px-3 sm:px-4 rounded-xl flex-1 min-w-0 border border-amber-200/40 shadow-md backdrop-blur-sm relative">
                   {/* Small decorative corners for inner cards */}
                   <div className="absolute top-0 left-0 w-6 h-6 border-t border-l border-amber-400/40 rounded-tl-lg"></div>
                   <div className="absolute bottom-0 right-0 w-6 h-6 border-b border-r border-amber-400/40 rounded-br-lg"></div>
                   
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    <div className="flex justify-center sm:justify-start">
+                  <div className="flex flex-col sm:flex-row gap-4 min-w-0">
+                    <div className="flex justify-center sm:justify-start shrink-0">
                       <ProfileImage 
                         url={data?.img!}
                         name={data?.name}
@@ -56,41 +56,41 @@ const DoctorProfile = async(props: {params: Promise <{id: string}>}) => {
                       />
                     </div>
 
-                    <div className="flex-1 flex flex-col justify-between gap-2 text-center sm:text-left">
-                      <div>
-                        <h1 className="text-lg sm:text-xl md:text-2xl font-bold uppercase text-white tracking-wider">
+                    <div className="flex-1 min-w-0 flex flex-col justify-between gap-2 text-center sm:text-left">
+                      <div className="min-w-0">
+                        <h1 className="text-lg sm:text-xl md:text-2xl font-bold uppercase text-white tracking-wider break-words">
                           {data?.name}
                         </h1>
-                        <p className="text-xs sm:text-sm font-medium text-amber-200 mt-1">
+                        <p className="text-xs sm:text-sm font-medium text-amber-200 mt-1 break-words">
                           {data?.address || "No Address Information Found"}
                         </p>
                       </div>
 
-                      <div className="mt-2 sm:mt-4 space-y-2 text-xs sm:text-sm font-medium">
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-1">
+                      <div className="mt-2 sm:mt-4 space-y-2 text-xs sm:text-sm font-medium min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 min-w-0">
                           <span className="text-amber-200 shrink-0">License #:</span>
-                          <p className="font-semibold text-white">{data?.license_number}</p>
+                          <p className="font-semibold text-white break-all">{data?.license_number}</p>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
-                          <div className="flex items-center justify-center sm:justify-start gap-2">
-                            <FaBriefcaseMedical className="text-base sm:text-lg text-amber-400 shrink-0" />
-                            <span className="capitalize text-white text-xs sm:text-sm">{data?.specialization}</span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3 min-w-0">
+                          <div className="flex items-start justify-center sm:justify-start gap-2 min-w-0">
+                            <FaBriefcaseMedical className="text-base sm:text-lg text-amber-400 shrink-0 mt-0.5" />
+                            <span className="capitalize text-white text-xs sm:text-sm break-words min-w-0">{data?.specialization}</span>
                           </div>
 
-                          <div className="flex items-center justify-center sm:justify-start gap-2">
-                            <BsPersonWorkspace className="text-base sm:text-lg text-amber-400 shrink-0" />
-                            <span className="capitalize text-white text-xs sm:text-sm">{data?.type}</span>
+                          <div className="flex items-start justify-center sm:justify-start gap-2 min-w-0">
+                            <BsPersonWorkspace className="text-base sm:text-lg text-amber-400 shrink-0 mt-0.5" />
+                            <span className="capitalize text-white text-xs sm:text-sm break-words min-w-0">{data?.type}</span>
                           </div>
 
-                          <div className="flex items-center justify-center sm:justify-start gap-2">
-                            <MdEmail className="text-base sm:text-lg text-amber-400 shrink-0" />
-                            <span className="text-white text-xs sm:text-sm break-all">{data?.email}</span>
+                          <div className="flex items-start justify-center sm:justify-start gap-2 min-w-0 col-span-1 sm:col-span-2">
+                            <MdEmail className="text-base sm:text-lg text-amber-400 shrink-0 mt-0.5" />
+                            <span className="text-white text-xs sm:text-sm break-all min-w-0">{data?.email}</span>
                           </div>
 
-                          <div className="flex items-center justify-center sm:justify-start gap-2">
-                            <MdOutlineLocalPhone className="text-base sm:text-lg text-amber-400 shrink-0" />
-                            <span className="text-white text-xs sm:text-sm">{data?.phone}</span>
+                          <div className="flex items-start justify-center sm:justify-start gap-2 min-w-0 col-span-1 sm:col-span-2">
+                            <MdOutlineLocalPhone className="text-base sm:text-lg text-amber-400 shrink-0 mt-0.5" />
+                            <span className="text-white text-xs sm:text-sm break-all">{data?.phone}</span>
                           </div>
                         </div>
                       </div>
@@ -99,7 +99,7 @@ const DoctorProfile = async(props: {params: Promise <{id: string}>}) => {
                 </div>
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3 lg:w-64 xl:w-auto">
+                <div className="grid grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3 lg:w-64 xl:w-auto shrink-0">
                   <div className="bg-gradient-to-br from-amber-50/20 to-amber-100/10 p-3 sm:p-4 rounded-xl border border-amber-200/40 shadow-md flex flex-col items-center gap-2 backdrop-blur-sm relative">
                     <div className="absolute top-0 left-0 w-4 h-4 border-t border-l border-amber-400/40 rounded-tl-lg"></div>
                     <div className="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-amber-400/40 rounded-br-lg"></div>
@@ -128,7 +128,7 @@ const DoctorProfile = async(props: {params: Promise <{id: string}>}) => {
                     
                     <IoTimeSharp className="size-4 sm:size-5 text-amber-400" />
                     <div className="text-center">
-                      <h1 className="text-lg sm:text-xl font-bold text-white">{availableDays({data: data.working_days})}</h1>
+                      <h1 className="text-lg sm:text-xl font-bold text-white break-words">{availableDays({data: data.working_days})}</h1>
                       <span className="text-xs sm:text-sm text-amber-200 font-medium">Working Hours</span>
                     </div>
                   </div>
@@ -147,15 +147,17 @@ const DoctorProfile = async(props: {params: Promise <{id: string}>}) => {
               </div>
 
               {/* Recent Appointments */}
-              <div className="bg-gradient-to-b from-amber-50/20 to-amber-100/10 rounded-xl p-3 sm:p-4 border border-amber-200/40 shadow-md backdrop-blur-sm relative">
+              <div className="bg-gradient-to-b from-amber-50/20 to-amber-100/10 rounded-xl p-3 sm:p-4 border border-amber-200/40 shadow-md backdrop-blur-sm relative min-w-0">
                 <div className="absolute top-0 left-0 w-6 h-6 border-t border-l border-amber-400/40 rounded-tl-lg"></div>
                 <div className="absolute -left-1 top-4 sm:top-6 h-12 sm:h-16 w-1 bg-amber-400 rounded-full shadow-[0_0_10px_rgba(251,191,36,0.6)]"></div>
-                <RecentAppointments data={data?.appointments} />
+                <div className="min-w-0">
+                  <RecentAppointments data={data?.appointments} />
+                </div>
               </div>  
             </div>
 
             {/* Right Sidebar */}
-            <div className="w-full xl:w-[30%] flex flex-col gap-4">
+            <div className="w-full xl:w-[30%] flex flex-col gap-4 shrink-0">
               {/* Quick Links */}
               <div className="bg-gradient-to-b from-amber-50/20 to-amber-100/10 p-3 sm:p-4 rounded-xl border border-amber-200/40 shadow-md backdrop-blur-sm relative">
                 <div className="absolute top-0 right-0 w-6 h-6 border-t border-r border-amber-400/40 rounded-tr-lg"></div>
