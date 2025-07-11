@@ -888,7 +888,7 @@ const openEditKeyword = (keyword: Keyword) => {
               </div>
   
               {/* Keywords List */}
-              <div className="flex-1 overflow-hidden">
+              <div className="flex-1 overflow-y-auto remove-scrollbar">
                 <div className="border border-gray-800 rounded-lg h-full flex flex-col bg-gray-900/50">
                   <div className="p-3 bg-gray-800/50 border-b border-gray-800">
                     <div className="flex items-center justify-between">
