@@ -70,6 +70,14 @@ const getPaymentMethodIcon = (method: PaymentMethod) => {
   }
 };
 
+/**
+ * Renders the payment details page for a given payment or appointment identifier.
+ *
+ * @param props - Object containing route params and query params as promises.
+ * @param props.params - Promise resolving to an object with the required `id` route parameter; if `id` is missing the page renders a 404.
+ * @param props.searchParams - Promise resolving to an object with optional `cat` query parameter (defaults to "billing").
+ * @returns A React element that displays patient info, receipt details, billing summary, bill items, and payment actions for the resolved payment; renders a 404 page if the payment cannot be found.
+ */
 export default async function PaymentDetailsPage(props: { params: Promise<{ id: string }>, searchParams: Promise<{ cat?: string }> }) {
   const params = await props.params;
   const searchParams = await props.searchParams;
