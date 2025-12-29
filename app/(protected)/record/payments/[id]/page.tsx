@@ -70,11 +70,11 @@ const getPaymentMethodIcon = (method: PaymentMethod) => {
   }
 };
 
-export default async function PaymentDetailsPage({ params, searchParams }: PaymentDetailsProps) {
-  const resolvedParams = await Promise.resolve(params);
-  const id = resolvedParams?.id;
-  const resolvedSearchParams = await Promise.resolve(searchParams);
-  const category = resolvedSearchParams?.cat || 'billing';
+export default async function PaymentDetailsPage(props: { params: Promise<{ id: string }>, searchParams: Promise<{ cat?: string }> }) {
+  const params = await props.params;
+  const searchParams = await props.searchParams;
+  const { id } = params;
+  const category = searchParams?.cat || 'billing';
 
   if (!id) {
     notFound();

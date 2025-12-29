@@ -20,7 +20,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Doctor, Patient, PriorityLevel } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { SubmitHandler, useForm } from "react-hook-form";
-  
+
 import { Button } from "../ui/button";
 import { UserPen, Activity, AlertTriangle, HeartPulse } from "lucide-react";
 import { z } from "zod";
@@ -74,12 +74,12 @@ interface EnhancedBookAppointmentProps {
 // Dynamic timezone date formatting helper
 const formatDateWithUserTimezone = (date: Date | undefined) => {
   if (!date) return "";
-  
+
   // Simple local date formatting that preserves the selected date
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
-  
+
   return `${year}-${month}-${day}`;
 };
 
@@ -89,7 +89,7 @@ const getUserTimezoneInfo = () => {
   const offsetMinutes = new Date().getTimezoneOffset();
   const offsetHours = Math.abs(offsetMinutes / 60);
   const offsetSign = offsetMinutes <= 0 ? '+' : '-';
-  
+
   return {
     timezone,
     offset: `UTC${offsetSign}${offsetHours}`,
@@ -99,38 +99,38 @@ const getUserTimezoneInfo = () => {
 
 const generateDynamicTimes = (startTime: string, endTime: string, intervalMinutes: number = 30) => {
   const times = [];
-  
+
   // Parse start time (format: "07:00" or "7:00")
   const [startHour, startMin] = startTime.split(':').map(Number);
   const [endHour, endMin] = endTime.split(':').map(Number);
-  
+
   // Convert to minutes for easier calculation
   const startMinutes = startHour * 60 + startMin;
   const endMinutes = endHour * 60 + endMin;
-  
+
   // Generate times every intervalMinutes
   for (let minutes = startMinutes; minutes < endMinutes; minutes += intervalMinutes) {
     const hour = Math.floor(minutes / 60);
     const min = minutes % 60;
-    
+
     // Format to 12-hour time
     const period = hour >= 12 ? 'PM' : 'AM';
     const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
     const timeString = `${displayHour}:${min.toString().padStart(2, '0')} ${period}`;
-    
+
     times.push({
       label: timeString,
       value: timeString
     });
   }
-  
+
   return times;
 };
 
 // Custom Calendar Date Picker Component with Dynamic Timezone
-const CalendarDatePicker = ({ 
-  value, 
-  onChange, 
+const CalendarDatePicker = ({
+  value,
+  onChange,
   placeholder = "Select date",
   disabled = false,
   className = "",
@@ -152,53 +152,53 @@ const CalendarDatePicker = ({
     const now = new Date();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const checkDate = new Date(date);
     checkDate.setHours(0, 0, 0, 0);
-    
+
     // Disable dates beyond 3 months
     const maxDate = new Date();
     maxDate.setMonth(maxDate.getMonth() + 3);
     maxDate.setHours(23, 59, 59, 999);
-    
+
     if (checkDate > maxDate) return true;
-    
+
     // If no doctor selected, allow all future dates
     if (!selectedDoctorId || !doctorWorkingDays || doctorWorkingDays.length === 0) {
       // Still disable past dates
       return checkDate < today;
     }
-    
+
     // Get day name for the selected date
     const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     const dayOfWeek = dayNames[checkDate.getDay()].toLowerCase();
-    
+
     // Check if the day of the week is in doctor's working days
     const doctorWorkingDay = doctorWorkingDays.find(
       workingDay => workingDay.day.toLowerCase() === dayOfWeek
     );
-    
+
     // If doctor doesn't work on this day, disable it
     if (!doctorWorkingDay) return true;
-    
+
     // If it's a past date (not today), disable it
     if (checkDate < today) return true;
-    
+
     // If it's today, check if current time is past doctor's closing time
     if (checkDate.getTime() === today.getTime()) {
       // Parse doctor's closing time
       const [closeHour, closeMinute] = doctorWorkingDay.close_time.split(':').map(Number);
-      
+
       // Create a Date object for today's closing time
       const closingTime = new Date();
       closingTime.setHours(closeHour, closeMinute, 0, 0);
-      
+
       // If current time is past closing time, disable today
       if (now >= closingTime) {
         return true;
       }
     }
-    
+
     // Date is valid (future date or today before closing time, and doctor works on this day)
     return false;
   };
@@ -221,11 +221,11 @@ const CalendarDatePicker = ({
       </Button>
 
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
           onClick={() => setIsOpen(false)}
         >
-          <div 
+          <div
             className="bg-slate-900/95 border border-emerald-500/40 shadow-2xl rounded-lg p-4"
             onClick={(e) => e.stopPropagation()}
           >
@@ -246,7 +246,7 @@ const CalendarDatePicker = ({
                 ✕
               </Button>
             </div>
-            
+
             <Calendar
               mode="single"
               selected={value}
@@ -308,7 +308,7 @@ export const EnhancedBookAppointment = ({
     start_time: string;
     close_time: string;
   }[]>([]);
-  const [availableTimes, setAvailableTimes] = useState<{label: string, value: string}[]>([]);
+  const [availableTimes, setAvailableTimes] = useState<{ label: string, value: string }[]>([]);
   const [loadingWorkingDays, setLoadingWorkingDays] = useState(false);
 
 
@@ -334,7 +334,7 @@ export const EnhancedBookAppointment = ({
 
   // Priority level indicator classes
   const getPriorityClasses = (level: PriorityLevel) => {
-    switch(level) {
+    switch (level) {
       case PriorityLevel.EMERGENCY:
         return {
           bg: "bg-red-900/30",
@@ -380,136 +380,138 @@ export const EnhancedBookAppointment = ({
     }
   }, [note]);
 
-// Watch form values properly
-const selectedDoctorId = form.watch("doctor_id");
-const selectedDate = form.watch("appointment_date");
+  // Watch form values properly
+  const selectedDoctorId = form.watch("doctor_id");
+  const selectedDate = form.watch("appointment_date");
 
-// Effect for fetching doctor working days
-useEffect(() => {
-  const fetchDoctorWorkingDays = async () => {
-    if (selectedDoctorId) {
-      setLoadingWorkingDays(true);
-      setAvailableTimes([]); // Clear times immediately
-      // Clear the time selection when doctor changes
-      form.setValue("time", "");
-      
-      try {
-        const result = await getDoctorWorkingDays(selectedDoctorId);
-        if (result.success && result.workingDays) {
-          setDoctorWorkingDays(result.workingDays);
-        } else {
+  // Effect for fetching doctor working days
+  useEffect(() => {
+    const fetchDoctorWorkingDays = async () => {
+      if (selectedDoctorId) {
+        setLoadingWorkingDays(true);
+        setAvailableTimes([]); // Clear times immediately
+        // Clear the time selection when doctor changes
+        form.setValue("time", "");
+
+        try {
+          const result = await getDoctorWorkingDays(selectedDoctorId);
+          if (result.success && result.workingDays) {
+            setDoctorWorkingDays(result.workingDays);
+          } else {
+            setDoctorWorkingDays([]);
+          }
+        } catch (error) {
+          console.error('Error fetching doctor working days:', error);
           setDoctorWorkingDays([]);
+        } finally {
+          setLoadingWorkingDays(false);
         }
-      } catch (error) {
-        console.error('Error fetching doctor working days:', error);
+      } else {
         setDoctorWorkingDays([]);
-      } finally {
+        setAvailableTimes([]);
         setLoadingWorkingDays(false);
       }
-    } else {
-      setDoctorWorkingDays([]);
-      setAvailableTimes([]);
-      setLoadingWorkingDays(false);
-    }
-  };
+    };
 
-  // Add a small delay to ensure form values are properly set
-  const timeoutId = setTimeout(() => {
-    fetchDoctorWorkingDays();
-  }, 100);
+    // Add a small delay to ensure form values are properly set
+    const timeoutId = setTimeout(() => {
+      fetchDoctorWorkingDays();
+    }, 100);
 
-  return () => clearTimeout(timeoutId);
-}, [selectedDoctorId, form]);
+    return () => clearTimeout(timeoutId);
+  }, [selectedDoctorId, form]);
 
-// Effect for generating available times
-useEffect(() => {
-  if (selectedDate && selectedDoctorId && doctorWorkingDays.length > 0) {
-    try {
-      const date = new Date(selectedDate);
-      const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-      const dayOfWeek = dayNames[date.getDay()].toLowerCase();
-      
-      const workingDay = doctorWorkingDays.find(
-        wd => wd.day.toLowerCase() === dayOfWeek
-      );
-      
-      if (workingDay) {
-        const times = generateDynamicTimes(workingDay.start_time, workingDay.close_time, 30);
-        setAvailableTimes(times);
-      } else {
+  // Effect for generating available times
+  useEffect(() => {
+    if (selectedDate && selectedDoctorId && doctorWorkingDays.length > 0) {
+      try {
+        const date = new Date(selectedDate);
+        const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        const dayOfWeek = dayNames[date.getDay()].toLowerCase();
+
+        const workingDay = doctorWorkingDays.find(
+          wd => wd.day.toLowerCase() === dayOfWeek
+        );
+
+        if (workingDay) {
+          const times = generateDynamicTimes(workingDay.start_time, workingDay.close_time, 30);
+          setAvailableTimes(times);
+        } else {
+          setAvailableTimes([]);
+        }
+      } catch (error) {
+        console.error('Error generating available times:', error);
         setAvailableTimes([]);
       }
-    } catch (error) {
-      console.error('Error generating available times:', error);
+    } else {
       setAvailableTimes([]);
     }
-  } else {
-    setAvailableTimes([]);
-  }
-  
-  // Reset time selection if it's no longer valid
-  const currentTime = form.getValues("time");
-  if (currentTime) {
-    setTimeout(() => {
-      const isTimeStillValid = availableTimes.some(time => time.value === currentTime);
-      if (!isTimeStillValid) {
-        form.setValue("time", "");
-      }
-    }, 50);
-  }
-}, [selectedDate, selectedDoctorId, doctorWorkingDays, form]); // Added availableTimes.length to dependencies
 
-// Effect to set form ready state
-useEffect(() => {
-  setIsFormReady(!!selectedDoctorId);
-}, [selectedDoctorId]);
-
-const handlePriorityAssigned = async (
-  level: PriorityLevel,
-  score: number,
-  suggestedDepartment: string,
-  suggestedDoctorId: string,
-  isOverride: boolean = false
-) => {
-  // Clear existing selections
-  form.setValue("appointment_date", "");
-  form.setValue("time", "");
-  
-  // Set priority and doctor
-  form.setValue("priority_level", level);
-  form.setValue("priority_score", score);
-  form.setValue("doctor_id", suggestedDoctorId);
-  form.setValue("priority_override", isOverride);
-
-  setPriorityInfo({
-    level,
-    score,
-    department: suggestedDepartment
-  });
-
-  // Reset states
-  setDoctorWorkingDays([]);
-  setAvailableTimes([]);
-  setLoadingWorkingDays(true);
-
-  // Immediately fetch working days for the selected doctor
-  try {
-    const result = await getDoctorWorkingDays(suggestedDoctorId);
-    if (result.success && result.workingDays) {
-      setDoctorWorkingDays(result.workingDays);
-    } else {
-      setDoctorWorkingDays([]);
+    // Reset time selection if it's no longer valid
+    const currentTime = form.getValues("time");
+    if (currentTime) {
+      setTimeout(() => {
+        const isTimeStillValid = availableTimes.some(time => time.value === currentTime);
+        if (!isTimeStillValid) {
+          form.setValue("time", "");
+        }
+      }, 50);
     }
-  } catch (error) {
-    console.error('Error fetching priority doctor working days:', error);
-    setDoctorWorkingDays([]);
-  } finally {
-    setLoadingWorkingDays(false);
-  }
+  }, [selectedDate, selectedDoctorId, doctorWorkingDays, form]); // Added availableTimes.length to dependencies
 
-  setIsFormReady(true);
-  toast.success(`Priority set to ${level} (Score: ${score})`);
-};
+  // Effect to set form ready state
+  useEffect(() => {
+    setIsFormReady(!!selectedDoctorId);
+  }, [selectedDoctorId]);
+
+  const handlePriorityAssigned = async (
+    level: PriorityLevel,
+    score: number,
+    suggestedDepartment: string,
+    suggestedDoctorId: string,
+    isOverride: boolean = false
+  ) => {
+    // Clear existing selections
+    form.setValue("appointment_date", "");
+    form.setValue("time", "");
+
+    // Set priority and doctor
+    form.setValue("priority_level", level);
+    form.setValue("priority_score", score);
+    form.setValue("doctor_id", suggestedDoctorId);
+    form.setValue("priority_override", isOverride);
+
+    setPriorityInfo({
+      level,
+      score,
+      department: suggestedDepartment
+    });
+
+    // Reset states
+    setDoctorWorkingDays([]);
+    setAvailableTimes([]);
+    setLoadingWorkingDays(true);
+
+    // Immediately fetch working days for the selected doctor
+    try {
+      const result = await getDoctorWorkingDays(suggestedDoctorId);
+      if (result.success && result.workingDays) {
+        setDoctorWorkingDays(result.workingDays);
+      } else {
+        setDoctorWorkingDays([]);
+      }
+    } catch (error) {
+      console.error('Error fetching priority doctor working days:', error);
+      setDoctorWorkingDays([]);
+    } finally {
+      setLoadingWorkingDays(false);
+    }
+
+    setIsFormReady(true);
+    toast.success(`Priority set to ${level} (Score: ${score})`, {
+      id: "priority-update"
+    });
+  };
 
 
   const onSubmit: SubmitHandler<z.infer<typeof EnhancedAppointmentSchema>> = async (
@@ -517,9 +519,9 @@ const handlePriorityAssigned = async (
   ) => {
     try {
       setIsSubmitting(true);
-      
-      const newData = { 
-        ...values, 
+
+      const newData = {
+        ...values,
         patient_id: data?.id!,
         booked_by: bookedBy || null,
         priority_level: values.priority_level,
@@ -544,8 +546,8 @@ const handlePriorityAssigned = async (
         setShowPriorityAnalyzer(false);
         router.refresh();
         toast.success(
-          isNurseBooking 
-            ? `Appointment booked successfully for ${patientName}` 
+          isNurseBooking
+            ? `Appointment booked successfully for ${patientName}`
             : "Appointment created successfully"
         );
       }
@@ -564,7 +566,7 @@ const handlePriorityAssigned = async (
           variant="ghost"
           className="w-full flex items-center gap-2 justify-start text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg hover:shadow-emerald-500/25 transition-all duration-200 rounded-lg px-4 py-2"
         >
-          <UserPen size={16} /> 
+          <UserPen size={16} />
           {isNurseBooking ? `Book for ${patientName}` : 'Book Appointment'}
         </Button>
       </DialogTrigger>
@@ -668,7 +670,7 @@ const handlePriorityAssigned = async (
                       placeholder="Select an appointment type"
                     />
                   </div>
-                  
+
                   {/* Reason for Visit / Symptoms */}
                   <div className="space-y-2">
                     <CustomInput
@@ -728,23 +730,23 @@ const handlePriorityAssigned = async (
                       </div>
 
                       {selectedDoctorId && (
-  <div className="space-y-2">
-    {loadingWorkingDays ? (
-      <div className="text-xs text-blue-300/70 bg-blue-950/30 p-2 rounded-lg flex items-center gap-2">
-        <div className="w-3 h-3 border border-blue-400/50 border-t-blue-400 rounded-full animate-spin"></div>
-        Loading doctor availability...
-      </div>
-    ) : doctorWorkingDays.length > 0 ? (
-      <div className="text-xs text-emerald-300/70 bg-emerald-950/30 p-2 rounded-lg">
-        Available days: {doctorWorkingDays.map(wd => wd.day).join(', ')}
-      </div>
-    ) : (
-      <div className="text-xs text-amber-300/70 bg-amber-950/30 p-2 rounded-lg">
-        No working days set for this doctor. Please contact admin.
-      </div>
-    )}
-  </div>
-)}
+                        <div className="space-y-2">
+                          {loadingWorkingDays ? (
+                            <div className="text-xs text-blue-300/70 bg-blue-950/30 p-2 rounded-lg flex items-center gap-2">
+                              <div className="w-3 h-3 border border-blue-400/50 border-t-blue-400 rounded-full animate-spin"></div>
+                              Loading doctor availability...
+                            </div>
+                          ) : doctorWorkingDays.length > 0 ? (
+                            <div className="text-xs text-emerald-300/70 bg-emerald-950/30 p-2 rounded-lg">
+                              Available days: {doctorWorkingDays.map(wd => wd.day).join(', ')}
+                            </div>
+                          ) : (
+                            <div className="text-xs text-amber-300/70 bg-amber-950/30 p-2 rounded-lg">
+                              No working days set for this doctor. Please contact admin.
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       {/* Calendar Date Picker with Dynamic Timezone */}
                       <FormField
@@ -756,85 +758,85 @@ const handlePriorityAssigned = async (
                               Appointment Date
                             </FormLabel>
                             <FormControl>
-<CalendarDatePicker
-  value={field.value ? new Date(field.value) : undefined}
-  onChange={(date) => {
-    field.onChange(formatDateWithUserTimezone(date));
-  }}
-  placeholder={
-    loadingWorkingDays 
-      ? "Loading doctor availability..." 
-      : selectedDoctorId 
-        ? "Select appointment date" 
-        : "Select doctor first"
-  }
-  className="w-full"
-  selectedDoctorId={selectedDoctorId}
-  doctorWorkingDays={doctorWorkingDays}
-  disabled={loadingWorkingDays}
-/>
+                              <CalendarDatePicker
+                                value={field.value ? new Date(field.value) : undefined}
+                                onChange={(date) => {
+                                  field.onChange(formatDateWithUserTimezone(date));
+                                }}
+                                placeholder={
+                                  loadingWorkingDays
+                                    ? "Loading doctor availability..."
+                                    : selectedDoctorId
+                                      ? "Select appointment date"
+                                      : "Select doctor first"
+                                }
+                                className="w-full"
+                                selectedDoctorId={selectedDoctorId}
+                                doctorWorkingDays={doctorWorkingDays}
+                                disabled={loadingWorkingDays}
+                              />
                             </FormControl>
                             <FormMessage className="text-red-400" />
                           </FormItem>
                         )}
                       />
-                      
+
                       {/* Enhanced Time Selection Grid */}
-{/* Enhanced Time Selection with Real-time Availability */}
-<FormField
-  control={form.control}
-  name="time"
-  render={({ field }) => (
-    <FormItem>
-      <FormControl>
-        <TimeSlotSelector
-          selectedDoctorId={selectedDoctorId}
-          selectedDate={selectedDate}
-          availableTimes={doctorWorkingDays.length > 0 && selectedDate ? (() => {
-            try {
-              const date = new Date(selectedDate);
-              const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-              const dayOfWeek = dayNames[date.getDay()].toLowerCase();
-              const workingDay = doctorWorkingDays.find(wd => wd.day.toLowerCase() === dayOfWeek);
-              
-              if (workingDay) {
-                // Generate times using the same logic as before
-                const times = [];
-                const [startHour, startMin] = workingDay.start_time.split(':').map(Number);
-                const [endHour, endMin] = workingDay.close_time.split(':').map(Number);
-                const startMinutes = startHour * 60 + startMin;
-                const endMinutes = endHour * 60 + endMin;
-                
-                for (let minutes = startMinutes; minutes < endMinutes; minutes += 30) {
-                  const hour = Math.floor(minutes / 60);
-                  const min = minutes % 60;
-                  const period = hour >= 12 ? 'PM' : 'AM';
-                  const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-                  const timeString = `${displayHour}:${min.toString().padStart(2, '0')} ${period}`;
-                  
-                  times.push({
-                    label: timeString,
-                    value: timeString
-                  });
-                }
-                return times;
-              }
-              return [];
-            } catch (error) {
-              console.error('Error generating times:', error);
-              return [];
-            }
-          })() : []}
-          selectedTime={field.value}
-          onTimeSelect={field.onChange}
-          disabled={isSubmitting || loadingWorkingDays}
-          patientId={data.id}
-        />
-      </FormControl>
-      <FormMessage className="text-red-400 text-sm mt-2" />
-    </FormItem>
-  )}
-/>
+                      {/* Enhanced Time Selection with Real-time Availability */}
+                      <FormField
+                        control={form.control}
+                        name="time"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <TimeSlotSelector
+                                selectedDoctorId={selectedDoctorId}
+                                selectedDate={selectedDate}
+                                availableTimes={doctorWorkingDays.length > 0 && selectedDate ? (() => {
+                                  try {
+                                    const date = new Date(selectedDate);
+                                    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                                    const dayOfWeek = dayNames[date.getDay()].toLowerCase();
+                                    const workingDay = doctorWorkingDays.find(wd => wd.day.toLowerCase() === dayOfWeek);
+
+                                    if (workingDay) {
+                                      // Generate times using the same logic as before
+                                      const times = [];
+                                      const [startHour, startMin] = workingDay.start_time.split(':').map(Number);
+                                      const [endHour, endMin] = workingDay.close_time.split(':').map(Number);
+                                      const startMinutes = startHour * 60 + startMin;
+                                      const endMinutes = endHour * 60 + endMin;
+
+                                      for (let minutes = startMinutes; minutes < endMinutes; minutes += 30) {
+                                        const hour = Math.floor(minutes / 60);
+                                        const min = minutes % 60;
+                                        const period = hour >= 12 ? 'PM' : 'AM';
+                                        const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+                                        const timeString = `${displayHour}:${min.toString().padStart(2, '0')} ${period}`;
+
+                                        times.push({
+                                          label: timeString,
+                                          value: timeString
+                                        });
+                                      }
+                                      return times;
+                                    }
+                                    return [];
+                                  } catch (error) {
+                                    console.error('Error generating times:', error);
+                                    return [];
+                                  }
+                                })() : []}
+                                selectedTime={field.value}
+                                onTimeSelect={field.onChange}
+                                disabled={isSubmitting || loadingWorkingDays}
+                                patientId={data.id}
+                              />
+                            </FormControl>
+                            <FormMessage className="text-red-400 text-sm mt-2" />
+                          </FormItem>
+                        )}
+                      />
 
                     </div>
                   )}
@@ -858,11 +860,11 @@ const handlePriorityAssigned = async (
                   duration-200
                   disabled:opacity-50 
                   disabled:cursor-not-allowed
-                  ${priorityInfo?.level === PriorityLevel.EMERGENCY 
+                  ${priorityInfo?.level === PriorityLevel.EMERGENCY
                     ? 'bg-red-600 hover:bg-red-700 shadow-red-500/25' :
-                    priorityInfo?.level === PriorityLevel.URGENT 
-                    ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-500/25' :
-                    'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/25'
+                    priorityInfo?.level === PriorityLevel.URGENT
+                      ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-500/25' :
+                      'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/25'
                   }
                 `}
               >

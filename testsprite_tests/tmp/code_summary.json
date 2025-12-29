@@ -1,0 +1,29 @@
+{
+    "project_name": "medix-final",
+    "tech_stack": {
+        "framework": "Next.js 16.1.1",
+        "language": "TypeScript",
+        "styling": "Tailwind CSS",
+        "ui_components": "Radix UI",
+        "database_orm": "Prisma",
+        "database": "PostgreSQL",
+        "authentication": "Clerk",
+        "state_management": "Zustand",
+        "forms": "React Hook Form, Zod",
+        "mailing": "Nodemailer, Resend",
+        "error_tracking": "Sentry"
+    },
+    "features": [
+        "Patient Management",
+        "Doctor Management",
+        "Staff Management",
+        "Appointment Scheduling",
+        "Intelligent Appointment Triage (Priority Assessment)",
+        "Medical Records (Vital Signs, Diagnosis, Lab Tests)",
+        "Internal and External Referrals",
+        "Billing and Payments",
+        "Audit Logs",
+        "Doctor Ratings"
+    ],
+    "port": 3000
+}

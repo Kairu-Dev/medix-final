@@ -13,12 +13,12 @@ import { FaBriefcaseMedical, FaCalendarDays } from "react-icons/fa6";
 import { IoTimeSharp } from "react-icons/io5";
 import { MdEmail, MdOutlineLocalPhone } from "react-icons/md";
 
-const DoctorProfile = async(props: {params: Promise <{id: string}>}) => {
-    const params = await props.params;
-    const {data, totalAppointment } = await getDoctorById(params?.id);
-    /* eslint-disable */
+const DoctorProfile = async (props: { params: Promise<{ id: string }> }) => {
+  const params = await props.params;
+  const { data, totalAppointment } = await getDoctorById(params.id);
+  /* eslint-disable */
 
-    if (!data) return null;
+  if (!data) return null;
 
   return (
     <div className="min-h-screen bg-black-800/60 p-3 sm:p-4 md:p-6">
@@ -29,11 +29,11 @@ const DoctorProfile = async(props: {params: Promise <{id: string}>}) => {
           <div className="absolute top-0 right-0 w-8 sm:w-12 md:w-16 h-8 sm:h-12 md:h-16 border-t-2 border-r-2 border-amber-400/60 rounded-tr-xl transition-all duration-300"></div>
           <div className="absolute bottom-0 left-0 w-8 sm:w-12 md:w-16 h-8 sm:h-12 md:h-16 border-b-2 border-l-2 border-amber-400/60 rounded-bl-xl transition-all duration-300"></div>
           <div className="absolute bottom-0 right-0 w-8 sm:w-12 md:w-16 h-8 sm:h-12 md:h-16 border-b-2 border-r-2 border-amber-400/60 rounded-br-xl transition-all duration-300"></div>
-          
+
           {/* Light glow effects */}
           <div className="absolute -top-10 right-20 w-20 sm:w-32 md:w-40 h-20 sm:h-32 md:h-40 bg-amber-300/20 rounded-full blur-2xl"></div>
           <div className="absolute -bottom-10 left-40 w-20 sm:w-32 md:w-40 h-20 sm:h-32 md:h-40 bg-amber-200/10 rounded-full blur-3xl"></div>
-          
+
           <div className="p-4 sm:p-6 flex flex-col xl:flex-row gap-6 relative z-10">
             {/* Left Section */}
             <div className="w-full xl:w-[70%] min-w-0">
@@ -44,10 +44,10 @@ const DoctorProfile = async(props: {params: Promise <{id: string}>}) => {
                   {/* Small decorative corners for inner cards */}
                   <div className="absolute top-0 left-0 w-6 h-6 border-t border-l border-amber-400/40 rounded-tl-lg"></div>
                   <div className="absolute bottom-0 right-0 w-6 h-6 border-b border-r border-amber-400/40 rounded-br-lg"></div>
-                  
+
                   <div className="flex flex-col sm:flex-row gap-4 min-w-0">
                     <div className="flex justify-center sm:justify-start shrink-0">
-                      <ProfileImage 
+                      <ProfileImage
                         url={data?.img!}
                         name={data?.name}
                         className="size-16 sm:size-20 ring-2 ring-amber-400 ring-offset-2 ring-offset-amber-50/20 shadow-[0_0_15px_rgba(251,191,36,0.4)]"
@@ -103,7 +103,7 @@ const DoctorProfile = async(props: {params: Promise <{id: string}>}) => {
                   <div className="bg-gradient-to-br from-amber-50/20 to-amber-100/10 p-3 sm:p-4 rounded-xl border border-amber-200/40 shadow-md flex flex-col items-center gap-2 backdrop-blur-sm relative">
                     <div className="absolute top-0 left-0 w-4 h-4 border-t border-l border-amber-400/40 rounded-tl-lg"></div>
                     <div className="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-amber-400/40 rounded-br-lg"></div>
-                    
+
                     <FaBriefcaseMedical className="size-4 sm:size-5 text-amber-400" />
                     <div className="text-center">
                       <h1 className="text-lg sm:text-xl font-bold text-white">{totalAppointment}</h1>
@@ -114,7 +114,7 @@ const DoctorProfile = async(props: {params: Promise <{id: string}>}) => {
                   <div className="bg-gradient-to-br from-amber-50/20 to-amber-100/10 p-3 sm:p-4 rounded-xl border border-amber-200/40 shadow-md flex flex-col items-center gap-2 backdrop-blur-sm relative">
                     <div className="absolute top-0 left-0 w-4 h-4 border-t border-l border-amber-400/40 rounded-tl-lg"></div>
                     <div className="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-amber-400/40 rounded-br-lg"></div>
-                    
+
                     <FaCalendarDays className="size-4 sm:size-5 text-amber-400" />
                     <div className="text-center">
                       <h1 className="text-lg sm:text-xl font-bold text-white">{data?.working_days?.length}</h1>
@@ -125,10 +125,10 @@ const DoctorProfile = async(props: {params: Promise <{id: string}>}) => {
                   <div className="bg-gradient-to-br from-amber-50/20 to-amber-100/10 p-3 sm:p-4 rounded-xl border border-amber-200/40 shadow-md flex flex-col items-center gap-2 backdrop-blur-sm relative">
                     <div className="absolute top-0 left-0 w-4 h-4 border-t border-l border-amber-400/40 rounded-tl-lg"></div>
                     <div className="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-amber-400/40 rounded-br-lg"></div>
-                    
+
                     <IoTimeSharp className="size-4 sm:size-5 text-amber-400" />
                     <div className="text-center">
-                      <h1 className="text-lg sm:text-xl font-bold text-white break-words">{availableDays({data: data.working_days})}</h1>
+                      <h1 className="text-lg sm:text-xl font-bold text-white break-words">{availableDays({ data: data.working_days })}</h1>
                       <span className="text-xs sm:text-sm text-amber-200 font-medium">Working Hours</span>
                     </div>
                   </div>
@@ -136,7 +136,7 @@ const DoctorProfile = async(props: {params: Promise <{id: string}>}) => {
                   <div className="bg-gradient-to-br from-amber-50/20 to-amber-100/10 p-3 sm:p-4 rounded-xl border border-amber-200/40 shadow-md flex flex-col items-center gap-2 backdrop-blur-sm relative">
                     <div className="absolute top-0 left-0 w-4 h-4 border-t border-l border-amber-400/40 rounded-tl-lg"></div>
                     <div className="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-amber-400/40 rounded-br-lg"></div>
-                    
+
                     <BsCalendarDateFill className="size-4 sm:size-5 text-amber-400" />
                     <div className="text-center">
                       <h1 className="text-lg sm:text-xl font-bold text-white">{format(data?.created_at, "yyyy-MM-dd")}</h1>
@@ -153,7 +153,7 @@ const DoctorProfile = async(props: {params: Promise <{id: string}>}) => {
                 <div className="min-w-0">
                   <RecentAppointments data={data?.appointments} />
                 </div>
-              </div>  
+              </div>
             </div>
 
             {/* Right Sidebar */}
@@ -162,13 +162,13 @@ const DoctorProfile = async(props: {params: Promise <{id: string}>}) => {
               <div className="bg-gradient-to-b from-amber-50/20 to-amber-100/10 p-3 sm:p-4 rounded-xl border border-amber-200/40 shadow-md backdrop-blur-sm relative">
                 <div className="absolute top-0 right-0 w-6 h-6 border-t border-r border-amber-400/40 rounded-tr-lg"></div>
                 <div className="absolute bottom-0 left-0 w-6 h-6 border-b border-l border-amber-400/40 rounded-bl-lg"></div>
-                
+
                 <div className="flex items-center gap-2 mb-4">
                   <div className="h-6 w-1 bg-amber-400 rounded-full shadow-[0_0_8px_rgba(251,191,36,0.6)]"></div>
                   <h1 className="text-lg sm:text-xl font-bold text-white tracking-wider">Quick Links</h1>
                 </div>
                 <div className="flex gap-2 sm:gap-4 flex-wrap">
-                  <Link 
+                  <Link
                     href={`/record/appointments?id=${data?.id}`}
                     className="flex-1 min-w-0 p-2 sm:p-3 text-center rounded-md bg-amber-600/70 hover:bg-amber-600/90 text-white font-medium border border-amber-300/50 transition-all duration-200 shadow-md hover:shadow-[0_0_8px_rgba(251,191,36,0.5)] text-xs sm:text-sm"
                   >
@@ -176,7 +176,7 @@ const DoctorProfile = async(props: {params: Promise <{id: string}>}) => {
                   </Link>
 
                   <VisuallyHidden>
-                    <Link 
+                    <Link
                       href="#"
                       className="flex-1 min-w-0 p-2 sm:p-3 text-center rounded-md bg-amber-600/70 hover:bg-amber-600/90 text-white font-medium border border-amber-300/50 transition-colors duration-200 shadow-md hover:shadow-[0_0_8px_rgba(251,191,36,0.5)] text-xs sm:text-sm"
                     >
@@ -190,13 +190,13 @@ const DoctorProfile = async(props: {params: Promise <{id: string}>}) => {
               <div className="bg-gradient-to-b from-amber-50/20 to-amber-100/10 p-3 sm:p-4 rounded-xl border border-amber-200/40 shadow-md backdrop-blur-sm relative flex-1">
                 <div className="absolute top-0 left-0 w-6 h-6 border-t border-l border-amber-400/40 rounded-tl-lg"></div>
                 <div className="absolute bottom-0 right-0 w-6 h-6 border-b border-r border-amber-400/40 rounded-br-lg"></div>
-                
+
                 <div className="flex items-center gap-2 mb-4">
                   <div className="h-6 w-1 bg-amber-400 rounded-full shadow-[0_0_8px_rgba(251,191,36,0.6)]"></div>
                   <h1 className="text-lg sm:text-xl font-bold text-white tracking-wider">Patient Reviews & Ratings</h1>
                 </div>
-                
-                <RatingContainer id={params?.id}/>
+
+                <RatingContainer id={params?.id} />
               </div>
             </div>
           </div>

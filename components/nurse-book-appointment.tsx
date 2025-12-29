@@ -20,7 +20,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Doctor, Patient, PriorityLevel } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { SubmitHandler, useForm } from "react-hook-form";
-  
+
 import { Button } from "./ui/button";
 import { UserPen, Activity, AlertTriangle, HeartPulse, Stethoscope, UserCheck } from "lucide-react";
 import { z } from "zod";
@@ -76,11 +76,11 @@ interface NurseBookAppointmentProps {
 // Dynamic timezone date formatting helper
 const formatDateWithUserTimezone = (date: Date | undefined) => {
   if (!date) return "";
-  
+
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
-  
+
   return `${year}-${month}-${day}`;
 };
 
@@ -90,7 +90,7 @@ const getUserTimezoneInfo = () => {
   const offsetMinutes = new Date().getTimezoneOffset();
   const offsetHours = Math.abs(offsetMinutes / 60);
   const offsetSign = offsetMinutes <= 0 ? '+' : '-';
-  
+
   return {
     timezone,
     offset: `UTC${offsetSign}${offsetHours}`,
@@ -100,34 +100,34 @@ const getUserTimezoneInfo = () => {
 
 const generateDynamicTimes = (startTime: string, endTime: string, intervalMinutes: number = 30) => {
   const times = [];
-  
+
   const [startHour, startMin] = startTime.split(':').map(Number);
   const [endHour, endMin] = endTime.split(':').map(Number);
-  
+
   const startMinutes = startHour * 60 + startMin;
   const endMinutes = endHour * 60 + endMin;
-  
+
   for (let minutes = startMinutes; minutes < endMinutes; minutes += intervalMinutes) {
     const hour = Math.floor(minutes / 60);
     const min = minutes % 60;
-    
+
     const period = hour >= 12 ? 'PM' : 'AM';
     const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
     const timeString = `${displayHour}:${min.toString().padStart(2, '0')} ${period}`;
-    
+
     times.push({
       label: timeString,
       value: timeString
     });
   }
-  
+
   return times;
 };
 
 // Custom Calendar Date Picker Component
-const CalendarDatePicker = ({ 
-  value, 
-  onChange, 
+const CalendarDatePicker = ({
+  value,
+  onChange,
   placeholder = "Select date",
   disabled = false,
   className = "",
@@ -149,40 +149,40 @@ const CalendarDatePicker = ({
     const now = new Date();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const checkDate = new Date(date);
     checkDate.setHours(0, 0, 0, 0);
-    
+
     const maxDate = new Date();
     maxDate.setMonth(maxDate.getMonth() + 3);
     maxDate.setHours(23, 59, 59, 999);
-    
+
     if (checkDate > maxDate) return true;
-    
+
     if (!selectedDoctorId || !doctorWorkingDays || doctorWorkingDays.length === 0) {
       return checkDate < today;
     }
-    
+
     const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     const dayOfWeek = dayNames[checkDate.getDay()].toLowerCase();
-    
+
     const doctorWorkingDay = doctorWorkingDays.find(
       workingDay => workingDay.day.toLowerCase() === dayOfWeek
     );
-    
+
     if (!doctorWorkingDay) return true;
     if (checkDate < today) return true;
-    
+
     if (checkDate.getTime() === today.getTime()) {
       const [closeHour, closeMinute] = doctorWorkingDay.close_time.split(':').map(Number);
       const closingTime = new Date();
       closingTime.setHours(closeHour, closeMinute, 0, 0);
-      
+
       if (now >= closingTime) {
         return true;
       }
     }
-    
+
     return false;
   };
 
@@ -204,11 +204,11 @@ const CalendarDatePicker = ({
       </Button>
 
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
           onClick={() => setIsOpen(false)}
         >
-          <div 
+          <div
             className="bg-blue-950/95 border border-blue-400/40 shadow-2xl rounded-lg p-4"
             onClick={(e) => e.stopPropagation()}
           >
@@ -229,7 +229,7 @@ const CalendarDatePicker = ({
                 ✕
               </Button>
             </div>
-            
+
             <Calendar
               mode="single"
               selected={value}
@@ -269,11 +269,11 @@ const CalendarDatePicker = ({
   );
 };
 
-export const NurseBookAppointment = ({ 
-  patient, 
-  doctors, 
-  nurseId, 
-  nurseName = "Nurse" 
+export const NurseBookAppointment = ({
+  patient,
+  doctors,
+  nurseId,
+  nurseName = "Nurse"
 }: NurseBookAppointmentProps) => {
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -291,7 +291,7 @@ export const NurseBookAppointment = ({
     start_time: string;
     close_time: string;
   }[]>([]);
-  const [availableTimes, setAvailableTimes] = useState<{label: string, value: string}[]>([]);
+  const [availableTimes, setAvailableTimes] = useState<{ label: string, value: string }[]>([]);
   const [loadingWorkingDays, setLoadingWorkingDays] = useState(false);
   const [isFormReady, setIsFormReady] = useState(false);
 
@@ -312,7 +312,7 @@ export const NurseBookAppointment = ({
 
   // Priority level indicator classes with nurse-centric colors
   const getPriorityClasses = (level: PriorityLevel) => {
-    switch(level) {
+    switch (level) {
       case PriorityLevel.EMERGENCY:
         return {
           bg: "bg-red-900/30",
@@ -369,7 +369,7 @@ export const NurseBookAppointment = ({
         setLoadingWorkingDays(true);
         setAvailableTimes([]);
         form.setValue("time", "");
-        
+
         try {
           const result = await getDoctorWorkingDays(selectedDoctorId);
           if (result.success && result.workingDays) {
@@ -404,11 +404,11 @@ export const NurseBookAppointment = ({
         const date = new Date(selectedDate);
         const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
         const dayOfWeek = dayNames[date.getDay()].toLowerCase();
-        
+
         const workingDay = doctorWorkingDays.find(
           wd => wd.day.toLowerCase() === dayOfWeek
         );
-        
+
         if (workingDay) {
           const times = generateDynamicTimes(workingDay.start_time, workingDay.close_time, 30);
           setAvailableTimes(times);
@@ -422,7 +422,7 @@ export const NurseBookAppointment = ({
     } else {
       setAvailableTimes([]);
     }
-    
+
     const currentTime = form.getValues("time");
     if (currentTime) {
       setTimeout(() => {
@@ -449,24 +449,24 @@ export const NurseBookAppointment = ({
     // Clear existing selections
     form.setValue("appointment_date", "");
     form.setValue("time", "");
-    
+
     // Set priority and doctor
     form.setValue("priority_level", level);
     form.setValue("priority_score", score);
     form.setValue("doctor_id", suggestedDoctorId);
     form.setValue("priority_override", isOverride);
-  
+
     setPriorityInfo({
       level,
       score,
       department: suggestedDepartment
     });
-  
+
     // Reset states
     setDoctorWorkingDays([]);
     setAvailableTimes([]);
     setLoadingWorkingDays(true);
-  
+
     // Immediately fetch working days for the selected doctor
     try {
       const result = await getDoctorWorkingDays(suggestedDoctorId);
@@ -481,17 +481,19 @@ export const NurseBookAppointment = ({
     } finally {
       setLoadingWorkingDays(false);
     }
-  
+
     setIsFormReady(true);
-    toast.success(`Priority set to ${level} (Score: ${score})`);
+    toast.success(`Priority set to ${level} (Score: ${score})`, {
+      id: "priority-update"
+    });
   };
 
   const onSubmit: SubmitHandler<z.infer<typeof EnhancedAppointmentSchema>> = async (values) => {
     try {
       setIsSubmitting(true);
-      
-      const newData = { 
-        ...values, 
+
+      const newData = {
+        ...values,
         patient_id: patient?.id!,
         booked_by: nurseId,
         priority_level: values.priority_level,
@@ -532,11 +534,11 @@ export const NurseBookAppointment = ({
           variant="ghost"
           className="w-full flex items-center gap-2 justify-start text-sm font-medium bg-slate-800 hover:bg-slate-700 text-slate-100 transition-all duration-200 rounded-lg px-4 py-2 border border-slate-600 hover:border-slate-500"
         >
-          <Stethoscope size={16} className="text-blue-400" /> 
+          <Stethoscope size={16} className="text-blue-400" />
           Book for {patientName}
         </Button>
       </DialogTrigger>
-  
+
       <DialogContent className="
   bg-slate-900 
   border-slate-700 
@@ -581,7 +583,7 @@ export const NurseBookAppointment = ({
   sm:px-0
 ">
 
-<DialogTitle className="
+              <DialogTitle className="
   text-slate-100 
   text-lg
   sm:text-xl
@@ -598,7 +600,7 @@ export const NurseBookAppointment = ({
                 <span>Booking as {nurseName}</span>
               </div>
             </DialogHeader>
-  
+
             {/* Scrollable Content */}
             <div className="
   flex-1 
@@ -613,10 +615,10 @@ export const NurseBookAppointment = ({
 ">
 
               <Form {...form}>
-<form
-  onSubmit={form.handleSubmit(onSubmit)}
-  className="space-y-3 sm:space-y-6"
->
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-3 sm:space-y-6"
+                >
 
                   {/* Patient Info Section */}
                   <div className="
@@ -635,17 +637,17 @@ export const NurseBookAppointment = ({
 ">
 
 
-<ProfileImage
-  url={patient?.img!}
-  name={patientName}
-  bgColor={patient?.colorCode!}
-  className="size-12 sm:size-16 border-2 border-slate-600"
-/>
+                    <ProfileImage
+                      url={patient?.img!}
+                      name={patientName}
+                      bgColor={patient?.colorCode!}
+                      className="size-12 sm:size-16 border-2 border-slate-600"
+                    />
 
                     <div className="flex-1">
-                    <p className="font-semibold text-base sm:text-lg text-slate-100 mb-1">
-  {patientName}
-</p>
+                      <p className="font-semibold text-base sm:text-lg text-slate-100 mb-1">
+                        {patientName}
+                      </p>
                       <div className="flex items-center gap-3">
                         <span className="text-sm text-slate-300 capitalize bg-slate-700 px-2 py-1 rounded">
                           {patient?.gender}
@@ -657,10 +659,10 @@ export const NurseBookAppointment = ({
                       </div>
                     </div>
                   </div>
-  
+
                   {/* Appointment Type */}
                   <div className="space-y-1.5 sm:space-y-2">
-                  <CustomInput
+                    <CustomInput
                       type="select"
                       selectList={TYPES}
                       control={form.control}
@@ -669,10 +671,10 @@ export const NurseBookAppointment = ({
                       placeholder="Select an appointment type"
                     />
                   </div>
-                  
+
                   {/* Reason for Visit / Symptoms */}
                   <div className="space-y-1.5 sm:space-y-2">
-                  <CustomInput
+                    <CustomInput
                       type="textarea"
                       control={form.control}
                       name="note"
@@ -680,10 +682,10 @@ export const NurseBookAppointment = ({
                       label="Patient Symptoms / Reason for Visit"
                     />
                   </div>
-  
+
                   {/* Priority Analyzer */}
                   {showPriorityAnalyzer && (
- <div className="
+                    <div className="
  border 
  rounded-lg 
  p-3
@@ -704,7 +706,7 @@ export const NurseBookAppointment = ({
                       />
                     </div>
                   )}
-  
+
                   {/* Enhanced Date and Time Selection */}
                   {priorityInfo && (
                     <div className="space-y-4">
@@ -727,7 +729,7 @@ export const NurseBookAppointment = ({
                           </p>
                         </div>
                       </div>
-  
+
                       {selectedDoctorId && (
                         <div className="space-y-2">
                           {loadingWorkingDays ? (
@@ -746,7 +748,7 @@ export const NurseBookAppointment = ({
                           )}
                         </div>
                       )}
-  
+
                       {/* Calendar Date Picker */}
                       <FormField
                         control={form.control}
@@ -763,10 +765,10 @@ export const NurseBookAppointment = ({
                                   field.onChange(formatDateWithUserTimezone(date));
                                 }}
                                 placeholder={
-                                  loadingWorkingDays 
-                                    ? "Loading doctor availability..." 
-                                    : selectedDoctorId 
-                                      ? "Select appointment date" 
+                                  loadingWorkingDays
+                                    ? "Loading doctor availability..."
+                                    : selectedDoctorId
+                                      ? "Select appointment date"
                                       : "Select doctor first"
                                 }
                                 className="w-full"
@@ -779,67 +781,67 @@ export const NurseBookAppointment = ({
                           </FormItem>
                         )}
                       />
-  
-  <FormField
-  control={form.control}
-  name="time"
-  render={({ field }) => (
-    <FormItem>
-      <FormControl>
-        <TimeSlotSelector
-          selectedDoctorId={selectedDoctorId}
-          selectedDate={selectedDate}
-          availableTimes={doctorWorkingDays.length > 0 && selectedDate ? (() => {
-            try {
-              const date = new Date(selectedDate);
-              const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-              const dayOfWeek = dayNames[date.getDay()].toLowerCase();
-              const workingDay = doctorWorkingDays.find(wd => wd.day.toLowerCase() === dayOfWeek);
-              
-              if (workingDay) {
-                // Generate times using the same logic as your fixed version
-                const times = [];
-                const [startHour, startMin] = workingDay.start_time.split(':').map(Number);
-                const [endHour, endMin] = workingDay.close_time.split(':').map(Number);
-                const startMinutes = startHour * 60 + startMin;
-                const endMinutes = endHour * 60 + endMin;
-                
-                for (let minutes = startMinutes; minutes < endMinutes; minutes += 30) {
-                  const hour = Math.floor(minutes / 60);
-                  const min = minutes % 60;
-                  const period = hour >= 12 ? 'PM' : 'AM';
-                  const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-                  const timeString = `${displayHour}:${min.toString().padStart(2, '0')} ${period}`;
-                  
-                  times.push({
-                    label: timeString,
-                    value: timeString
-                  });
-                }
-                return times;
-              }
-              return [];
-            } catch (error) {
-              console.error('Error generating times:', error);
-              return [];
-            }
-          })() : []}
-          selectedTime={field.value}
-          onTimeSelect={field.onChange}
-          disabled={isSubmitting || loadingWorkingDays}
-          patientId={patient.id}
-        />
-      </FormControl>
-      <FormMessage className="text-red-400 text-sm mt-2" />
-    </FormItem>
-  )}
-/>
+
+                      <FormField
+                        control={form.control}
+                        name="time"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <TimeSlotSelector
+                                selectedDoctorId={selectedDoctorId}
+                                selectedDate={selectedDate}
+                                availableTimes={doctorWorkingDays.length > 0 && selectedDate ? (() => {
+                                  try {
+                                    const date = new Date(selectedDate);
+                                    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                                    const dayOfWeek = dayNames[date.getDay()].toLowerCase();
+                                    const workingDay = doctorWorkingDays.find(wd => wd.day.toLowerCase() === dayOfWeek);
+
+                                    if (workingDay) {
+                                      // Generate times using the same logic as your fixed version
+                                      const times = [];
+                                      const [startHour, startMin] = workingDay.start_time.split(':').map(Number);
+                                      const [endHour, endMin] = workingDay.close_time.split(':').map(Number);
+                                      const startMinutes = startHour * 60 + startMin;
+                                      const endMinutes = endHour * 60 + endMin;
+
+                                      for (let minutes = startMinutes; minutes < endMinutes; minutes += 30) {
+                                        const hour = Math.floor(minutes / 60);
+                                        const min = minutes % 60;
+                                        const period = hour >= 12 ? 'PM' : 'AM';
+                                        const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+                                        const timeString = `${displayHour}:${min.toString().padStart(2, '0')} ${period}`;
+
+                                        times.push({
+                                          label: timeString,
+                                          value: timeString
+                                        });
+                                      }
+                                      return times;
+                                    }
+                                    return [];
+                                  } catch (error) {
+                                    console.error('Error generating times:', error);
+                                    return [];
+                                  }
+                                })() : []}
+                                selectedTime={field.value}
+                                onTimeSelect={field.onChange}
+                                disabled={isSubmitting || loadingWorkingDays}
+                                patientId={patient.id}
+                              />
+                            </FormControl>
+                            <FormMessage className="text-red-400 text-sm mt-2" />
+                          </FormItem>
+                        )}
+                      />
                     </div>
                   )}
                 </form>
               </Form>
             </div>
-  
+
             {/* Footer - Fixed */}
             <div className="
   flex-shrink-0 
@@ -855,18 +857,18 @@ export const NurseBookAppointment = ({
   sticky
   bottom-0
 ">
-  
-  <Button
-  disabled={
-    isSubmitting || 
-    !form.formState.isValid || 
-    !priorityInfo ||
-    !form.watch("appointment_date") ||
-    !form.watch("time")
-  }
-  type="submit"
-  onClick={form.handleSubmit(onSubmit)}
-  className={`
+
+              <Button
+                disabled={
+                  isSubmitting ||
+                  !form.formState.isValid ||
+                  !priorityInfo ||
+                  !form.watch("appointment_date") ||
+                  !form.watch("time")
+                }
+                type="submit"
+                onClick={form.handleSubmit(onSubmit)}
+                className={`
     w-full 
     font-semibold 
     py-2.5
@@ -876,13 +878,12 @@ export const NurseBookAppointment = ({
     rounded-lg 
     transition-all 
     duration-200
-    ${
-      priorityInfo?.level === PriorityLevel.EMERGENCY 
-        ? 'bg-red-600 hover:bg-red-700 text-slate-100' :
-      priorityInfo?.level === PriorityLevel.URGENT 
-        ? 'bg-amber-600 hover:bg-amber-700 text-slate-100' :
-      'bg-blue-600 hover:bg-blue-700 text-slate-100'
-    }
+    ${priorityInfo?.level === PriorityLevel.EMERGENCY
+                    ? 'bg-red-600 hover:bg-red-700 text-slate-100' :
+                    priorityInfo?.level === PriorityLevel.URGENT
+                      ? 'bg-amber-600 hover:bg-amber-700 text-slate-100' :
+                      'bg-blue-600 hover:bg-blue-700 text-slate-100'
+                  }
     disabled:opacity-50 
     disabled:cursor-not-allowed 
     flex 
@@ -890,7 +891,7 @@ export const NurseBookAppointment = ({
     justify-center 
     gap-2
   `}
->
+              >
 
                 {isSubmitting ? (
                   <>
@@ -904,10 +905,10 @@ export const NurseBookAppointment = ({
                   </>
                 )}
               </Button>
-              
+
               {/* Form Status Indicators */}
               <div className="mt-2 sm:mt-3 text-xs text-slate-400 space-y-1">
-              {!priorityInfo && (
+                {!priorityInfo && (
                   <p className="flex items-center gap-1">
                     <Activity className="h-3 w-3" />
                     Complete symptom description to analyze priority
